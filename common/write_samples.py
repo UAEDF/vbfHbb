@@ -99,7 +99,7 @@ class info:
 				new_value = raw_input("      --> sample %s: cross section? [%s]"%(fields[0],fields[2]))
 				if not new_value=="": fields[2]=new_value
 #				fields[2] = str(raw_input("    --> Cross section for sample %s? "%iname))
-				fields[3] = "%f"%(float(fields[1])/float(fields[2])) if not fields[2]=="-1" else "-1"
+				fields[3] = "%f"%(float(fields[1])/float(fields[2])) if not float(fields[2])==-1 else "-1"
 #				fields[4] = re.search('(VBF|QCD|RUN|TRG|OTH)',iname.upper().replace('FLATTREE','').replace('_T','_OTH').replace('_Z','_OTH').replace('_W','_OTH').replace('DATA','RUN').replace('MULTIJET','RUN').replace('BJET','RUN').replace('JET','TRG')).group(1)
 				fields[5] = ','.join(trigarray)
 #				fields[6] = str(raw_input("    --> Colour for sample %s? "%iname))
