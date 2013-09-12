@@ -32,7 +32,7 @@ class info:
 				print (template)%kfield,
 			print
 			print '-'*(170+6*4)
-		for k,v in sorted(self.content['files'].iteritems()):
+		for k,v in sorted(self.content['files'].iteritems(), key=lambda (x,y):(len(y['tag']),y['tag'],len(y['fname']),y['fname'])):
 			for kfield,vfield in sorted(self.content['fields'].iteritems()):
 				template="%%%is | "%vfield
 				print (template)%self.content['files'][k][kfield], 
@@ -86,15 +86,15 @@ class info:
 			if fields[0] in self.content['files']: pass
 			else:
 				l2("Adding %s:"%fields[0])
-				for tag in infojson['tags'].iterkeys():
+				for tag in sorted(infojson['tags'].iterkeys(), key=lambda x:(-len(x),x)):
 					for possibility in infojson['tags'][tag]:
 						if possibility in fields[0]:
 							fields[4] = tag
 							new_value = raw_input("      --> sample %s: tag? [%s]"%(fields[0],fields[4]))
 							if not new_value=="": fields[4]=new_value
 							done = True
-						if done: continue
-					if done: continue
+						if done: break 
+					if done: break
 				fields[2] = infojson['crosssections'][fields[4]]
 				new_value = raw_input("      --> sample %s: cross section? [%s]"%(fields[0],fields[2]))
 				if not new_value=="": fields[2]=new_value
