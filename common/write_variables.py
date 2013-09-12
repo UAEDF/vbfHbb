@@ -2,7 +2,6 @@
 
 from optparse import OptionParser
 import datetime,sys,os,re,json
-sys.path.append('include/')
 
 tempargv = sys.argv[:]
 sys.argv = []

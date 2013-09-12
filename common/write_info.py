@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-import sys
-sys.path.append('../include')
-import os,re,json,datetime
+import sys,os,re,json,datetime
 
 from optparse import OptionParser
 from toolkit import *

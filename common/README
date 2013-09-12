@@ -71,3 +71,11 @@ You can use write_variables.py to:
 	e) clean (i.e. remove) entries from the file with -c (cfr. section 2)
 
 	
+
+4) reformat.{C,h}
+
+	Class intended to convert flatTrees with boolean vector branches to flatTrees with char vector branches (triggerResult)
+
+5) sample.{C,h}
+
+	Class intended to load ROOT TTrees into memory, including a specific draw() function.
