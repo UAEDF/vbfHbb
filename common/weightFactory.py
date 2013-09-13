@@ -42,12 +42,15 @@ class weightFactory:
 	def addBMWght(self,tag):
             for iFile in self.samples["files"]:
                if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 :  self.wOut += '*bMapWght(jetBtag[btagIdx[0]],jetBtag[btagIdx[1]])'
-#
-#wf = weightFactory('vbfHbb_samples_XJ_2012Paper.json',18.5)
-#print 'Data   : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','Data')
-#print 'QCD100 : ' , wf.getFormula('PU,XSEC,KFAC,LUMI,BMAP','QCD100')
-#print 'QCD250 : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','QCD250')
-#print 'QCD500 : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','QCD500')
-#print 'QCD1000: ' , wf.getFormula('PU,XSEC,KFAC,LUMI','QCD1000')
-#print 'ZJets  : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','ZJets')
-#print 'TTJets : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','TTJets')
+
+
+# Examples:
+if __name__=='__main__':
+  wf = weightFactory('vbfHbb_samples_XJ_2012Paper.json',18.5)
+  print 'Data   : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','Data') 
+  print 'QCD100 : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','QCD100')
+  print 'QCD250 : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','QCD250')
+  print 'QCD500 : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','QCD500')
+  print 'QCD1000: ' , wf.getFormula('PU,XSEC,KFAC,LUMI','QCD1000')
+  print 'ZJets  : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','ZJets')
+  print 'TTJets : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','TTJets')

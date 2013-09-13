@@ -72,7 +72,8 @@ class info:
 						field_new = ','.join(re.findall('[A-Za-z]{2,}',fields[1]))
 						print "      %s: %s"%(field,field_new)
 					elif field=='title_y':
-						field_new = 'N / '%((float(fields[-1])-float(fields[-2]))/float(fields[-3]))
+						#field_new = 'N / '%((float(fields[-1])-float(fields[-2]))/float(fields[-3]))
+                                                field_new = 'N/bin' 
 						print "      %s: %s"%(field,field_new)
 					else:
 						field_new = str(raw_input("      %s? "%(field)))
