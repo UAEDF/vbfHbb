@@ -131,7 +131,6 @@ def do_draw(opts,fout,s,v,sel,trg):
 		hnew.SetTitle(hname)
 		l3("%s doesn\'t exist. Filling first."%(path))
 		do_fill(opts,fout,s,v,sel,trg)
-		hnew.Delete()
 		hload = gDirectory.Get(path)
 	if opts.debug: l3("%sLoaded: %30s(%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),plain))
 	canvas = TCanvas("c","c",2400,1800)
@@ -142,7 +141,7 @@ def do_draw(opts,fout,s,v,sel,trg):
 	legend.SetTextSize(0.025)
 	legend.AddEntry(hload,s['tag'],'LP')
 	legend.Draw()
-	ndir = 'plots/%s/'%(os.path.split(fout.GetName())[1][:-5]) # strip off the path and the suffix, keep the basename
+	ndir = 'plots/%s'%(os.path.split(fout.GetName())[1][:-5]) # strip off the path and the suffix, keep the basename
 	if not os.path.exists('%s/%s/%s_%s'%(ndir, s['tag'], selname, trgname)): os.makedirs('%s/%s/%s_%s'%(ndir, s['tag'], selname, trgname))
 	canvas.SetName("c%s"%hload.GetName()[1:])
 	canvas.SetTitle(canvas.GetName())
