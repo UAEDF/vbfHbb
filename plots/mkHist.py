@@ -89,7 +89,7 @@ def dumpSamples(samplesroot):
 def do_fill(opts,fout,s,v,sel,trg):
 	# cut
 	cut,cutlabel = write_cuts(sel,trg,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight)
-	if opts.debug: l3("Cut: %s: %s"%(cutlabel,cut))
+	if opts.debug: l3("Cut: %s%s%s: %s"%(blue,cutlabel,plain,cut))
 
 	# names
 	sample = s['pointer']
@@ -131,7 +131,7 @@ def do_draw(opts,fout,s,v,sel,trg):
 	if (not hload) or opts.redraw:
 		hnew = TH1F(hname,';'.join([hname,v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
 		hnew.SetTitle(hname)
-		l3("%s doesn\'t exist. Filling first."%(path))
+		l3("%s%s doesn\'t exist. Filling first.%s"%(red,path,plain))
 		do_fill(opts,fout,s,v,sel,trg)
 		hload = gDirectory.Get(path)
 	if opts.debug: l3("%sLoaded: %30s(N=%9d, Int=%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),hload.Integral(),plain))
@@ -244,7 +244,7 @@ def main():
 	samples = samplesfull['files']
 	dsamples = []
 	# all samples from file if nothing is specified in options
-	if not opts.sample: opts.sample = ','.join([y['tag'] for x,y in samplesfull['files']])
+	if not opts.sample: opts.sample = ','.join([y['tag'] for (x,y) in samplesfull['files'].iteritems()])
 	for sample in samples.itervalues():
 		if not any([x in sample['tag'] for x in opts.sample]): dsamples += [sample['fname']]
 	# remove some
