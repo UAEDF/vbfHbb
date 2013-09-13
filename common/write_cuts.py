@@ -1,15 +1,20 @@
 #!/usr/bin/env python
 
-import sys,json
+import sys,json,os
+basepath=os.path.split(os.path.abspath(__file__))[0]
+sys.path.append(basepath)
+
 from toolkit import *
 from optparse import OptionParser,OptionGroup
+from weightFactory import *
 import datetime
 today=datetime.date.today().strftime('%Y%m%d')
 
 ####################################################################################################
 def get_trigger(trigs,sample,samplejson,trigequal="49",trigjoin=" || "):
 	content = json.loads(filecontent(samplejson))
-	trg = group( trigjoin.join( ["triggerResult[%s]==%s"%(content['files'][sample]['trigger'].split(',')[content['trigger'].index(x)],trigequal) for x in trigs] ))
+	samplename = [x for x,y in content['files'].iteritems() if y['tag']==sample][0]
+	trg = group( trigjoin.join( ["triggerResult[%s]==%s"%(content['files'][samplename]['trigger'].split(',')[content['trigger'].index(x)],trigequal) for x in trigs] ))
 	return trg
 
 ####################################################################################################
@@ -29,13 +34,13 @@ def combos(triggers):
 ####################################################################################################
 def parser():
 	mp = OptionParser()
-	mp.add_option('--jsonsamp',help=blue+"File name for json with sample info."+plain,dest='jsonsamp',default="vbfHbb_samples_%s.json"%today,type='str')
-	mp.add_option('--jsonvars',help=blue+"File name for json with variable info."+plain,dest='jsonvars',default="vbfHbb_variables_%s.json"%today,type='str')
-	mp.add_option('--jsoncuts',help=blue+"File name for json with cut info."+plain,dest='jsoncuts',default="vbfHbb_cuts_%s.json"%today,type='str')
+	mp.add_option('--jsonsamp',help=blue+"File name for json with sample info."+plain,dest='jsonsamp',default="%s/vbfHbb_samples_%s.json"%(basepath,today),type='str')
+	mp.add_option('--jsonvars',help=blue+"File name for json with variable info."+plain,dest='jsonvars',default="%s/vbfHbb_variables_%s.json"%(basepath,today),type='str')
+	mp.add_option('--jsoncuts',help=blue+"File name for json with cut info."+plain,dest='jsoncuts',default="%s/vbfHbb_cuts_%s.json"%(basepath,today),type='str')
 	mp.add_option('-s','--selection',help=purple+"Put these selections (comma separated)."+plain,dest='selection',default='',type='str',action='callback',callback=optsplit)
 	mp.add_option('-t','--trigger',help=purple+"Put these triggers (comma separated)."+plain,dest='trigger',default='',type='str',action='callback',callback=optsplit)
 	mp.add_option('-r','--reftrig',help=purple+"Put these reference triggers (comma separated)."+plain,dest='reftrig',default='',type='str',action='callback',callback=optsplit)
-	mp.add_option('-w','--weight',help=purple+"Put this weight"+plain,dest='weight',default='',type='str')
+	mp.add_option('-w','--weight',help=purple+"Put this weight (\"lumi,weight1;weight2;...\")"+plain,dest='weight',default=[[''],['']],type='str',action='callback',callback=optsplitlist)
 	mp.add_option('--sample',help=red+"Specify for which sample this cut will be used (relevant for trigger)."+plain,dest='sample',default='',type='str')
 	mp.add_option('--skip',help=blue+"Variable to leave out of selection (N-1 cuts)."+plain,dest='skip',type='str')
 	mgt = OptionGroup(mp,"Trigger options")
@@ -70,15 +75,21 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	sel = selnew
 	trg = trgnew
 	# defaults
-	seljoin        = (' && ' if not 'seljoin'         in kwargs else kwargs['seljoin'])
-	trgjoin        = (' || ' if not 'trgjoin'         in kwargs else kwargs['trgjoin'])
-	selcmpjoin     = (' && ' if not 'selcmpjoin'      in kwargs else kwargs['selcmpjoin'])
-	trgcmpjoin     = (' && ' if not 'trgcmpjoin'      in kwargs else kwargs['trgcmpjoin'])
-	stgroup        = (False  if not 'stgroup'         in kwargs else kwargs['stgroup']) # first group sel and trg, then group complements	
-	reftrig        = ([]     if not 'reftrig'         in kwargs else kwargs['reftrig'])
-	varskip        = (''     if not 'varskip'         in kwargs else kwargs['varskip'])
+	seljoin        = (' && '  if not 'seljoin'         in kwargs else kwargs['seljoin'])
+	trgjoin        = (' || '  if not 'trgjoin'         in kwargs else kwargs['trgjoin'])
+	selcmpjoin     = (' && '  if not 'selcmpjoin'      in kwargs else kwargs['selcmpjoin'])
+	trgcmpjoin     = (' && '  if not 'trgcmpjoin'      in kwargs else kwargs['trgcmpjoin'])
+	stgroup        = (False   if not 'stgroup'         in kwargs else kwargs['stgroup']) # first group sel and trg, then group complements	
+	reftrig        = ([]      if not 'reftrig'         in kwargs else kwargs['reftrig'])
+	varskip        = (''      if not 'varskip'         in kwargs else kwargs['varskip'])
+	weight         = ([[''],['']] if not 'weight'      in kwargs else kwargs['weight'])
 	if not (seljoin[0]==' ' and seljoin[-1]==' '): seljoin = ' '+seljoin+' '
 	if not (trgjoin[0]==' ' and trgjoin[-1]==' '): trgjoin = ' '+trgjoin+' '
+	
+	wfString = ''
+	if not weight == [[''],['']]:
+		wf = weightFactory(kwargs['jsonsamp'],weight[0][0])
+		wfString = wf.getFormula(','.join(weight[1]),kwargs['sample'])
 
 	# construct
 	if not (selold==[] and trgold==[]):
@@ -98,8 +109,8 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 			tcmplabels   = group( trgcmpjoin.join( [ group('! t'+x) for x in trgcmp ] ) )
 	
 			# combo
-			st = ' && '.join([x for x in [s,scmp,t,tcmp] if not x=="()"])
-			stlabels = ' && '.join([x for x in [slabels,scmplabels,tlabels,tcmplabels] if not x=="()"])
+			st = group(' && '.join([x for x in [s,scmp,t,tcmp] if not x=="()"]))
+			stlabels = group(' && '.join([x for x in [slabels,scmplabels,tlabels,tcmplabels] if not x=="()"]))
 	
 		else:
 			st        = group( seljoin.join( [ group( ' && '.join([ k+v[0]+v[1] for k,v in sorted(selections[si].iteritems(), key=lambda(x,y):x) if not k==varskip ]+[get_trigger(triggers[si],kwargs['sample'],kwargs['jsonsamp'])]) ) for si in (sel if not sel==[] else selold) ] ) )
@@ -114,8 +125,12 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 
 	# when only NONE for sel/trg
 	else:
-		st="1."
-		stlabels="1."
+		st=group("1.")
+		stlabels=group("1.")
+	
+	if not weight == [[''],['']]:
+		st = group("%s * %s"%(st,group(wfString)))
+		stlabels = group("%s * %s"%(stlabels,group('weight factors')))
 
 	return st,stlabels
 
@@ -128,7 +143,7 @@ if __name__=='__main__':
 	mp = parser()
 	opts,args = mp.parse_args()
 
-	st, stlabels = write_cuts(opts.selection,opts.trigger,opts.selcmp,opts.trgcmp,reftrig=opts.reftrig,jsoncuts=opts.jsoncuts,sample=opts.sample,jsonsamp=opts.jsonsamp,seljoin=opts.seljoin,trgjoin=opts.trgjoin,varskip=opts.skip,selcmpjoin=opts.selcmpjoin,trgcmpjoin=opts.trgcmpjoin,stgroup=opts.stgroup)
+	st, stlabels = write_cuts(opts.selection,opts.trigger,opts.selcmp,opts.trgcmp,reftrig=opts.reftrig,jsoncuts=opts.jsoncuts,sample=opts.sample,jsonsamp=opts.jsonsamp,seljoin=opts.seljoin,trgjoin=opts.trgjoin,varskip=opts.skip,selcmpjoin=opts.selcmpjoin,trgcmpjoin=opts.trgcmpjoin,stgroup=opts.stgroup,weight=opts.weight)
 	print st
 	print
 	print stlabels

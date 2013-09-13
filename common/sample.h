@@ -12,7 +12,7 @@ using namespace std;
 
 class sample {
 	public:
-		sample(TString,TString,float,vector<TString>);
+		sample(TString,TString,vector<TString>); // float
 		~sample();
 		void draw(TString,TString,TString);
 		TFile* getf();

@@ -2,6 +2,8 @@
 
 from optparse import OptionParser
 import datetime,sys,os,re,json
+basepath=os.path.split(os.path.abspath(__file__))[0]
+sys.path.append(basepath)
 
 tempargv = sys.argv[:]
 sys.argv = []
@@ -144,11 +146,11 @@ class info:
 def parser():
 	mp = OptionParser()
 	mp.add_option('-i','--input',help='Comma separated list of input files (including prefix).',dest='input',type='str',default='')
-	mp.add_option('-o','--output',help='Output file name (including prefix).',dest='output',type='str',default='vbfHbb_samples_%s.json'%today)
+	mp.add_option('-o','--output',help='Output file name (including prefix).',dest='output',type='str',default='%s/vbfHbb_samples_%s.json'%(basepath,today))
 	mp.add_option('-r','--readonly',help='Print content of output file.',dest='readonly',action='store_true',default=False)
 	mp.add_option('-c','--clean',help='Clean json file.',dest='clean',action='store_true',default=False)
 	mp.add_option('-u','--update',help='Update json file.',dest='update',action='store_true',default=False)
-	mp.add_option('-b','--baseinfo',help='File with cross section info (including prefix).',dest='baseinfo',type='str',default='vbfHbb_info.json')
+	mp.add_option('-b','--baseinfo',help='File with cross section info (including prefix).',dest='baseinfo',type='str',default='%s/vbfHbb_info.json'%basepath)
 	return mp
 
 
@@ -170,7 +172,7 @@ if __name__=='__main__':
 
 	if not opts.readonly and not opts.clean:
 		l1("Looping over new inputs:")
-		for iname in opts.input.split(','):
+		for iname in sorted(opts.input.split(','),key=lambda x:(len(x),x)):
 			if not os.path.exists(iname): 
 				l2("Skipping non-existant %s."%iname)
 				continue

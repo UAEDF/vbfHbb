@@ -2,6 +2,8 @@
 
 from optparse import OptionParser
 import datetime,sys,os,re,json
+basepath=os.path.split(os.path.abspath(__file__))[0]
+sys.path.append(basepath)
 
 tempargv = sys.argv[:]
 sys.argv = []
@@ -72,12 +74,14 @@ class info:
 						field_new = ','.join(re.findall('[A-Za-z]{2,}',fields[1]))
 						print "      %s: %s"%(field,field_new)
 					elif field=='title_y':
-						#field_new = 'N / '%((float(fields[-1])-float(fields[-2]))/float(fields[-3]))
-                                                field_new = 'N/bin' 
+						field_new = 'N / bin' 
 						print "      %s: %s"%(field,field_new)
 					else:
 						field_new = str(raw_input("      %s? "%(field)))
 					fields.append(field_new if not field_new=="" else "-")
+				# update title_y
+				title_y_new = 'N / %.2f'%((float(fields[self.content['fields'].index('xmax')])-float(fields[self.content['fields'].index('xmin')]))/float(fields[self.content['fields'].index('nbins_x')]))
+				fields[self.content['fields'].index('title_y')] = title_y_new
 		elif type(passed_content)==list: 
 			fields=passed_content
 			if not fields[0] in self.content['variables']: l2("Adding %s:"%fields[0])
@@ -99,10 +103,11 @@ class info:
 
 def parser():
 	mp = OptionParser()
-	mp.add_option('-o','--output',help='Output file name (including prefix).',dest='output',type='str',default='vbfHbb_variables_%s.json'%today)
-	mp.add_option('-r','--readonly',help='Print content of output file.',dest='readonly',action='store_true',default=False)
-	mp.add_option('-c','--clean',help='Clean json file.',dest='clean',action='store_true',default=False)
-	mp.add_option('-u','--update',help='Update json file.',dest='update',action='store_true',default=False)
+	mp.add_option('-o','--output',help='Output file name (including prefix).',dest='output',type='str',default='%s/vbfHbb_variables_%s.json'%(basepath,today))
+	mp.add_option('-a','--add',help='Add content to the file.',action='store_true',default=False)
+	mp.add_option('-r','--readonly',help='Print content of output file.',action='store_true',default=False)
+	mp.add_option('-c','--clean',help='Clean json file (remove existing variables).',dest='clean',action='store_true',default=False)
+	mp.add_option('-u','--update',help='Update json file (edit existing variables).',dest='update',action='store_true',default=False)
 	return mp
 
 
@@ -111,22 +116,22 @@ if __name__=='__main__':
 	mp = parser()
 	opts,args = mp.parse_args()
 
-	if sum([(1 if x else 0) for x in [opts.readonly, opts.clean, opts.update]]) > 1:
-		print "%sConflicting opts. Never combine readonly, clean and update. Use one at a time. Exiting.%s"%(Red,plain)
+	if sum([(1 if x else 0) for x in [opts.add, opts.readonly, opts.clean, opts.update]]) > 1:
+		print "%sConflicting opts. Never combine add, readonly, clean and update. Use one at a time. Exiting.%s"%(Red,plain)
 		sys.exit()
 
 	myinfo = info(opts.output)
 	myinfo.print_info()
 
-	if opts.clean and not (opts.readonly or opts.update):
+	if opts.clean and not (opts.readonly or opts.update or opts.add):
 		myinfo.clean_info()
 	
-	if opts.update and not (opts.readonly or opts.clean):
+	if opts.update and not (opts.readonly or opts.clean or opts.add):
 		myinfo.update_info()
 		myinfo.print_info()
 		myinfo.write_info()
 
-	if not opts.readonly and not (opts.clean or opts.update):
+	if opts.add and not (opts.clean or opts.update or opts.readonly):
 		var = str(raw_input("var? [varname] "))
 		while not var == "":
 			myinfo.add_info(var)

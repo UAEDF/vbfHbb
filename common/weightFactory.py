@@ -2,8 +2,9 @@
 
 import sys
 import os,re,json,datetime
+basepath=os.path.split(os.path.abspath(__file__))[0]
+sys.path.append(basepath)
 
-sys.path.append('../common')
 from toolkit import *
 
 class weightFactory:

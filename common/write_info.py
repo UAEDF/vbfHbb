@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import sys,os,re,json,datetime
+basepath=os.path.split(os.path.abspath(__file__))[0]
+sys.path.append(basepath)
 
 from optparse import OptionParser
 from toolkit import *
@@ -15,7 +17,7 @@ today = datetime.date.today().strftime('%Y%m%d')
 ####################################################################################################
 def parser():
 	mp = OptionParser()
-	mp.add_option('-i','--input',help='Name of json file containing cross section, tagging and colour info.',dest='input',type='str')
+	mp.add_option('-i','--input',help='Name of json file containing cross section, tagging and colour info.',dest='input',type='str',default='%s/vbfHbb_cuts_%s'%(basepath,today))
 	mp.add_option('-r','--readonly',help='Just print out content.',action='store_true',default=True)
 	mp.add_option('-u','--update',help='Update content.',action='store_true',default=False)
 	return mp 
