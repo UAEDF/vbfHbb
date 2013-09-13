@@ -15,6 +15,7 @@ def get_trigger(trigs,sample,samplejson,trigequal="49",trigjoin=" || "):
 	content = json.loads(filecontent(samplejson))
 	samplename = [x for x,y in content['files'].iteritems() if y['tag']==sample][0]
 	trg = group( trigjoin.join( ["triggerResult[%s]==%s"%(content['files'][samplename]['trigger'].split(',')[content['trigger'].index(x)],trigequal) for x in trigs] ))
+	if "triggerResult[-]" in trg: sys.exit('  %sUnknown trigger in trigger string. Check! Exiting.\n  --> %s (from %s)%s'%(red,trg,','.join(trigs),plain))
 	return trg
 
 ####################################################################################################

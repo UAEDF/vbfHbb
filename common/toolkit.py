@@ -45,7 +45,8 @@ def inroot(cmd):
 
 # SPLIT COMMA SEPARATED OPTION LIST ################################################################
 def optsplitlist(option,opt,value,parser):
-	if ';' in value: setattr(parser.values, option.dest, [x.split(';') for x in value.split(',')])
-	else: setattr(parser.values, option.dest, [value.split(',')])
+#	if ';' in value: setattr(parser.values, option.dest, [x.split(';') for x in value.split(',')])
+#	else: setattr(parser.values, option.dest, [value.split(',')])
+	setattr(parser.values, option.dest, [x.split(';') for x in value.split(',')])
 def optsplit(option,opt,value,parser):
 	setattr(parser.values, option.dest, value.split(','))
