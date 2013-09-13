@@ -12,7 +12,7 @@
 "trg": {
 "NONE": [],
 "NOM": ["HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v* OR HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v* OR HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v* OR HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*","HLT_QuadJet75_55_35_20_BTagIP_VBF_v* OR HLT_QuadJet75_55_38_20_BTagIP_VBF_v*"],
-"NOMold": ["HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*","HLT_QuadJet75_55_38_20_BTagIP_VBF_v*"],
+"NOMMC": ["HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*","HLT_QuadJet75_55_38_20_BTagIP_VBF_v*"],
 "VBF": ["HLT_DiJet35_MJJ700_AllJets_DEta3p5_VBF_v*"],
 "QJT": ["HLT_QuadJet50_v*"],
 "REF": ["HLT_PFJet80_v*"]
