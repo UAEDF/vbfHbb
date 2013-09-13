@@ -28,6 +28,7 @@ def parser():
 	mga = OptionGroup(mp,cyan+"action settings"+plain)
 	mga.add_option('--fill',help='Fill histograms and write to root file.',action='store_true',default=False)
 	mga.add_option('--draw',help='Draw histograms from root file (fill if not present).',action='store_true',default=False)
+	mga.add_option('--redraw',help='Draw histogram from root file (refill in all cases).',action='store_true',default=False)
 
 	mgj = OptionGroup(mp,cyan+"json settings"+plain)
 	mgj.add_option('-S','--jsonsamp',help="File name for json with sample info.",dest='jsonsamp',default="%s/../common/vbfHbb_samples_%s.json"%(basepath,today),type='str')
@@ -36,11 +37,12 @@ def parser():
 	mgj.add_option('-I','--jsoninfo',help="File name for json with general info.",dest='jsoninfo',default="vbfHbb_info.json",type='str')
 
 	mgr = OptionGroup(mp,cyan+"root settings"+plain)
-	mgr.add_option('-o','--fout',help="File name for output file.",dest='fout',default='%s/rootfiles/vbfHbb.root'%(basepath),type='str')
+	mgr.add_option('-o','--fout',help="File name for output file.",dest='fout',default='rootfiles/vbfHbb.root',type='str')
 	mgr.add_option('-b','--batch',help="Set batch mode for ROOT.",action='store_true',default=False)
 
 	mgd = OptionGroup(mp,cyan+"detail settings"+plain)
 	mgd.add_option('-d','--debug',help="Write extra printout statements.",action='store_true',default=False)
+	mgd.add_option('-R','--reformat',help="Reformat all trees, even when present allready.",action='store_true',default=False)
 
 	mgst = OptionGroup(mp,cyan+"Run for subselection determined by variable, sample and/or selection/trigger"+plain)
 	mgst.add_option('-v','--variable',help=purple+"Run only for these variables (comma separated)."+plain,dest='variable',default='',type='str',action='callback',callback=optsplit)
@@ -126,7 +128,7 @@ def do_draw(opts,fout,s,v,sel,trg):
 	gDirectory.cd('%s:/'%fout.GetName())
 	path = '/plots/%s/%s_%s/%s;1'%(s['tag'], selname, trgname, hname)
 	hload = gDirectory.Get(path)
-	if not hload:
+	if (not hload) or opts.redraw:
 		hnew = TH1F(hname,';'.join([hname,v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
 		hnew.SetTitle(hname)
 		l3("%s doesn\'t exist. Filling first."%(path))
@@ -223,7 +225,7 @@ def main():
 	opts,args = mp.parse_args()
 
 	# check actions
-	if not (opts.fill or opts.draw): sys.exit(red+"Specify either fill or draw option to run. Exiting."+plain) 
+	if not (opts.fill or opts.draw or opts.redraw): sys.exit(red+"Specify either fill, draw or redraw option to run. Exiting."+plain) 
 	
 	# decide batch mode
 	if opts.batch: gROOT.SetBatch(1)
@@ -263,7 +265,9 @@ def main():
 	# if opts.tree or charred trees inexistant: convert trees
 	l1("Converting samples:")
 	for sample in samples.itervalues():
-		if not os.path.exists(sample['fname'][:-5]+'_reformatted.root'): 
+		sname = sample['fname'][:-5]+'_reformatted.root'
+		if (not os.path.exists(sname)) or opts.reformat: 
+			if os.path.exists(sname): os.remove(sname)
 			inroot('reformat("%s",variables)'%sample['fname'])
 			sys.exit("Sample reformat function was needed first. Rerun for actual plotting (or more converting).")
 
@@ -284,7 +288,7 @@ def main():
 				if not v['var'] in opts.variable: continue
 				for s in sorted(samplesroot):
 					if opts.fill: do_fill(opts,fout,s,v,sel,trg)
-					if opts.draw: do_draw(opts,fout,s,v,sel,trg)
+					if opts.draw or opts.redraw: do_draw(opts,fout,s,v,sel,trg)
 				### END LOOP over samples
 			### END LOOP over variables
 		### END LOOP over selections
