@@ -35,6 +35,7 @@ def parser():
 	mp.add_option('-s','--selection',help=purple+"Put these selections (comma separated)."+plain,dest='selection',default='',type='str',action='callback',callback=optsplit)
 	mp.add_option('-t','--trigger',help=purple+"Put these triggers (comma separated)."+plain,dest='trigger',default='',type='str',action='callback',callback=optsplit)
 	mp.add_option('-r','--reftrig',help=purple+"Put these reference triggers (comma separated)."+plain,dest='reftrig',default='',type='str',action='callback',callback=optsplit)
+	mp.add_option('-w','--weight',help=purple+"Put this weight"+plain,dest='weight',default='',type='str')
 	mp.add_option('--sample',help=red+"Specify for which sample this cut will be used (relevant for trigger)."+plain,dest='sample',default='',type='str')
 	mp.add_option('--skip',help=blue+"Variable to leave out of selection (N-1 cuts)."+plain,dest='skip',type='str')
 	mgt = OptionGroup(mp,"Trigger options")
