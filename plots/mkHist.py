@@ -104,7 +104,7 @@ def do_fill(opts,fout,s,v,sel,trg):
 
 	# do actual filling
 	inroot('%s.draw("%s","%s","%s")'%(sample,h.GetName(),v['root'],cut))
-	if opts.debug: l3("%sFilled: %30s(%9d)%s"%(yellow,h.GetName(),h.GetEntries(),plain))
+	if opts.debug: l3("%sFilled: %30s(N=%9d, Int=%9d)%s"%(yellow,h.GetName(),h.GetEntries(),h.Integral(),plain))
 	
 	# write histogram to file
 	gDirectory.cd('%s:/'%fout.GetName())
@@ -134,7 +134,7 @@ def do_draw(opts,fout,s,v,sel,trg):
 		l3("%s doesn\'t exist. Filling first."%(path))
 		do_fill(opts,fout,s,v,sel,trg)
 		hload = gDirectory.Get(path)
-	if opts.debug: l3("%sLoaded: %30s(%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),plain))
+	if opts.debug: l3("%sLoaded: %30s(N=%9d, Int=%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),hload.Integral(),plain))
 	canvas = TCanvas("c","c",2400,1800)
 	hload.Draw()	
 	legend = TLegend(gPad.GetLeftMargin()+0.02,1-gPad.GetTopMargin()-0.04-0.02,gPad.GetLeftMargin()+0.22,1-gPad.GetTopMargin()-0.02)
