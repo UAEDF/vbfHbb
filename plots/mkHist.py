@@ -29,6 +29,8 @@ def parser():
 	mga.add_option('--fill',help='Fill histograms and write to root file.',action='store_true',default=False)
 	mga.add_option('--draw',help='Draw histograms from root file (fill if not present).',action='store_true',default=False)
 	mga.add_option('--redraw',help='Draw histogram from root file (refill in all cases).',action='store_true',default=False)
+	mga.add_option('--drawstack',help='Draw histograms from root file (stack samples, fill if not present).',action='store_true',default=False)
+	mga.add_option('--redrawstack',help='Draw histograms from root file (stack samples, refill in all cases).',action='store_true',default=False)
 
 	mgj = OptionGroup(mp,cyan+"json settings"+plain)
 	mgj.add_option('-S','--jsonsamp',help="File name for json with sample info.",dest='jsonsamp',default="%s/../common/vbfHbb_samples_%s.json"%(basepath,today),type='str')
@@ -98,9 +100,20 @@ def do_fill(opts,fout,s,v,sel,trg):
 	hname = '_'.join(['h',v['var'],s['tag'],selname,trgname])
 
 	# containers
-	canvas = TCanvas("c","c",2400,1800)
+	canvas = TCanvas("cfill","cfill",2400,1800)
 	h      = TH1F(hname,';'.join([hname,v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
 	h.Sumw2()
+	
+	# bMapWght
+	if not opts.weight == [[''],['']] and 'BMAP' in opts.weight[1]: 
+		if not len(opts.weight)>2 or not os.path.exists(opts.weight[2][0]): sys.exit(red+"Check bMapWght file path. Exiting."+plain)
+		gROOT.ProcessLineSync('TFile *fmap = TFile::Open("%s");'%opts.weight[2][0])
+		gROOT.ProcessLineSync('gDirectory->cd("%s:/")'%fout.GetName())
+		gROOT.ProcessLineSync('TH2F *bMap = (TH2F*)fmap->Get("bMap;1").Clone();')
+		print ROOT.bMap
+		gROOT.ProcessLineSync('fmap->Close();')
+		print ROOT.bMap
+		fout.cd()
 
 	# do actual filling
 	inroot('%s.draw("%s","%s","%s")'%(sample,h.GetName(),v['root'],cut))
@@ -117,7 +130,7 @@ def do_fill(opts,fout,s,v,sel,trg):
 	gDirectory.cd('%s:/'%fout.GetName())
 
 	h.Delete()
-	c.Close()
+	canvas.Close()
 
 def do_draw(opts,fout,s,v,sel,trg):
 	# names
@@ -135,7 +148,7 @@ def do_draw(opts,fout,s,v,sel,trg):
 		do_fill(opts,fout,s,v,sel,trg)
 		hload = gDirectory.Get(path)
 	if opts.debug: l3("%sLoaded: %30s(N=%9d, Int=%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),hload.Integral(),plain))
-	canvas = TCanvas("c","c",2400,1800)
+	canvas = TCanvas("cdraw","cdraw",2400,1800)
 	hload.Draw()	
 	legend = TLegend(gPad.GetLeftMargin()+0.02,1-gPad.GetTopMargin()-0.04-0.02,gPad.GetLeftMargin()+0.22,1-gPad.GetTopMargin()-0.02)
 	legend.SetFillStyle(0)
@@ -151,68 +164,171 @@ def do_draw(opts,fout,s,v,sel,trg):
 	if opts.debug: l3("%sWritten plots to: %s%s"%(yellow,'%s/%s/%s_%s/%s.png'%(ndir, s['tag'], selname, trgname, canvas.GetName()),plain))
 	gDirectory.cd('%s:/'%fout.GetName())
 
-#def do_drawcomplex(opts,fout,s,v,sel,trg,samples):
-#	# names
-#	sample = s['pointer']
-#	selname = 's'+'-'.join(sel)
-#	trgname = 't'+'-'.join(trg)
-#	jsoninfo = json.loads(filecontent(opts.jsoninfo))
-#	jsoncuts = json.loads(filecontent(opts.jsoncuts))
-#	group = jsoninfo['groups'][s['tag']]
-#	htags = [k for k,val in jsoninfo['groups'].iteritems() if val==group]
-#	htags = [x for x in htags if x in opts.sample]
-#	hnames = ['_'.join(['h',v['var'],x,selname,trgname]) for x in htags]
-#	stackname = '_'.join(['s',v['var'],group,selname,trgname])
-#
-#	canvas = TCanvas("c","c",2400,1800)
-#	hs = []
-#	hstack = THStack(stackname, "%s;%s;%s"%(stackname,v['title_x'],v['title_y']))
-#
-#	for hname in hnames:
-#		htag = hname.split('_')[2]
-#		hind = map(itemgetter('tag'), samples).index(htag) 
-#		gDirectory.cd('%s:/'%fout.GetName())
-#		path = '/plots/%s/%s_%s/%s;1'%(htag, selname, trgname, hname)
-#		hload = gDirectory.Get(path)
-#		if not hload:
-#			hnew = TH1F(hname,';'.join([hname,v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
-#			hnew.SetTitle(hname)
-#			l3("%s doesn\'t exist. Filling first."%(path))
-#			do_fill(opts,fout,samples[hind],v,sel,trg)
-#			hload = gDirectory.Get(path)
-#		if opts.debug: l3("%sLoaded: %30s(%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),plain))
-#		hs += [hload]
-#		hs[-1].SetLineColor(int(samples[hind]['colour']))
-#		print hs
-#		hstack.Add(hs[-1])
-#	hstack.Draw()
-#
-#	legend = TLegend(gPad.GetLeftMargin()+0.02,1-gPad.GetTopMargin()-0.04*len(hs)-0.04-0.02,gPad.GetLeftMargin()+0.22,1-gPad.GetTopMargin()-0.02)
-#	legend.SetFillStyle(0)
-#  	legend.SetTextColor(kBlue-2)
-#	legend.SetTextSize(0.025)
-#	for ih,h in enumerate(hs): legend.AddEntry(h,htags[ih]+" #rightarrow %s"%group,'LP')
-#	legend.Draw()
+def do_drawstack(opts,fout,samples,v,sel,trg):
+	# names
+	selname = 's'+'-'.join(sel)
+	trgname = 't'+'-'.join(trg)
+
+	jsoninfo = json.loads(filecontent(opts.jsoninfo))
+	jsoncuts = json.loads(filecontent(opts.jsoncuts))
+
+	canvas = TCanvas('cdrawstack','cdrawstack',2400,1800)
+	canvas.cd()
+
+	sigStackname = '_'.join(['ssig',v['var'],selname,trgname])
+	datStackname = '_'.join(['sdat',v['var'],selname,trgname])
+	bkgStackname = '_'.join(['sbkg',v['var'],selname,trgname])
+	sigStack = THStack(sigStackname,"%s;%s;%s"%(sigStackname,v['title_x'],v['title_y']))
+	datStack = THStack(datStackname,"%s;%s;%s"%(datStackname,v['title_x'],v['title_y']))
+	bkgStack = THStack(bkgStackname,"%s;%s;%s"%(bkgStackname,v['title_x'],v['title_y']))
+	sigHistos = []
+	datHistos = []
+	bkgHistos = []	
+	legend = TLegend(gPad.GetLeftMargin()+0.02,1-gPad.GetTopMargin()-(0.04*ceil(len(samples)/ceil(len(samples)/4.)))-0.04-0.02,gPad.GetLeftMargin()+(0.12*ceil(len(samples)/4.))+0.02,1-gPad.GetTopMargin()-0.02)
+	legend.SetFillStyle(0)
+  	legend.SetTextColor(kBlue-2)
+	legend.SetTextSize(0.025)
+	legend.SetNColumns(int(ceil(len(samples)/4.)))
+	text = TPaveText(1-gPad.GetRightMargin()-0.3,1-gPad.GetTopMargin()-(0.06*sum([x for x in [not opts.weight==[[''],['']], 'KFAC' in opts.weight[1], True] if x])),1-gPad.GetRightMargin(),1-gPad.GetTopMargin(),"NDC")
+	text.SetFillColor(kWhite)
+	text.SetFillStyle(0)
+	text.SetBorderSize(0)
+	text.SetTextSize(0.030)
+	text.SetTextAlign(13)
+	text.AddText("VBF H #rightarrow b#bar{b}: #sqrt{s} = 8 TeV (2012)")
+	if not opts.weight==[[''],['']]: text.AddText("#sigma = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
+	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = 1.3")
+	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
+	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	ymin=0
+	ymax=0
+
+	for s in samples:
+		# names
+		sname = s['pointer']
+		group = jsoninfo['groups'][s['tag']]
+		hname = '_'.join(['h',v['var'],s['tag'],selname,trgname])
+		# get histogram
+		gDirectory.cd('%s:/'%fout.GetName())
+		path = '/plots/%s/%s_%s/%s;1'%(s['tag'], selname, trgname, hname)
+		hload = gDirectory.Get(path)
+		if (not hload) or opts.redrawstack:
+			hnew = TH1F(hname,';'.join([hname,v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
+			hnew.SetTitle(hname)
+			l3("%s doesn\'t exist. Filling first."%(path))
+			do_fill(opts,fout,s,v,sel,trg)
+			hload = gDirectory.Get(path)
+		if opts.debug: l3("%sLoaded: %30s(N=%9d, Int=%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),hload.Integral(),plain))
+		# sort
+		if group=='Data':
+			datHistos += [hload]
+			datHistos[-1].SetLineColor(jsoninfo['colours'][s['tag']])
+			datHistos[-1].SetLineStyle(1)
+			datHistos[-1].SetFillColor(jsoninfo['colours'][s['tag']])
+			datHistos[-1].SetFillStyle(0)
+			datHistos[-1].SetMarkerStyle(20)
+			datStack.Add(datHistos[-1])
+			legend.AddEntry(datHistos[-1],s['tag'],'P')
+			if datHistos[-1].GetMaximum() > ymax: ymax = datHistos[-1].GetMaximum()
+			if datHistos[-1].GetMinimum() < ymin: ymin = datHistos[-1].GetMinimum()
+		elif group=='VBF' or group=='GluGlu':
+			sigHistos += [hload]
+			sigHistos[-1].SetLineColor(jsoninfo['colours'][s['tag']])
+			sigHistos[-1].SetLineStyle(1)
+			sigHistos[-1].SetFillColor(jsoninfo['colours'][s['tag']])
+			sigHistos[-1].SetFillStyle(0)
+			sigHistos[-1].SetMarkerStyle(0)
+			sigStack.Add(sigHistos[-1])
+			legend.AddEntry(sigHistos[-1],s['tag'],'L')
+			if sigHistos[-1].GetMaximum() > ymax: ymax = sigHistos[-1].GetMaximum()
+			if sigHistos[-1].GetMinimum() < ymin: ymin = sigHistos[-1].GetMinimum()
+		else:
+			bkgHistos += [hload]
+			bkgHistos[-1].SetLineColor(jsoninfo['colours'][s['tag']])
+			bkgHistos[-1].SetLineStyle(1)
+			bkgHistos[-1].SetFillColor(jsoninfo['colours'][s['tag']])
+			bkgHistos[-1].SetFillStyle(1)
+			bkgHistos[-1].SetMarkerStyle(0)
+			bkgStack.Add(bkgHistos[-1])
+			legend.AddEntry(bkgHistos[-1],s['tag'],'F')
+			if bkgHistos[-1].GetMaximum() > ymax: ymax = bkgHistos[-1].GetMaximum()
+			if bkgHistos[-1].GetMinimum() < ymin: ymin = bkgHistos[-1].GetMinimum()
+
+	if not (datHistos == [] or bkgHistos == []):
+		ratio = datStack.GetStack().Last().Clone('data')
+		#ratio.SetTitle("%s;%s;%s"%(datHistos[-1].GetTitle,datHistos[-1].GetXaxis().GetTitle(),datHistos[-1].GetYaxis().GetTitle()))
+		ratio.Divide(datStack.GetStack().Last(),bkgStack.GetStack().Last())
+
+	canvas.SetLogy(1)
+	bkgStack.SetMinimum(float("1e%i"%log10(ymin+0.1)))
+	bkgStack.SetMaximum(float("1e%i"%(log10(ymax)+3)))
+	bkgStack.SetTitle("stack_%s;%s;%s"%(bkgStack.GetName()[5:],bkgStack.GetStack().Last().GetXaxis().GetTitle(),bkgStack.GetStack().Last().GetYaxis().GetTitle()))
+	if ratio:
+		c1 = TPad('c1','c1',0,0.3,1,1)
+		c2 = TPad('c2','c2',0,0,1,0.3)
+		c1.SetBottomMargin(0.0)
+		c2.SetTopMargin(0.0)
+		c2.SetBottomMargin(c2.GetBottomMargin()+0.075)
+		c1.Draw()
+		c2.Draw()
+		canvas.Update()
+		c1.cd()
+		c1.SetLogy()
+#		bkgStack.GetStack().Last().SetLabelSize(bkgStack.GetStack().Last().GetLabelSize()/0.7,'XYZT')
+		bkgStack.Draw("hist")
+		sigStack.Draw("nostack,hist,same")
+		datStack.Draw("same")
+		c2.cd()
+		ratio.SetTitle("")
+		ratio.GetYaxis().SetTitle('Data / MC')
+		ratio.GetYaxis().SetRangeUser(0.0,2.0)
+		ratio.SetLabelFont(42,'XYZT')
+		ratio.SetLabelSize(0.070,'XYZT')
+		ratio.SetTitleFont(42,'XYZT')
+		ratio.SetTitleSize(0.070,'XYZT')
+		ratio.SetTitleOffset(1.20,'X')
+		ratio.SetTitleOffset(0.7,'Y')
+		ratio.SetFillColor(kGray)
+		ratio.SetFillStyle(1)
+		ratio.Draw('hist')
+		ratio.Draw('psame')
+		gPad.Update()
+		line = TLine(gPad.GetUxmin(),1.0,gPad.GetUxmax(),1.0)
+		line.SetLineWidth(2)
+		line.SetLineColor(kBlack)
+		line.Draw("same")
+		c1.cd()
+	else:
+		canvas.cd()
+		bkgStack.Draw("hist")
+		sigStack.Draw("nostack,hist,same")
+		datStack.Draw("same")
+
+	legend.Draw()
+	text.Draw()
+
 #	gPad.Update()
 #	# change the title background to nothing
-#	#titlebox = gPad.GetPrimitive("title")
+#	bkgS#titlebox = gPad.GetPrimitive("title")
 #	#titlebox.SetFillStyle(0)
 #	gPad.Update()
-#	ndir = 'draws'
-#	if not gDirectory.GetDirectory('/%s'%(ndir)): gDirectory.mkdir('%s'%(ndir))
-#	if not gDirectory.GetDirectory('/%s/%s'%(ndir, group)): gDirectory.mkdir('%s/%s'%(ndir, group))
-#	if not gDirectory.GetDirectory('/%s/%s/%s_%s'%(ndir, group, selname, trgname)): gDirectory.mkdir('%s/%s/%s_%s'%(ndir, group, selname, trgname))
-#	gDirectory.cd('%s:/%s/%s/%s_%s'%(fout.GetName(), ndir, group, selname, trgname))
-#	ndir = '%s/draws/'%(os.path.split(fout.GetName())[1][:-5]) # strip off the path and the suffix, keep the basename
-#	if not os.path.exists('plots/%s/%s/%s_%s'%(ndir, group, selname, trgname)): os.makedirs('plots/%s/%s/%s_%s'%(ndir, group, selname, trgname))
+
+	ndir = 'plots'
+	if not gDirectory.GetDirectory('/%s'%(ndir)): gDirectory.mkdir('%s'%(ndir))
+	if not gDirectory.GetDirectory('/%s/%s'%(ndir, 'stack')): gDirectory.mkdir('%s/%s'%(ndir, 'stack'))
+	if not gDirectory.GetDirectory('/%s/%s/%s_%s'%(ndir, 'stack', selname, trgname)): gDirectory.mkdir('%s/%s/%s_%s'%(ndir, 'stack', selname, trgname))
+	gDirectory.cd('%s:/%s/%s/%s_%s'%(fout.GetName(), ndir, 'stack', selname, trgname))
+	
+	ndir = 'plots/%s'%(os.path.split(fout.GetName())[1][:-5]) # strip off the path and the suffix, keep the basename
+	if not os.path.exists('%s/%s/%s_%s'%(ndir, 'stack', selname, trgname)): os.makedirs('%s/%s/%s_%s'%(ndir, 'stack', selname, trgname))
 #	#gPad.SetRightMargin(0.14)
 #	#gPad.Update()
-#	canvas.SetName("c%s"%hstack.GetName()[1:])
-#	canvas.SetTitle(canvas.GetName())
-#	#canvas.Write(canvas.GetName(),TH1.kOverwrite)
-#	canvas.SaveAs('plots/%s/%s/%s_%s/%s.png'%(ndir, group, selname, trgname, canvas.GetName()))
-#	if opts.debug: l3("%sWritten plots to: %s%s"%(yellow,'plots/%s/%s/%s_%s/%s.png'%(ndir, group, selname, trgname, canvas.GetName()),plain))
-#	gDirectory.cd('%s:/'%fout.GetName())
+	canvas.SetName("c%s"%bkgStack.GetName()[4:])
+	canvas.SetTitle(canvas.GetName())
+	#canvas.Write(canvas.GetName(),TH1.kOverwrite)
+	canvas.SaveAs('%s/%s/%s_%s/%s.png'%(ndir, 'stack', selname, trgname, canvas.GetName()))
+	if opts.debug: l3("%sWritten plots to: %s%s"%(yellow,'%s/%s/%s_%s/%s.png'%(ndir, 'stack', selname, trgname, canvas.GetName()),plain))
+	gDirectory.cd('%s:/'%fout.GetName())
 
 
 
@@ -225,7 +341,7 @@ def main():
 	opts,args = mp.parse_args()
 
 	# check actions
-	if not (opts.fill or opts.draw or opts.redraw): sys.exit(red+"Specify either fill, draw or redraw option to run. Exiting."+plain) 
+	if not (opts.fill or opts.draw or opts.redraw or opts.drawstack or opts.redrawstack): sys.exit(red+"Specify either fill, draw, redraw, drawstack or redrawstack option to run. Exiting."+plain) 
 	
 	# decide batch mode
 	if opts.batch: gROOT.SetBatch(1)
@@ -235,6 +351,7 @@ def main():
 	# load C++ modules
 	inroot('.L ../common/sample.C+')
 	inroot('.L ../common/reformat.C+')
+	inroot('.L ../common/bMapWght.C+')
 	# load style
 	inroot('.x ../common/styleCMS.C+')
 	inroot('gROOT->ForceStyle();')
@@ -264,12 +381,16 @@ def main():
 
 	# if opts.tree or charred trees inexistant: convert trees
 	l1("Converting samples:")
+	if opts.reformat:
+		for sample in samples.itervalues():
+			sname = sample['fname'][:-5]+'_reformatted.root'
+			if os.path.exists(sname): os.remove(sname)
+		sys.exit(red+"Reformat function was called. All reformatted trees were removed. Rerun for more converting, but REMOVE the reformat flag."+plain)
 	for sample in samples.itervalues():
 		sname = sample['fname'][:-5]+'_reformatted.root'
-		if (not os.path.exists(sname)) or opts.reformat: 
-			if os.path.exists(sname): os.remove(sname)
+		if (not os.path.exists(sname)): 
 			inroot('reformat("%s",variables)'%sample['fname'])
-			sys.exit("Sample reformat function was needed first. Rerun for actual plotting (or more converting).")
+			sys.exit(red+"Sample reformat function was needed first. Rerun for actual plotting (or more converting)."+plain)
 
 	# get samples in ROOT
 	l1("Loading samples:")
@@ -289,6 +410,7 @@ def main():
 				for s in sorted(samplesroot):
 					if opts.fill: do_fill(opts,fout,s,v,sel,trg)
 					if opts.draw or opts.redraw: do_draw(opts,fout,s,v,sel,trg)
+				if opts.drawstack or opts.redrawstack: do_drawstack(opts,fout,samplesroot,v,sel,trg)
 				### END LOOP over samples
 			### END LOOP over variables
 		### END LOOP over selections
