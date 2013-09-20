@@ -1,0 +1,7 @@
+{
+"jsonsamp": "../common/vbfHbb_samples_SA_2012Paper.json",
+"jsonvars": "../common/vbfHbb_variables_SA_2012Paper.json",
+"jsoncuts": "../common/vbfHbb_cuts.json",
+"jsoninfo": "../common/vbfHbb_info.json",
+"debug": "True"
+}

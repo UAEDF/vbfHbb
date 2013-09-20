@@ -15,6 +15,7 @@ class sample {
 		sample(TString,TString,vector<TString>); // float
 		~sample();
 		void draw(TString,TString,TString);
+		float count(TString);
 		TFile* getf();
 		TTree* gett();
 		void delf();

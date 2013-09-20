@@ -4,6 +4,7 @@ import sys,json,os
 basepath=os.path.split(os.path.abspath(__file__))[0]
 sys.path.append(basepath)
 
+import main
 from toolkit import *
 from optparse import OptionParser,OptionGroup
 from weightFactory import *
@@ -33,30 +34,26 @@ def combos(triggers):
 	return ccs
 
 ####################################################################################################
-def parser():
-	mp = OptionParser()
-	mp.add_option('--jsonsamp',help=blue+"File name for json with sample info."+plain,dest='jsonsamp',default="%s/vbfHbb_samples_%s.json"%(basepath,today),type='str')
-	mp.add_option('--jsonvars',help=blue+"File name for json with variable info."+plain,dest='jsonvars',default="%s/vbfHbb_variables_%s.json"%(basepath,today),type='str')
-	mp.add_option('--jsoncuts',help=blue+"File name for json with cut info."+plain,dest='jsoncuts',default="%s/vbfHbb_cuts_%s.json"%(basepath,today),type='str')
-	mp.add_option('-s','--selection',help=purple+"Put these selections (comma separated)."+plain,dest='selection',default='',type='str',action='callback',callback=optsplit)
-	mp.add_option('-t','--trigger',help=purple+"Put these triggers (comma separated)."+plain,dest='trigger',default='',type='str',action='callback',callback=optsplit)
-	mp.add_option('-r','--reftrig',help=purple+"Put these reference triggers (comma separated)."+plain,dest='reftrig',default='',type='str',action='callback',callback=optsplit)
-	mp.add_option('-w','--weight',help=purple+"Put this weight (\"lumi,weight1;weight2;...\")"+plain,dest='weight',default=[[''],['']],type='str',action='callback',callback=optsplitlist)
-	mp.add_option('--sample',help=red+"Specify for which sample this cut will be used (relevant for trigger)."+plain,dest='sample',default='',type='str')
-	mp.add_option('--skip',help=blue+"Variable to leave out of selection (N-1 cuts)."+plain,dest='skip',type='str')
+def parser(mp=None):
+	if mp==None: mp = OptionParser()
+	mgc = OptionGroup(mp,"Cut options")	
+	mgc.add_option('--use',help=red+"Specify for which sample this cut will be used (relevant for trigger)."+plain,dest='use',default='',type='str')
+	mtc.add_option('--skip',help=blue+"Variable to leave out of selection (N-1 cuts)."+plain,dest='skip',type='str')
+
 	mgt = OptionGroup(mp,"Trigger options")
 	mgs = OptionGroup(mp,"Selection options")
-	mgd = OptionGroup(mp,"Detailed options")
 	mgt.add_option('--trgjoin',help='Separator for joining triggers.',default=' || ',type='str',dest='trgjoin')
 	mgt.add_option('--trgcmpjoin',help='Separator for joining complements.',default=' || ',type='str',dest='trgcmpjoin')
 	mgt.add_option('--trgcmp',help="Put these triggers in the complement (comma separated).",dest='trgcmp',default='',type='str',action='callback',callback=optsplit)
 	mgs.add_option('--seljoin',help='Separator for joining selections.',default=' && ',type='str',dest='seljoin')
 	mgs.add_option('--selcmpjoin',help='Separator for joining complements.',default=' || ',type='str',dest='selcmpjoin')
 	mgs.add_option('--selcmp',help="Put these selections in the complement (comma separated).",dest='selcmp',default='',type='str',action='callback',callback=optsplit)
-	mgd.add_option('--stgroup',help='First group sel and trg, only then group complements.',action='store_true',default=False)
+	mgs.add_option('--stgroup',help='First group sel and trg, only then group complements.',action='store_true',default=False)
+	
+	mp.add_option_group(mgc)
 	mp.add_option_group(mgt)
 	mp.add_option_group(mgs)
-	mp.add_option_group(mgd)
+	
 	return mp
 
 
@@ -84,12 +81,13 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	reftrig        = ([]      if not 'reftrig'         in kwargs else kwargs['reftrig'])
 	varskip        = (''      if not 'varskip'         in kwargs else kwargs['varskip'])
 	weight         = ([[''],['']] if not 'weight'      in kwargs else kwargs['weight'])
+	KFWght         = (None    if not 'KFWght'          in kwargs else kwargs['KFWght'])
 	if not (seljoin[0]==' ' and seljoin[-1]==' '): seljoin = ' '+seljoin+' '
 	if not (trgjoin[0]==' ' and trgjoin[-1]==' '): trgjoin = ' '+trgjoin+' '
 	
 	wfString = ''
 	if not weight == [[''],['']]:
-		wf = weightFactory(kwargs['jsonsamp'],weight[0][0])
+		wf = weightFactory(kwargs['jsonsamp'],weight[0][0],KFWght) 
 		wfString = wf.getFormula(','.join(weight[1]),kwargs['sample'])
 
 	# construct
@@ -119,8 +117,8 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	
 		# reftrig
 		if len(reftrig)>0:
-			rt       = group( ' && '.join( [get_trigger(triggers[x],kwargs['sample'],kwargs['jsonsamp']) for x in reftrig] ) )
-			rtlabels = group( ' && '.join( ['t'+x for x in reftrig] ) )
+			rt       = group( ' && '.join( [ get_trigger(triggers[x],kwargs['sample'],kwargs['jsonsamp']) for x in reftrig ] ) )
+			rtlabels = group( ' && '.join( [ 't'+x for x in reftrig ] ) )
 			st       = group( st + ' && ' + rt ) 
 			stlabels = group( stlabels + ' && ' + rtlabels ) 
 
@@ -132,6 +130,10 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	if not weight == [[''],['']]:
 		st = group("%s * %s"%(st,group(wfString)))
 		stlabels = group("%s * %s"%(stlabels,group('weight factors')))
+	
+	if st.replace('(','').replace(')','').replace(' ','') == "":
+		st=group("1.")
+		stlabels=group("1.")
 
 	return st,stlabels
 
@@ -141,10 +143,10 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 
 ####################################################################################################
 if __name__=='__main__':
-	mp = parser()
+	mp = parser(main.parser())
 	opts,args = mp.parse_args()
 
-	st, stlabels = write_cuts(opts.selection,opts.trigger,opts.selcmp,opts.trgcmp,reftrig=opts.reftrig,jsoncuts=opts.jsoncuts,sample=opts.sample,jsonsamp=opts.jsonsamp,seljoin=opts.seljoin,trgjoin=opts.trgjoin,varskip=opts.skip,selcmpjoin=opts.selcmpjoin,trgcmpjoin=opts.trgcmpjoin,stgroup=opts.stgroup,weight=opts.weight)
+	st, stlabels = write_cuts(opts.selection,opts.trigger,opts.selcmp,opts.trgcmp,reftrig=opts.reftrig,jsoncuts=opts.jsoncuts,sample=opts.use,jsonsamp=opts.jsonsamp,seljoin=opts.seljoin,trgjoin=opts.trgjoin,varskip=opts.skip,selcmpjoin=opts.selcmpjoin,trgcmpjoin=opts.trgcmpjoin,stgroup=opts.stgroup,weight=opts.weight)
 	print st
 	print
 	print stlabels

@@ -90,7 +90,7 @@ class info:
 				l2("Adding %s:"%fields[0])
 				for tag in sorted(infojson['tags'].iterkeys(), key=lambda x:(-len(x),x)):
 					for possibility in infojson['tags'][tag]:
-						if possibility in fields[0]:
+						if possibility in os.path.split(fields[0])[1]:
 							fields[4] = tag
 							new_value = raw_input("      --> sample %s: tag? [%s]"%(fields[0],fields[4]))
 							if not new_value=="": fields[4]=new_value

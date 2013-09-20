@@ -4,11 +4,13 @@
 void styleCMS() {
   TStyle *tdrStyle = new TStyle("tdrStyle_edited","Style for P-TDR");
 
+  tdrStyle->SetPalette(13);;
+
 // For the canvas:
   tdrStyle->SetCanvasBorderMode(0);
   tdrStyle->SetCanvasColor(kWhite);
-  tdrStyle->SetCanvasDefH(1200); //Height of canvas
-  tdrStyle->SetCanvasDefW(1200); //Width of canvas
+  tdrStyle->SetCanvasDefH(2400); //Height of canvas
+  tdrStyle->SetCanvasDefW(1800); //Width of canvas
   tdrStyle->SetCanvasDefX(0);   //POsition on screen
   tdrStyle->SetCanvasDefY(0);
 
@@ -86,11 +88,12 @@ void styleCMS() {
 // For the Global title:
 
   tdrStyle->SetOptTitle(1);
-  tdrStyle->SetTitleFont(42);
+  tdrStyle->SetTitleFont(43);
   tdrStyle->SetTitleColor(1);
   tdrStyle->SetTitleTextColor(kBlue-2);
   tdrStyle->SetTitleFillColor(10);
   tdrStyle->SetTitleFontSize(0.045); // 0.050
+  //tdrStyle->SetTitleFontSize(10);
   // tdrStyle->SetTitleH(0); // Set the height of the title box
   // tdrStyle->SetTitleW(0); // Set the width of the title box
   tdrStyle->SetTitleX(0.12); // Set the position of the title box
@@ -101,20 +104,22 @@ void styleCMS() {
 // For the axis titles:
 
   tdrStyle->SetTitleColor(kBlue-2, "XYZ");
-  tdrStyle->SetTitleFont(42, "XYZ");
-  tdrStyle->SetTitleSize(0.035, "XYZ"); // 0.04
+  tdrStyle->SetTitleFont(43, "XYZ");
+  //tdrStyle->SetTitleSize(0.035, "XYZ"); // 0.04
+  tdrStyle->SetTitleSize(0.03*tdrStyle->GetCanvasDefW(), "XYZ"); // 0.04
   // tdrStyle->SetTitleXSize(Float_t size = 0.02); // Another way to set the size?
   // tdrStyle->SetTitleYSize(Float_t size = 0.02);
   tdrStyle->SetTitleXOffset(1.25);
-  tdrStyle->SetTitleYOffset(1.35);
+  tdrStyle->SetTitleYOffset(1.55);
   // tdrStyle->SetTitleOffset(1.1, "Y"); // Another way to set the Offset
 
 // For the axis labels:
 
   tdrStyle->SetLabelColor(kBlue-2, "XYZ");
-  tdrStyle->SetLabelFont(42, "XYZ");
+  tdrStyle->SetLabelFont(43, "XYZ");
   tdrStyle->SetLabelOffset(0.007, "XYZ");
-  tdrStyle->SetLabelSize(0.035, "XYZ"); // 0.04
+  //tdrStyle->SetLabelSize(0.035, "XYZ"); // 0.04
+  tdrStyle->SetLabelSize(0.03*tdrStyle->GetCanvasDefW(), "XYZ"); // 0.04
 
 // For the axis:
 

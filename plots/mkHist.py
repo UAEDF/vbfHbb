@@ -10,9 +10,11 @@ import ROOT
 from ROOT import *
 sys.argv = tempargv
 
+import main
 from optparse import OptionParser,OptionGroup
 from operator import itemgetter
 from toolkit import *
+from dependencyFactory import *
 from write_cuts import *
 import datetime
 today=datetime.date.today().strftime('%Y%m%d')
@@ -22,8 +24,8 @@ today=datetime.date.today().strftime('%Y%m%d')
 
 
 # OPTION PARSER ####################################################################################
-def parser():
-	mp = OptionParser()
+def parser(mp=None):
+	if mp==None: mp = OptionParser()
 
 	mga = OptionGroup(mp,cyan+"action settings"+plain)
 	mga.add_option('--fill',help='Fill histograms and write to root file.',action='store_true',default=False)
@@ -32,65 +34,17 @@ def parser():
 	mga.add_option('--drawstack',help='Draw histograms from root file (stack samples, fill if not present).',action='store_true',default=False)
 	mga.add_option('--redrawstack',help='Draw histograms from root file (stack samples, refill in all cases).',action='store_true',default=False)
 
-	mgj = OptionGroup(mp,cyan+"json settings"+plain)
-	mgj.add_option('-S','--jsonsamp',help="File name for json with sample info.",dest='jsonsamp',default="%s/../common/vbfHbb_samples_%s.json"%(basepath,today),type='str')
-	mgj.add_option('-V','--jsonvars',help="File name for json with variable info.",dest='jsonvars',default="%s/../common/vbfHbb_variables_%s.json"%(basepath,today),type='str')
-	mgj.add_option('-C','--jsoncuts',help="File name for json with cut info.",dest='jsoncuts',default="%s/../common/vbfHbb_cuts_%s.json"%(basepath,today),type='str')
-	mgj.add_option('-I','--jsoninfo',help="File name for json with general info.",dest='jsoninfo',default="vbfHbb_info.json",type='str')
-
-	mgr = OptionGroup(mp,cyan+"root settings"+plain)
-	mgr.add_option('-o','--fout',help="File name for output file.",dest='fout',default='rootfiles/vbfHbb.root',type='str')
-	mgr.add_option('-b','--batch',help="Set batch mode for ROOT.",action='store_true',default=False)
-
-	mgd = OptionGroup(mp,cyan+"detail settings"+plain)
-	mgd.add_option('-d','--debug',help="Write extra printout statements.",action='store_true',default=False)
-	mgd.add_option('-R','--reformat',help="Reformat all trees, even when present allready.",action='store_true',default=False)
-
-	mgst = OptionGroup(mp,cyan+"Run for subselection determined by variable, sample and/or selection/trigger"+plain)
-	mgst.add_option('-v','--variable',help=purple+"Run only for these variables (comma separated)."+plain,dest='variable',default='',type='str',action='callback',callback=optsplit)
-	mgst.add_option('-s','--sample',help=purple+"Run only for these samples (comma separated)."+plain,dest='sample',default='',type='str',action='callback',callback=optsplit)
-	mgst.add_option('-t','--trigger',help=purple+"Run only for these triggers (comma and colon separated)."+plain,dest='trigger',default=[['NONE']],type='str',action='callback',callback=optsplitlist)
-	mgst.add_option('-p','--selection',help=purple+"Run only for these selections (comma and colon separated)."+plain,dest='selection',default=[['NONE']],type='str',action='callback',callback=optsplitlist)
-	mgst.add_option('-r','--reftrig',help=purple+"Add reference trigger to selection."+plain,action='store_true',default=False)
-	mgst.add_option('-w','--weight',help=purple+"Put this weight (\"lumi,weight1;weight2;...\")"+plain,dest='weight',default=[[''],['']],type='str',action='callback',callback=optsplitlist)
-	
 	mp.add_option_group(mga)
-	mp.add_option_group(mgj)
-	mp.add_option_group(mgr)
-	mp.add_option_group(mgd)
-	mp.add_option_group(mgst)
 	return mp
 
 
 
 
 
-# LOADING SAMPLES ##################################################################################
-def loadSamples(opts,samples):
-	samplesroot = [] 
-	for isample,sample in enumerate(sorted(samples.itervalues())): 
-		# follow regex in opts FOR samples
-		if not opts.sample==[] and not any([(x in sample['tag']) for x in opts.sample]): continue
-		inroot('sample mysample%i = sample("%s_reformatted.root","Hbb/events",variables);'%(isample,sample['fname'][:-5]))
-		samplesroot.append({'pointer':'mysample%i'%isample, 'fname':sample['fname'], 'tag':sample['tag'], 'colour':sample['colour']})
-		l2(samplesroot[-1])
-	return samplesroot
-
-# CLEANING SAMPLES #################################################################################
-def dumpSamples(samplesroot):
-	for sample in samplesroot:
-		inroot("%s.getf()->cd();"%sample['pointer'])
-		inroot("%s.delt();"%sample['pointer'])
-		inroot("%s.delf();"%sample['pointer'])
-
-
-
-
-
 # FUNCTIONS FOR FILLING AND DRAWING HISTOGRAMS #####################################################
-def do_fill(opts,fout,s,v,sel,trg):
+def do_fill(opts,fout,s,v,sel,trg,KFWght=None):
 	# cut
-	cut,cutlabel = write_cuts(sel,trg,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight)
+	cut,cutlabel = write_cuts(sel,trg,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght)
 	if opts.debug: l3("Cut: %s%s%s: %s"%(blue,cutlabel,plain,cut))
 
 	# names
@@ -98,83 +52,107 @@ def do_fill(opts,fout,s,v,sel,trg):
 	selname = 's'+'-'.join(sel)
 	trgname = 't'+'-'.join(trg)
 	hname = '_'.join(['h',v['var'],s['tag'],selname,trgname])
+	if not opts.weight == [[''],['']]: weightpars = ('-'.join(sorted(opts.weight[1]))+'/').replace('KFAC','KFAC%s'%("%.2f"%KFWght if KFWght else 'def'))
+	else: weightpars = 'NONE/'
 
 	# containers
 	canvas = TCanvas("cfill","cfill",2400,1800)
+	fout.Delete(hname)
 	h      = TH1F(hname,';'.join([hname,v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
 	h.Sumw2()
 	
-	# bMapWght
-	if not opts.weight == [[''],['']] and 'BMAP' in opts.weight[1]: 
-		if not len(opts.weight)>2 or not os.path.exists(opts.weight[2][0]): sys.exit(red+"Check bMapWght file path. Exiting."+plain)
-		gROOT.ProcessLineSync('TFile *fmap = TFile::Open("%s");'%opts.weight[2][0])
-		gROOT.ProcessLineSync('gDirectory->cd("%s:/")'%fout.GetName())
-		gROOT.ProcessLineSync('TH2F *bMap = (TH2F*)fmap->Get("bMap;1").Clone();')
-		print ROOT.bMap
-		gROOT.ProcessLineSync('fmap->Close();')
-		print ROOT.bMap
-		fout.cd()
-
 	# do actual filling
 	inroot('%s.draw("%s","%s","%s")'%(sample,h.GetName(),v['root'],cut))
-	if opts.debug: l3("%sFilled: %30s(N=%9d, Int=%9d)%s"%(yellow,h.GetName(),h.GetEntries(),h.Integral(),plain))
+	if opts.debug: l3("%sFilled: %40s(N=%9d, Int=%9d)%s"%(yellow,h.GetName(),h.GetEntries(),h.Integral(),plain))
 	
 	# write histogram to file
 	gDirectory.cd('%s:/'%fout.GetName())
-	ndir = 'plots'
-	if not gDirectory.GetDirectory('/%s'%(ndir)): gDirectory.mkdir('%s'%(ndir))
-	if not gDirectory.GetDirectory('/%s/%s'%(ndir, s['tag'])): gDirectory.mkdir('%s/%s'%(ndir, s['tag']))
-	if not gDirectory.GetDirectory('/%s/%s/%s_%s'%(ndir, s['tag'], selname, trgname)): gDirectory.mkdir('%s/%s/%s_%s'%(ndir, s['tag'], selname, trgname))
-	gDirectory.cd('%s:/%s/%s/%s_%s'%(fout.GetName(), ndir, s['tag'], selname, trgname))
+	path = "%s/%s%s/%s_%s"%('plots',weightpars,s['tag'],selname,trgname)
+	makeDirsRoot(fout,path)
+	gDirectory.cd(path)
 	h.Write(h.GetName(),TH1.kOverwrite)
 	gDirectory.cd('%s:/'%fout.GetName())
 
+	# clean
 	h.Delete()
 	canvas.Close()
 
-def do_draw(opts,fout,s,v,sel,trg):
+########################################
+def do_draw(opts,fout,s,v,sel,trg,KFWght=None):
 	# names
 	sample = s['pointer']
 	selname = 's'+'-'.join(sel)
 	trgname = 't'+'-'.join(trg)
 	hname = '_'.join(['h',v['var'],s['tag'],selname,trgname])
+	if not opts.weight == [[''],['']]: weightpars = ('-'.join(sorted(opts.weight[1]))+'/').replace('KFAC','KFAC%s'%("%.2f"%KFWght if KFWght else 'def'))
+	else: weightpars = 'NONE/'
+	
+	# load
 	gDirectory.cd('%s:/'%fout.GetName())
-	path = '/plots/%s/%s_%s/%s;1'%(s['tag'], selname, trgname, hname)
+	path = '%s/%s%s/%s_%s/%s;1'%('plots',weightpars,s['tag'], selname, trgname, hname)
 	hload = gDirectory.Get(path)
+	# fill if needed/wanted
 	if (not hload) or opts.redraw:
 		hnew = TH1F(hname,';'.join([hname,v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
 		hnew.SetTitle(hname)
-		l3("%s%s doesn\'t exist. Filling first.%s"%(red,path,plain))
-		do_fill(opts,fout,s,v,sel,trg)
+		print
+		if not opts.redraw: l3("%s%s doesn\'t exist. Filling first.%s"%(red,path,plain))
+		else: l3("Redrawing %s%s first.%s"%(red,path,plain))
+		do_fill(opts,fout,s,v,sel,trg,KFWght)
 		hload = gDirectory.Get(path)
 	if opts.debug: l3("%sLoaded: %30s(N=%9d, Int=%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),hload.Integral(),plain))
+	
+	# containers
 	canvas = TCanvas("cdraw","cdraw",2400,1800)
+
+	# draw
 	hload.Draw()	
-	legend = TLegend(gPad.GetLeftMargin()+0.02,1-gPad.GetTopMargin()-0.04-0.02,gPad.GetLeftMargin()+0.22,1-gPad.GetTopMargin()-0.02)
-	legend.SetFillStyle(0)
-  	legend.SetTextColor(kBlue-2)
-	legend.SetTextSize(0.025)
+	left   = gPad.GetLeftMargin()+0.02
+	bottom = 1-gPad.GetTopMargin()-0.02 - (0.04) # one line sized 0.04
+	right  = gPad.GetLeftMargin()+0.02 + (0.2) # width 0.2
+	top    = 1-gPad.GetTopMargin()-0.02
+	legend = getTLegend(left,bottom,right,top)
 	legend.AddEntry(hload,s['tag'],'LP')
 	legend.Draw()
-	ndir = 'plots/%s'%(os.path.split(fout.GetName())[1][:-5]) # strip off the path and the suffix, keep the basename
-	if not os.path.exists('%s/%s/%s_%s'%(ndir, s['tag'], selname, trgname)): os.makedirs('%s/%s/%s_%s'%(ndir, s['tag'], selname, trgname))
+	
+	# info text
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']])]) # counting lines about weights + 1 for vbfHbb tag 
+	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
+	right  = 1-gPad.GetRightMargin()-0.02
+	top    = 1-gPad.GetTopMargin()
+	bottom = 1-gPad.GetTopMargin() - (0.04*rows) # n rows size 0.04
+	text = getTPave(left,bottom,right,top)
+	text.AddText("VBF H #rightarrow b#bar{b}: #sqrt{s} = 8 TeV (2012)")
+	if not opts.weight==[[''],['']] and 'LUMI' in opts.weight[1]: text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
+	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
+	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
+	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	text.Draw()
+
+	# write
+	path = "%s/%s/%s%s/%s_%s"%('plots',os.path.split(fout.GetName())[1][:-5],weightpars,s['tag'],selname,trgname)
+	makeDirs(path)
 	canvas.SetName("c%s"%hload.GetName()[1:])
 	canvas.SetTitle(canvas.GetName())
-	canvas.SaveAs('%s/%s/%s_%s/%s.png'%(ndir, s['tag'], selname, trgname, canvas.GetName()))
-	if opts.debug: l3("%sWritten plots to: %s%s"%(yellow,'%s/%s/%s_%s/%s.png'%(ndir, s['tag'], selname, trgname, canvas.GetName()),plain))
+	canvas.SaveAs('%s/%s.png'%(path, canvas.GetName()))
+	if opts.debug: l3("%sWritten plots to: %s%s"%(yellow,'%s/%s.png'%(path, canvas.GetName()),plain))
 	gDirectory.cd('%s:/'%fout.GetName())
+	canvas.Close()
 
-def do_drawstack(opts,fout,samples,v,sel,trg):
+########################################
+def do_drawstack(opts,fout,samples,v,sel,trg,KFWght=None):
 	# names
 	selname = 's'+'-'.join(sel)
 	trgname = 't'+'-'.join(trg)
-
+	if not opts.weight == [[''],['']]: weightpars = ('-'.join(sorted(opts.weight[1]))+'/').replace('KFAC','KFAC%s'%("%.2f"%KFWght if KFWght else 'def'))
+	else: weightpars = 'NONE/'
+	# info
 	jsoninfo = json.loads(filecontent(opts.jsoninfo))
 	jsoncuts = json.loads(filecontent(opts.jsoncuts))
 
+	# containers
 	canvas = TCanvas('cdrawstack','cdrawstack',2400,1800)
 	canvas.cd()
-
 	sigStackname = '_'.join(['ssig',v['var'],selname,trgname])
 	datStackname = '_'.join(['sdat',v['var'],selname,trgname])
 	bkgStackname = '_'.join(['sbkg',v['var'],selname,trgname])
@@ -184,114 +162,102 @@ def do_drawstack(opts,fout,samples,v,sel,trg):
 	sigHistos = []
 	datHistos = []
 	bkgHistos = []	
-	legend = TLegend(gPad.GetLeftMargin()+0.02,1-gPad.GetTopMargin()-(0.04*ceil(len(samples)/ceil(len(samples)/4.)))-0.04-0.02,gPad.GetLeftMargin()+(0.12*ceil(len(samples)/4.))+0.02,1-gPad.GetTopMargin()-0.02)
-	legend.SetFillStyle(0)
-  	legend.SetTextColor(kBlue-2)
-	legend.SetTextSize(0.025)
-	legend.SetNColumns(int(ceil(len(samples)/4.)))
-	text = TPaveText(1-gPad.GetRightMargin()-0.3,1-gPad.GetTopMargin()-(0.06*sum([x for x in [not opts.weight==[[''],['']], 'KFAC' in opts.weight[1], True] if x])),1-gPad.GetRightMargin(),1-gPad.GetTopMargin(),"NDC")
-	text.SetFillColor(kWhite)
-	text.SetFillStyle(0)
-	text.SetBorderSize(0)
-	text.SetTextSize(0.030)
-	text.SetTextAlign(13)
+
+	# legend
+	columns = ceil(len(samples)/4.)
+	rows    = ceil(len(samples)/columns)
+	left    = gPad.GetLeftMargin()+0.02
+	bottom  = 1-gPad.GetTopMargin()-0.02 - (0.04*rows) # n rows sized 0.04
+	right   = gPad.GetLeftMargin()+0.02 + (0.12*columns) # n columns width 0.12
+	top     = 1-gPad.GetTopMargin()-0.02
+	legend  = getTLegend(left,bottom,right,top,columns)
+
+	# info text
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']])]) # counting lines about weights + 1 for vbfHbb tag 
+	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
+	right  = 1-gPad.GetRightMargin()-0.02
+	top    = 1-gPad.GetTopMargin()
+	bottom = 1-gPad.GetTopMargin() - (0.04*rows) # n rows size 0.04
+	text = getTPave(left,bottom,right,top)
 	text.AddText("VBF H #rightarrow b#bar{b}: #sqrt{s} = 8 TeV (2012)")
-	if not opts.weight==[[''],['']]: text.AddText("#sigma = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
-	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = 1.3")
+	if not opts.weight==[[''],['']] and 'LUMI' in opts.weight[1]: text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
+	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	# layout scaling
 	ymin=0
 	ymax=0
 
-	for s in samples:
+	### LOOP over all samples
+	for s in sorted(samples,key=lambda x:('QCD' in x['tag'],jsoninfo['crosssections'][x['tag']])):
 		# names
 		sname = s['pointer']
 		group = jsoninfo['groups'][s['tag']]
 		hname = '_'.join(['h',v['var'],s['tag'],selname,trgname])
 		# get histogram
 		gDirectory.cd('%s:/'%fout.GetName())
-		path = '/plots/%s/%s_%s/%s;1'%(s['tag'], selname, trgname, hname)
+		path = '/%s/%s%s/%s_%s/%s;1'%('plots',weightpars,s['tag'], selname, trgname, hname)
 		hload = gDirectory.Get(path)
+		# fill if needed/wanted 
 		if (not hload) or opts.redrawstack:
 			hnew = TH1F(hname,';'.join([hname,v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
 			hnew.SetTitle(hname)
-			l3("%s doesn\'t exist. Filling first."%(path))
-			do_fill(opts,fout,s,v,sel,trg)
+			print
+			if not opts.redraw: l3("%s%s doesn\'t exist. Filling first.%s"%(red,path,plain))
+			else: l3("Redrawing %s%s first.%s"%(red,path,plain))
+			do_fill(opts,fout,s,v,sel,trg,KFWght)
 			hload = gDirectory.Get(path)
-		if opts.debug: l3("%sLoaded: %30s(N=%9d, Int=%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),hload.Integral(),plain))
+		if opts.debug: l3("%sLoaded: %40s(N=%9d, Int=%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),hload.Integral(),plain))
 		# sort
+# setStyleTH1F : f(histo, lineColor, lineStyle, fillColor, fillStyle, markerColor, markerStyle)
+# getRangeTH1F : ymin, ymax = f(histo, ymin, ymax)
+### DATA
 		if group=='Data':
 			datHistos += [hload]
-			datHistos[-1].SetLineColor(jsoninfo['colours'][s['tag']])
-			datHistos[-1].SetLineStyle(1)
-			datHistos[-1].SetFillColor(jsoninfo['colours'][s['tag']])
-			datHistos[-1].SetFillStyle(0)
-			datHistos[-1].SetMarkerStyle(20)
+			setStyleTH1F(datHistos[-1],jsoninfo['colours'][s['tag']],1,jsoninfo['colours'][s['tag']],0,1,20)
 			datStack.Add(datHistos[-1])
 			legend.AddEntry(datHistos[-1],s['tag'],'P')
-			if datHistos[-1].GetMaximum() > ymax: ymax = datHistos[-1].GetMaximum()
-			if datHistos[-1].GetMinimum() < ymin: ymin = datHistos[-1].GetMinimum()
+			ymin, ymax = getRangeTH1F(datHistos[-1],ymin,ymax)
+### SIGNAL
 		elif group=='VBF' or group=='GluGlu':
 			sigHistos += [hload]
-			sigHistos[-1].SetLineColor(jsoninfo['colours'][s['tag']])
-			sigHistos[-1].SetLineStyle(1)
-			sigHistos[-1].SetFillColor(jsoninfo['colours'][s['tag']])
-			sigHistos[-1].SetFillStyle(0)
-			sigHistos[-1].SetMarkerStyle(0)
+			setStyleTH1F(sigHistos[-1],jsoninfo['colours'][s['tag']],1,jsoninfo['colours'][s['tag']],0,0,0)
 			sigStack.Add(sigHistos[-1])
 			legend.AddEntry(sigHistos[-1],s['tag'],'L')
-			if sigHistos[-1].GetMaximum() > ymax: ymax = sigHistos[-1].GetMaximum()
-			if sigHistos[-1].GetMinimum() < ymin: ymin = sigHistos[-1].GetMinimum()
+			ymin, ymax = getRangeTH1F(sigHistos[-1],ymin,ymax)
+### QCD
 		else:
 			bkgHistos += [hload]
-			bkgHistos[-1].SetLineColor(jsoninfo['colours'][s['tag']])
-			bkgHistos[-1].SetLineStyle(1)
-			bkgHistos[-1].SetFillColor(jsoninfo['colours'][s['tag']])
-			bkgHistos[-1].SetFillStyle(1)
-			bkgHistos[-1].SetMarkerStyle(0)
+			setStyleTH1F(bkgHistos[-1],jsoninfo['colours'][s['tag']],1,jsoninfo['colours'][s['tag']],1,0,0)
 			bkgStack.Add(bkgHistos[-1])
 			legend.AddEntry(bkgHistos[-1],s['tag'],'F')
-			if bkgHistos[-1].GetMaximum() > ymax: ymax = bkgHistos[-1].GetMaximum()
-			if bkgHistos[-1].GetMinimum() < ymin: ymin = bkgHistos[-1].GetMinimum()
+			ymin, ymax = getRangeTH1F(bkgHistos[-1],ymin,ymax)
 
+### RATIO plot if Data is plotted
 	if not (datHistos == [] or bkgHistos == []):
 		ratio = datStack.GetStack().Last().Clone('data')
-		#ratio.SetTitle("%s;%s;%s"%(datHistos[-1].GetTitle,datHistos[-1].GetXaxis().GetTitle(),datHistos[-1].GetYaxis().GetTitle()))
 		ratio.Divide(datStack.GetStack().Last(),bkgStack.GetStack().Last())
+	### END LOOP over samples
 
 	canvas.SetLogy(1)
-	bkgStack.SetMinimum(float("1e%i"%log10(ymin+0.1)))
-	bkgStack.SetMaximum(float("1e%i"%(log10(ymax)+3)))
+	setRangeTH1F(bkgStack,ymin,ymax)
 	bkgStack.SetTitle("stack_%s;%s;%s"%(bkgStack.GetName()[5:],bkgStack.GetStack().Last().GetXaxis().GetTitle(),bkgStack.GetStack().Last().GetYaxis().GetTitle()))
+
 	if ratio:
-		c1 = TPad('c1','c1',0,0.3,1,1)
-		c2 = TPad('c2','c2',0,0,1,0.3)
-		c1.SetBottomMargin(0.0)
-		c2.SetTopMargin(0.0)
-		c2.SetBottomMargin(c2.GetBottomMargin()+0.075)
-		c1.Draw()
-		c2.Draw()
-		canvas.Update()
-		c1.cd()
+		# containers
+		c1,c2 = getRatioPlotCanvas(canvas)
 		c1.SetLogy()
-#		bkgStack.GetStack().Last().SetLabelSize(bkgStack.GetStack().Last().GetLabelSize()/0.7,'XYZT')
+		# draw (top)
+		c1.cd()
 		bkgStack.Draw("hist")
 		sigStack.Draw("nostack,hist,same")
 		datStack.Draw("same")
+		# draw (bottom)
 		c2.cd()
-		ratio.SetTitle("")
-		ratio.GetYaxis().SetTitle('Data / MC')
-		ratio.GetYaxis().SetRangeUser(0.0,2.0)
-		ratio.SetLabelFont(42,'XYZT')
-		ratio.SetLabelSize(0.070,'XYZT')
-		ratio.SetTitleFont(42,'XYZT')
-		ratio.SetTitleSize(0.070,'XYZT')
-		ratio.SetTitleOffset(1.20,'X')
-		ratio.SetTitleOffset(0.7,'Y')
-		ratio.SetFillColor(kGray)
-		ratio.SetFillStyle(1)
-		ratio.Draw('hist')
-		ratio.Draw('psame')
+		setStyleTH1Fratio(ratio)
+		ratio.Draw('histe0')
+#		ratio.Draw('psame')
+		# line through y=1
 		gPad.Update()
 		line = TLine(gPad.GetUxmin(),1.0,gPad.GetUxmax(),1.0)
 		line.SetLineWidth(2)
@@ -300,124 +266,69 @@ def do_drawstack(opts,fout,samples,v,sel,trg):
 		c1.cd()
 	else:
 		canvas.cd()
+		# draw (top only)
 		bkgStack.Draw("hist")
 		sigStack.Draw("nostack,hist,same")
 		datStack.Draw("same")
-
+	# draw legend/textinfo
 	legend.Draw()
 	text.Draw()
 
-#	gPad.Update()
-#	# change the title background to nothing
-#	bkgS#titlebox = gPad.GetPrimitive("title")
-#	#titlebox.SetFillStyle(0)
-#	gPad.Update()
-
-	ndir = 'plots'
-	if not gDirectory.GetDirectory('/%s'%(ndir)): gDirectory.mkdir('%s'%(ndir))
-	if not gDirectory.GetDirectory('/%s/%s'%(ndir, 'stack')): gDirectory.mkdir('%s/%s'%(ndir, 'stack'))
-	if not gDirectory.GetDirectory('/%s/%s/%s_%s'%(ndir, 'stack', selname, trgname)): gDirectory.mkdir('%s/%s/%s_%s'%(ndir, 'stack', selname, trgname))
-	gDirectory.cd('%s:/%s/%s/%s_%s'%(fout.GetName(), ndir, 'stack', selname, trgname))
+	# save
+	gDirectory.cd('%s:/'%fout.GetName())
+	path = '%s/%s%s/%s_%s'%('plots',weightpars,'stack',selname,trgname)
+	makeDirsRoot(fout,path)
+	gDirectory.cd(path)
 	
-	ndir = 'plots/%s'%(os.path.split(fout.GetName())[1][:-5]) # strip off the path and the suffix, keep the basename
-	if not os.path.exists('%s/%s/%s_%s'%(ndir, 'stack', selname, trgname)): os.makedirs('%s/%s/%s_%s'%(ndir, 'stack', selname, trgname))
-#	#gPad.SetRightMargin(0.14)
-#	#gPad.Update()
+	# var2: strip off the path and the suffix, keep the basename
+	path = '%s/%s/%s%s/%s_%s'%('plots',os.path.split(fout.GetName())[1][:-5],weightpars,'stack',selname,trgname)
+	makeDirs(path)
+
 	canvas.SetName("c%s"%bkgStack.GetName()[4:])
 	canvas.SetTitle(canvas.GetName())
-	#canvas.Write(canvas.GetName(),TH1.kOverwrite)
-	canvas.SaveAs('%s/%s/%s_%s/%s.png'%(ndir, 'stack', selname, trgname, canvas.GetName()))
-	if opts.debug: l3("%sWritten plots to: %s%s"%(yellow,'%s/%s/%s_%s/%s.png'%(ndir, 'stack', selname, trgname, canvas.GetName()),plain))
+	canvas.SaveAs('%s/%s.png'%(path, canvas.GetName()))
+	print
+	if opts.debug: l3("%sWritten plots to: %s%s"%(yellow,'%s/%s.png'%(path, canvas.GetName()),plain))
 	gDirectory.cd('%s:/'%fout.GetName())
+	canvas.Close()
 
 
 
 
 
 # MAIN FUNCTION ####################################################################################
-def main():
-	# parse options
-	mp = parser()
-	opts,args = mp.parse_args()
+def mkHist():
+	# init main (including option parsing)
+	opts,samples,variables,loadedSamples,fout = main.main(parser())
 
 	# check actions
 	if not (opts.fill or opts.draw or opts.redraw or opts.drawstack or opts.redrawstack): sys.exit(red+"Specify either fill, draw, redraw, drawstack or redrawstack option to run. Exiting."+plain) 
 	
-	# decide batch mode
-	if opts.batch: gROOT.SetBatch(1)
-	# suppress blabla messages (... has been created)
-	ROOT.gErrorIgnoreLevel = kWarning # or 1001 
-	
-	# load C++ modules
-	inroot('.L ../common/sample.C+')
-	inroot('.L ../common/reformat.C+')
-	inroot('.L ../common/bMapWght.C+')
-	# load style
-	inroot('.x ../common/styleCMS.C+')
-	inroot('gROOT->ForceStyle();')
-
-	# load sample info
-	samplesfull = json.loads(filecontent(opts.jsonsamp))
-	samples = samplesfull['files']
-	dsamples = []
-	# all samples from file if nothing is specified in options
-	if not opts.sample: opts.sample = ','.join([y['tag'] for (x,y) in samplesfull['files'].iteritems()])
-	for sample in samples.itervalues():
-		if not any([x in sample['tag'] for x in opts.sample]): dsamples += [sample['fname']]
-	# remove some
-	for dsample in dsamples:
-		del samples[dsample]
-
-	# load variable info
-	variablesfull = json.loads(filecontent(opts.jsonvars))
-	variables = variablesfull['variables']
-
-	# get variables in ROOT
-	inroot("vector<TString> variables; variables.clear();")
-	for v in [x['bare'] for x in variables.itervalues()]: 
-		for vsplit in v.strip().split(','): inroot('variables.push_back("%s");'%vsplit)
-	# also add trigger results
-	inroot('variables.push_back("%s");'%"triggerResult")
-
-	# if opts.tree or charred trees inexistant: convert trees
-	l1("Converting samples:")
-	if opts.reformat:
-		for sample in samples.itervalues():
-			sname = sample['fname'][:-5]+'_reformatted.root'
-			if os.path.exists(sname): os.remove(sname)
-		sys.exit(red+"Reformat function was called. All reformatted trees were removed. Rerun for more converting, but REMOVE the reformat flag."+plain)
-	for sample in samples.itervalues():
-		sname = sample['fname'][:-5]+'_reformatted.root'
-		if (not os.path.exists(sname)): 
-			inroot('reformat("%s",variables)'%sample['fname'])
-			sys.exit(red+"Sample reformat function was needed first. Rerun for actual plotting (or more converting)."+plain)
-
-	# get samples in ROOT
-	l1("Loading samples:")
-	samplesroot = loadSamples(opts,samples) 
-	
-	# read/create output file
-	if not os.path.exists(os.path.split(opts.fout)[0]): os.makedirs(os.path.split(opts.fout)[0])
-	fout = TFile(opts.fout,'recreate' if not os.path.exists(opts.fout) else 'update')
-	fout.cd()
-	
+	if opts.KFWght or len(opts.weight)==4: l1("Including KFWght calculations or manual KFWght.")
 	# fill histograms and save
 	l1('Filling and drawing histograms:')
 	for trg in opts.trigger:
 		for sel in opts.selection:
+			if opts.KFWght: KFWght = getKFWght(opts,loadedSamples,sel,trg)
+			elif len(opts.weight)==4: KFWght = float(opts.weight[3][0])
+			else: KFWght = None
 			for v in variables.itervalues():
 				if not v['var'] in opts.variable: continue
-				for s in sorted(samplesroot):
-					if opts.fill: do_fill(opts,fout,s,v,sel,trg)
-					if opts.draw or opts.redraw: do_draw(opts,fout,s,v,sel,trg)
-				if opts.drawstack or opts.redrawstack: do_drawstack(opts,fout,samplesroot,v,sel,trg)
+				if v['var'] in opts.novariable: continue
+				for s in sorted(loadedSamples):
+					if opts.fill: do_fill(opts,fout,s,v,sel,trg,KFWght)
+					if opts.draw or opts.redraw: do_draw(opts,fout,s,v,sel,trg,KFWght)
+					if opts.fill or opts.draw or opts.redraw: print
+				if opts.drawstack or opts.redrawstack: 
+					do_drawstack(opts,fout,loadedSamples,v,sel,trg,KFWght)
+					print 
 				### END LOOP over samples
 			### END LOOP over variables
 		### END LOOP over selections
 	### END LOOP over triggers
 
 	# try to clean up 
-	dumpSamples(samplesroot)
+	main.dumpSamples(loadedSamples)	
 	fout.Close()
 
 
@@ -426,4 +337,4 @@ def main():
 
 ####################################################################################################
 if __name__=='__main__':
-	main()
+	mkHist()

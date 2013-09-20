@@ -37,10 +37,10 @@ class info:
 	def _print(self):
 		l1("Printing content for %s"%self.fname)
 		l2("cross sections and tags:")
-		print "%s%15s | %15s | %60s%s"%(cyan,"name","cross section","possible tags",plain)
+		print "%s%25s | %15s | %60s%s"%(cyan,"name","cross section","possible tags",plain)
 		print "%s"%cyan+"-"*96+"%s"%plain
 		for sample in sorted(self.crosssections.keys()):
-			print "%15s | %15s | %60s"%(sample,self.crosssections[sample],', '.join([str(x) for x in self.tags[sample]]))
+			print "%25s | %15s | %60s"%(sample,self.crosssections[sample],', '.join([str(x) for x in self.tags[sample]]))
 	##########	
 	def _update(self):
 		l1("Updating content for %s"%self.fname)

@@ -19,6 +19,11 @@ void sample::draw(TString h, TString var, TString cut) {
 	t->Draw(Form("%s>>+%s",var.Data(),h.Data()),TCut(cut.Data()));
 }
 
+float sample::count(TString cut) {
+	float n = t->GetEntries(TCut(cut.Data()));
+	return n;
+}
+
 TFile* sample::getf() {
 	return f;
 }
