@@ -120,7 +120,7 @@ def main(mp=None):
 	if not opts.usebool: inroot('.L %s'%(os.path.join(basepath,'../common/reformat.C+')))
 	inroot('.L %s'%(os.path.join(basepath,'../common/bMapWght.C+')))
 	# load style
-	inroot('.x %s'%(os.path.join(basepath,'../common/styleCMS.C+')))
+	inroot('.x %s'%(os.path.join(basepath,'../common/styleCMS.C++')))
 	inroot('gROOT->ForceStyle();')
 
 

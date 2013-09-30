@@ -119,8 +119,8 @@ def setRangeTH1F(h,ymin,ymax,log=True):
 		h.SetMaximum(round(ymax*1.3,2))
 
 def getRatioPlotCanvas(canvas):
-	c1 = TPad('c1','c1',0,0.3,1,1)
-	c2 = TPad('c2','c2',0,0,1,0.3)
+	c1 = TPad('c1','c1',0,0.2,1,1)
+	c2 = TPad('c2','c2',0,0,1,0.2)
 	c1.SetBottomMargin(0.0)
 	c2.SetTopMargin(0.0)
 	c2.SetBottomMargin(c2.GetBottomMargin()+0.1)
@@ -133,7 +133,8 @@ def setStyleTH1Fratio(h):
 	# main
 	h.SetTitle("")
 	h.GetYaxis().SetTitle('Data / MC')
-	h.GetYaxis().SetRangeUser(0.5,1.5)
+	#h.GetYaxis().SetRangeUser(0.5,1.5)
+	h.GetYaxis().SetRangeUser(0.0,2.0)
 	h.GetYaxis().SetNdivisions(505)
 	# fonts & offsets
 	h.SetTitleOffset(3.25,'X')

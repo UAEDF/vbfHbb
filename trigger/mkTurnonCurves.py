@@ -177,15 +177,11 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 			if (not hload[tag]) or opts.redrawstack:
 				hnew = TH1F(hname[tag],';'.join([hname[tag],v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
 				hnew.SetTitle(';'.join([hname[tag],v['title_x'],v['title_y']]))
-				print Green, opts.redraw, opts.redrawstack, tag, plain
+				#print Green, opts.redraw, opts.redrawstack, tag, plain
 				if not (opts.redraw or opts.redrawstack): l3("%s%s doesn\'t exist. Filling first.%s"%(red,fullpath,plain))
 				elif (opts.redraw or opts.redrawstack) and tag=='Den': l3("%sLoading %s since it was redrawn with 'Num'.%s"%(red,fullpath,plain))
 				else: l3("%sRedrawing %s first.%s"%(red,fullpath,plain))
 				if not ((opts.redraw or opts.redrawstack) and tag=='Den'): do_fill(opts,fout,s,v,sel,trg,reftrg,KFWght)
-				#print Red+"fout:"+plain
-				#fout.ls()
-				#print Red+"gDirectory:"+plain
-				#gDirectory.ls()
 				hload[tag] = gDirectory.Get(fullpath)
 			if opts.debug: l3("%sLoaded: %40s(N=%9d, Int=%9d)%s"%(yellow,hload[tag].GetName(),hload[tag].GetEntries(),hload[tag].Integral(),plain))
 			histos[tag] += [hload[tag]]
@@ -197,9 +193,9 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 	istack=0
 	ratio = {}
 	for kstack,stack in allstacks.iteritems():
-		print kstack,stack
-		print stack['Num'].GetStack().Last().GetEntries()
-		print stack['Den'].GetStack().Last().GetEntries()
+		#print kstack,stack
+		#print stack['Num'].GetStack().Last().GetEntries()
+		#print stack['Den'].GetStack().Last().GetEntries()
 		# get ratios
 		ratio[kstack] = TH1F(allstacknames[kstack]['Rat'],';'.join([allstacknames[kstack]['Rat'],v['title_x'],'Trigger Efficiency (N-1 Cuts)']),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
 		ratio[kstack].Divide(stack['Num'].GetStack().Last(),stack['Den'].GetStack().Last(),1.0,1.0,'B')
@@ -209,9 +205,10 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 		#setRangeTH1F(ratio[kstack],ymin,ymax,False)
 		setRangeTH1F(ratio[kstack],0,0.15/1.3,False)
 		legend.AddEntry(ratio[kstack],kstack,'L')
-		canvas.cd()
-		ratio[kstack].Draw("" if istack==0 else "same")
-		istack += 1
+#		canvas.cd()
+#		ratio[kstack].Draw("" if istack==0 else "same")
+#		istack += 1
+		stack['Rat'] = dc(ratio[kstack])
 
 		# write histogram to file
 		gDirectory.cd('%s:/'%fout.GetName())
@@ -220,6 +217,37 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 		gDirectory.cd(path)
 		ratio[kstack].Write(ratio[kstack].GetName(),TH1.kOverwrite)
 		gDirectory.cd('%s:/'%fout.GetName())
+	
+	# Data / MC ratio
+	if 'JetMon' in allstacks.keys() and 'QCD' in allstacks.keys():
+		ratioplot = allstacks['JetMon']['Rat'].Clone('Data / MC')
+		ratioplot.SetTitle('Data / MC')
+		ratioplot.Divide(allstacks['JetMon']['Rat'],allstacks['QCD']['Rat'])
+	else: ratioplot=None
+
+	if not ratioplot==None:
+		# containers
+		c1,c2 = getRatioPlotCanvas(canvas)
+		# draw (top)
+		c1.cd()
+		for istack,stack in enumerate(allstacks.itervalues()):
+			stack['Rat'].Draw("" if istack==0 else "same")
+		# draw (bottom)
+		c2.cd()
+		setStyleTH1Fratio(ratioplot)
+		ratioplot.Draw('e0')
+		ratioplot.Draw('psame')
+		# line through y=1
+		gPad.Update()
+		line = TLine(gPad.GetUxmin(),1.0,gPad.GetUxmax(),1.0)
+		line.SetLineWidth(2)
+		line.SetLineColor(kBlack)
+		line.Draw("same")
+		c1.cd()
+	else:
+		canvas.cd()
+		for istack,stack in enumerate(allstacks.itervalues()):
+			stack['Rat'].Draw("" if istack==0 else "same")
 
 	# write plot to file
 	legend.Draw()
