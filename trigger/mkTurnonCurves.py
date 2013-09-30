@@ -44,9 +44,9 @@ def do_fill(opts,fout,s,v,sel,trg,reftrig,KFWght=None):
 	cuts = {}
 	canvas = TCanvas("cfill","cfill",2400,1800)
 	# cut
-	cuts['Num'],cutlabelnum = write_cuts(sel,trg,reftrig=reftrig,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,varskip=v['root'])
+	cuts['Num'],cutlabelnum = write_cuts(sel,trg,reftrig=reftrig,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,varskip=v['root'],trigequal=('49' if not opts.usebool else '1'))
 	if opts.debug: l3("Cut numerator: %s%s%s: %s"%(blue,cutlabelnum,plain,cuts['Num']))
-	cuts['Den'],cutlabelden = write_cuts(sel,reftrig=reftrig,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,varskip=v['root'])
+	cuts['Den'],cutlabelden = write_cuts(sel,reftrig=reftrig,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,varskip=v['root'],trigequal=('49' if not opts.usebool else '1'))
 	if opts.debug: l3("Cut denominator: %s%s%s: %s"%(blue,cutlabelden,plain,cuts['Den']))
 
 	for itag,icut,isel,itrg in [('Num',cuts['Num'],sel,trg),('Den',cuts['Den'],sel,['None'])]:

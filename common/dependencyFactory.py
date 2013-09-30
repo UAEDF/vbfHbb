@@ -44,7 +44,7 @@ def getKFWght(opts,loadedSamples,sel,trg):
 		opts.weightlocal = dc(opts.weight)
 		opts.weightlocal[1] = list(set(opts.weight[1])-set(['KFAC']))
 		### Get cut and weight
-		cut = write_cuts(sel,trg,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weightlocal)[0]
+		cut = write_cuts(sel,trg,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weightlocal,trigequal=('49' if not opts.usebool else '1'))[0]
 #		wf = weightFactory(opts.jsonsamp,opts.weight[0][0] if not opts.weight[0][0]=='' else '19000')
 #		weight = wf.getFormula(','.join(['XSEC','LUMI']),s['tag']) 
 	#	print cut
@@ -91,8 +91,8 @@ def getBMapWght(opts,fout,samples,sel,trg,reftrig):
 		for s in samples:
 			if not tag=='Rat': 
 				inroot('t = (TTree*)%s.gett();'%s['pointer'])
-				cuts['Num'] = write_cuts(sel,trg,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,reftrig=reftrig)[0]
-				cuts['Den'] = write_cuts(sel,['NONE'],sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,reftrig=reftrig)[0]
+				cuts['Num'] = write_cuts(sel,trg,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,reftrig=reftrig,trigequal=('49' if not opts.usebool else '1'))[0]
+				cuts['Den'] = write_cuts(sel,['NONE'],sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,reftrig=reftrig,trigequal=('49' if not opts.usebool else '1'))[0]
 				wf = weightFactory(opts.jsonsamp,opts.weight[0][0] if not opts.weight[0][0]=='' else '19000')
 				weight = wf.getFormula(','.join(opts.weight[1] if not opts.weight[1]==[''] else ['XSEC','LUMI']),s['tag']) 
 				inroot('t->Draw("jetBtag[btagIdx[1]]:jetBtag[btagIdx[0]]>>+%s",TCut("%s*%s"));'%(maps[tag].GetName(),cuts[tag],weight))

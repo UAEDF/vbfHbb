@@ -44,7 +44,7 @@ def parser(mp=None):
 # FUNCTIONS FOR FILLING AND DRAWING HISTOGRAMS #####################################################
 def do_fill(opts,fout,s,v,sel,trg,KFWght=None):
 	# cut
-	cut,cutlabel = write_cuts(sel,trg,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght)
+	cut,cutlabel = write_cuts(sel,trg,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,trigequal=('49' if not opts.usebool else '1'))
 	if opts.debug: l3("Cut: %s%s%s: %s"%(blue,cutlabel,plain,cut))
 
 	# names

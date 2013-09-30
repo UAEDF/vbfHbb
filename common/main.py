@@ -37,6 +37,7 @@ def parser(mp=None):
 	mgd.add_option('-R','--reformat',help="Reformat all trees, even when present allready.",action='store_true',default=False)
 	mgd.add_option('-K','--KFWght',help="Recalculate KFWght from current list of samples.",action='store_true',default=False)
 	mgd.add_option('-B','--BMapWght',help="Recalculate BMapWght from current list of samples. Provide sel, trg and reftrig. Format: (sample) for standard map or (sample,sample) for ratiomap.",action='callback',callback=optsplit,default=[],type='str')
+	mgd.add_option('--usebool',help="Use original trees, not the char ones.",action='store_true',default=False)
 
 	mgst = OptionGroup(mp,cyan+"Run for subselection determined by variable, sample and/or selection/trigger"+plain)
 	mgst.add_option('-v','--variable',help=purple+"Run only for these variables (comma separated)."+plain,dest='variable',default='',type='str',action='callback',callback=optsplit)
@@ -68,7 +69,8 @@ def loadSamples(opts,samples):
 		# veto regex in opts.nosample
 		if not opts.nosample==[] and any([(x in sample['tag']) for x in opts.nosample]): continue
 		# configure
-		inroot('sample mysample%i = sample("%s_reformatted.root","Hbb/events",variables);'%(isample,sample['fname'][:-5]))
+		if not opts.usebool: inroot('sample mysample%i = sample("%s_reformatted.root","Hbb/events",variables);'%(isample,sample['fname'][:-5]))
+		else: inroot('sample mysample%i = sample("%s.root","Hbb/events",variables);'%(isample,sample['fname'][:-5]))
 		samplesroot.append({'pointer':'mysample%i'%isample, 'fname':sample['fname'], 'tag':sample['tag'], 'colour':sample['colour']})
 		l2(samplesroot[-1])
 	return samplesroot
@@ -115,7 +117,7 @@ def main(mp=None):
 	ROOT.gErrorIgnoreLevel = kWarning # or 1001 
 	# load C++ modules
 	inroot('.L %s'%(os.path.join(basepath,'../common/sample.C+')))
-	inroot('.L %s'%(os.path.join(basepath,'../common/reformat.C+')))
+	if not opts.usebool: inroot('.L %s'%(os.path.join(basepath,'../common/reformat.C+')))
 	inroot('.L %s'%(os.path.join(basepath,'../common/bMapWght.C+')))
 	# load style
 	inroot('.x %s'%(os.path.join(basepath,'../common/styleCMS.C+')))
@@ -147,7 +149,7 @@ def main(mp=None):
 
 
 # convert samples
-	convertSamples(opts,samples)
+	if not opts.usebool: convertSamples(opts,samples)
 
 # load samples
 	loadedSamples = loadSamples(opts,samples)
