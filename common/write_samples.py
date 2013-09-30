@@ -21,7 +21,7 @@ class info:
 		self.content = {}
 		self.content['files'] = {}
 		self.content['other'] = []
-		self.content['fields'] = {'fname':80,'npassed':12,'xsec':12,'scale':15,'tag':8,'trigger':25,'colour':8} # field lengths
+		self.content['fields'] = {'fname':100,'npassed':12,'xsec':12,'scale':15,'tag':8,'trigger':25,'colour':8} # field lengths
 		self.content['trigger'] = ['HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v* OR HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v* OR HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v* OR HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v* OR HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v*','HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v*','HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v*','HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v*','HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_DiJet35_MJJ650_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ700_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ750_AllJets_DEta3p5_VBF_v*','HLT_QuadJet50_v*','HLT_PFJet80_v*']
 		self.read_info()
 
@@ -133,13 +133,19 @@ class info:
 		f.write(json.dumps(self.content))
 		f.close()
 
-	def update_info(self):
+	def update_info(self,infojson):
 		l1("Updating content for %s"%self.oname)
 		for f in sorted(self.content['files'].keys()):
 			l2("%s: "%f)
 			for field in self.content['files'][f].keys():
-				new_value = raw_input("%s? [%s]"%(field,str(self.content['files'][f][field])))
+				if field=='colour': new_value = raw_input("%s? [%s(%s)]"%(field,str(self.content['files'][f][field]),str(infojson['colours'][self.content['files'][f]['tag']])))
+				elif field=='xsec': new_value = raw_input("%s? [%s(%s)]"%(field,str(self.content['files'][f][field]),str(infojson['crosssections'][self.content['files'][f]['tag']])))
+				else: new_value = raw_input("%s? [%s]"%(field,str(self.content['files'][f][field])))
 				if not new_value == "": self.content['files'][f][field] = new_value
+			for field in ['scale']:
+				new_value = raw_input("%s? [%s]"%(field,"%f"%(float(self.content['files'][f]['npassed'])/float(self.content['files'][f]['xsec'])) if not float(self.content['files'][f]['xsec'])==-1 else "-1"))
+				if not new_value == "": self.content['files'][f][field] = new_value
+				else: self.content['files'][f][field] = "%f"%(float(self.content['files'][f]['npassed'])/float(self.content['files'][f]['xsec'])) if not float(self.content['files'][f]['xsec'])==-1 else "-1"
 		self.print_info()
 		self.write_info()
 
@@ -168,7 +174,7 @@ if __name__=='__main__':
 		myinfo.clean_info()
 	
 	if opts.update and not opts.readonly:
-		myinfo.update_info()
+		myinfo.update_info(mybaseinfo)
 
 	if not opts.readonly and not opts.clean:
 		l1("Looping over new inputs:")

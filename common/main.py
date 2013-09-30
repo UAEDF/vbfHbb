@@ -154,7 +154,7 @@ def main(mp=None):
 
 
 # open/create output file
-	if not os.path.exists(os.path.split(opts.fout)[0]): os.makedirs(os.path.split(opts.fout)[0])
+	if not os.path.exists(os.path.split(opts.fout)[0]) and not os.path.split(opts.fout)[0]=='': os.makedirs(os.path.split(opts.fout)[0])
 	fout = TFile(opts.fout,'recreate' if (not os.path.exists(opts.fout) or opts.new) else 'update')
 	fout.cd()
 	

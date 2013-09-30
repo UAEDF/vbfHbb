@@ -93,6 +93,7 @@ def do_draw(opts,fout,s,v,sel,trg,KFWght=None):
 	hload = gDirectory.Get(path)
 	# fill if needed/wanted
 	if (not hload) or opts.redraw:
+		l2("Sample: %s"%(s['tag']))
 		hnew = TH1F(hname,';'.join([hname,v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
 		hnew.SetTitle(hname)
 		print
@@ -189,7 +190,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,KFWght=None):
 	ymax=0
 
 	### LOOP over all samples
-	for s in sorted(samples,key=lambda x:('QCD' in x['tag'],jsoninfo['crosssections'][x['tag']])):
+	for s in sorted(samples,key=lambda x:('QCD' in x['tag'],not 'WJets' in x['tag'],jsoninfo['crosssections'][x['tag']])):
 		# names
 		sname = s['pointer']
 		group = jsoninfo['groups'][s['tag']]
@@ -200,6 +201,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,KFWght=None):
 		hload = gDirectory.Get(path)
 		# fill if needed/wanted 
 		if (not hload) or opts.redrawstack:
+			l2("Sample: %s"%(s['tag']))
 			hnew = TH1F(hname,';'.join([hname,v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
 			hnew.SetTitle(hname)
 			print
@@ -214,21 +216,21 @@ def do_drawstack(opts,fout,samples,v,sel,trg,KFWght=None):
 ### DATA
 		if group=='Data':
 			datHistos += [hload]
-			setStyleTH1F(datHistos[-1],jsoninfo['colours'][s['tag']],1,jsoninfo['colours'][s['tag']],0,1,20)
+			setStyleTH1F(datHistos[-1],jsoninfo['colours'][s['tag']],1,jsoninfo['colours'][s['tag']],0,1,20,0,2)
 			datStack.Add(datHistos[-1])
 			legend.AddEntry(datHistos[-1],s['tag'],'P')
 			ymin, ymax = getRangeTH1F(datHistos[-1],ymin,ymax)
 ### SIGNAL
 		elif group=='VBF' or group=='GluGlu':
 			sigHistos += [hload]
-			setStyleTH1F(sigHistos[-1],jsoninfo['colours'][s['tag']],1,jsoninfo['colours'][s['tag']],0,0,0)
+			setStyleTH1F(sigHistos[-1],jsoninfo['colours'][s['tag']],1,jsoninfo['colours'][s['tag']],0,0,0,5,0)
 			sigStack.Add(sigHistos[-1])
 			legend.AddEntry(sigHistos[-1],s['tag'],'L')
 			ymin, ymax = getRangeTH1F(sigHistos[-1],ymin,ymax)
 ### QCD
 		else:
 			bkgHistos += [hload]
-			setStyleTH1F(bkgHistos[-1],jsoninfo['colours'][s['tag']],1,jsoninfo['colours'][s['tag']],1,0,0)
+			setStyleTH1F(bkgHistos[-1],1,1,jsoninfo['colours'][s['tag']],1,0,0,1,0)
 			bkgStack.Add(bkgHistos[-1])
 			legend.AddEntry(bkgHistos[-1],s['tag'],'F')
 			ymin, ymax = getRangeTH1F(bkgHistos[-1],ymin,ymax)
@@ -237,13 +239,15 @@ def do_drawstack(opts,fout,samples,v,sel,trg,KFWght=None):
 	if not (datHistos == [] or bkgHistos == []):
 		ratio = datStack.GetStack().Last().Clone('data')
 		ratio.Divide(datStack.GetStack().Last(),bkgStack.GetStack().Last())
+	else:
+		ratio = None
 	### END LOOP over samples
 
 	canvas.SetLogy(1)
 	setRangeTH1F(bkgStack,ymin,ymax)
 	bkgStack.SetTitle("stack_%s;%s;%s"%(bkgStack.GetName()[5:],bkgStack.GetStack().Last().GetXaxis().GetTitle(),bkgStack.GetStack().Last().GetYaxis().GetTitle()))
 
-	if ratio:
+	if not ratio==None:
 		# containers
 		c1,c2 = getRatioPlotCanvas(canvas)
 		c1.SetLogy()
@@ -251,11 +255,11 @@ def do_drawstack(opts,fout,samples,v,sel,trg,KFWght=None):
 		c1.cd()
 		bkgStack.Draw("hist")
 		sigStack.Draw("nostack,hist,same")
-		datStack.Draw("same")
+		datStack.GetStack().Last().Draw("same")
 		# draw (bottom)
 		c2.cd()
 		setStyleTH1Fratio(ratio)
-		ratio.Draw('histe0')
+		ratio.Draw('e0')
 #		ratio.Draw('psame')
 		# line through y=1
 		gPad.Update()
@@ -315,7 +319,9 @@ def mkHist():
 			for v in variables.itervalues():
 				if not v['var'] in opts.variable: continue
 				if v['var'] in opts.novariable: continue
+				l2("Var: %s"%v['var'])
 				for s in sorted(loadedSamples):
+					if opts.fill or opts.draw or opts.redraw: l2("Sample: %s"%(s['tag']))
 					if opts.fill: do_fill(opts,fout,s,v,sel,trg,KFWght)
 					if opts.draw or opts.redraw: do_draw(opts,fout,s,v,sel,trg,KFWght)
 					if opts.fill or opts.draw or opts.redraw: print

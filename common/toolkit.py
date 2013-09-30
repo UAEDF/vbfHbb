@@ -95,22 +95,28 @@ def getTPave(left,bottom,right,top,rows=None,fillColor=0,fillStyle=0,textColor=1
 	text.SetBorderSize(0)
 	return text
 
-def setStyleTH1F(h,lineColor=1,lineStyle=1,fillColor=0,fillStyle=0,markerColor=1,markerStyle=0):
+def setStyleTH1F(h,lineColor=1,lineStyle=1,fillColor=0,fillStyle=0,markerColor=1,markerStyle=0,lineWidth=3,markerSize=3):
 	h.SetLineColor(lineColor)
 	h.SetLineStyle(lineStyle)
+	h.SetLineWidth(lineWidth)
 	h.SetFillColor(fillColor)
 	h.SetFillStyle(fillStyle)
 	h.SetMarkerColor(markerColor)
 	h.SetMarkerStyle(markerStyle)
+	h.SetMarkerSize(markerSize)
 
 def getRangeTH1F(h,ymin,ymax):
 	if h.GetMaximum() > ymax: ymax = h.GetMaximum()
 	if h.GetMinimum() < ymin: ymin = h.GetMinimum()
 	return ymin,ymax
 
-def setRangeTH1F(h,ymin,ymax):
-	h.SetMinimum(float("1e%i"%log10(ymin+0.1)))
-	h.SetMaximum(float("1e%i"%(log10(ymax)+3)))
+def setRangeTH1F(h,ymin,ymax,log=True):
+	if log:
+		h.SetMinimum(float("1e%i"%log10(ymin+0.1)))
+		h.SetMaximum(float("1e%i"%(log10(ymax)+3)))
+	else:
+		h.SetMinimum(0)
+		h.SetMaximum(round(ymax*1.3,2))
 
 def getRatioPlotCanvas(canvas):
 	c1 = TPad('c1','c1',0,0.3,1,1)
@@ -134,6 +140,9 @@ def setStyleTH1Fratio(h):
 	# filling
 #	h.SetFillColor(kGray)
 #	h.SetFillStyle(1)
+	h.SetMarkerStyle(20)
+	h.SetMarkerColor(kBlack)
+	h.SetMarkerSize(2)
 
 # PRINTOUT FUNCTIONS ###############################################################################
 def write_bMapWght(bMapWghtFile='%s/bMapWght.root'%basepath):

@@ -6,6 +6,7 @@ sys.path.append(basepath)
 
 import main
 from toolkit import *
+from copy import deepcopy as dc
 from optparse import OptionParser,OptionGroup
 from weightFactory import *
 import datetime
@@ -14,6 +15,7 @@ today=datetime.date.today().strftime('%Y%m%d')
 ####################################################################################################
 def get_trigger(trigs,sample,samplejson,trigequal="49",trigjoin=" || "):
 	content = json.loads(filecontent(samplejson))
+	print trigs
 	samplename = [x for x,y in content['files'].iteritems() if y['tag']==sample][0]
 	trg = group( trigjoin.join( ["triggerResult[%s]==%s"%(content['files'][samplename]['trigger'].split(',')[content['trigger'].index(x)],trigequal) for x in trigs] ))
 	if "triggerResult[-]" in trg: sys.exit('  %sUnknown trigger in trigger string. Check! Exiting.\n  --> %s (from %s)%s'%(red,trg,','.join(trigs),plain))
@@ -38,7 +40,7 @@ def parser(mp=None):
 	if mp==None: mp = OptionParser()
 	mgc = OptionGroup(mp,"Cut options")	
 	mgc.add_option('--use',help=red+"Specify for which sample this cut will be used (relevant for trigger)."+plain,dest='use',default='',type='str')
-	mtc.add_option('--skip',help=blue+"Variable to leave out of selection (N-1 cuts)."+plain,dest='skip',type='str')
+	mgc.add_option('--skip',help=blue+"Variable to leave out of selection (N-1 cuts)."+plain,dest='skip',type='str')
 
 	mgt = OptionGroup(mp,"Trigger options")
 	mgs = OptionGroup(mp,"Selection options")
@@ -66,8 +68,8 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	cuts = json.loads(filecontent(kwargs["jsoncuts"]))
 	selections = cuts['sel']
 	triggers = cuts['trg']
-	selnew = list(set(sel)-set(['NONE']))
-	trgnew = list(set(trg)-set(['NONE']))
+	selnew = dc(list(set(sel)-set(['NONE'])))
+	trgnew = dc(list(set(trg)-set(['NONE'])))
 	selold = sel
 	trgold = trg
 	sel = selnew
@@ -85,6 +87,7 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	if not (seljoin[0]==' ' and seljoin[-1]==' '): seljoin = ' '+seljoin+' '
 	if not (trgjoin[0]==' ' and trgjoin[-1]==' '): trgjoin = ' '+trgjoin+' '
 	
+
 	wfString = ''
 	if not weight == [[''],['']]:
 		wf = weightFactory(kwargs['jsonsamp'],weight[0][0],KFWght) 
@@ -146,7 +149,7 @@ if __name__=='__main__':
 	mp = parser(main.parser())
 	opts,args = mp.parse_args()
 
-	st, stlabels = write_cuts(opts.selection,opts.trigger,opts.selcmp,opts.trgcmp,reftrig=opts.reftrig,jsoncuts=opts.jsoncuts,sample=opts.use,jsonsamp=opts.jsonsamp,seljoin=opts.seljoin,trgjoin=opts.trgjoin,varskip=opts.skip,selcmpjoin=opts.selcmpjoin,trgcmpjoin=opts.trgcmpjoin,stgroup=opts.stgroup,weight=opts.weight)
+	st, stlabels = write_cuts(opts.selection[0],opts.trigger[0],opts.selcmp,opts.trgcmp,reftrig=opts.reftrig[0],jsoncuts=opts.jsoncuts,sample=opts.use,jsonsamp=opts.jsonsamp,seljoin=opts.seljoin,trgjoin=opts.trgjoin,varskip=opts.skip,selcmpjoin=opts.selcmpjoin,trgcmpjoin=opts.trgcmpjoin,stgroup=opts.stgroup,weight=opts.weight)
 	print st
 	print
 	print stlabels
