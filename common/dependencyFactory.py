@@ -108,6 +108,7 @@ def getBMapWght(opts,fout,samples,sel,trg,reftrig):
 def getBMapWghtRatio(opts,fout,samplesnum,samplesden,sel,trg,reftrig):
 	# info
 	jsoninfo = json.loads(filecontent(opts.jsoninfo))
+	print samplesnum
 	gnum = jsoninfo['groups'][samplesnum[0]['tag']]
 	gden = jsoninfo['groups'][samplesden[0]['tag']]
 	l2("Ratio map for %s / %s"%(gnum,gden))
