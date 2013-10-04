@@ -123,7 +123,7 @@ def getRatioPlotCanvas(canvas):
 	c2 = TPad('c2','c2',0,0,1,0.2)
 	c1.SetBottomMargin(0.0)
 	c2.SetTopMargin(0.0)
-	c2.SetBottomMargin(c2.GetBottomMargin()+0.1)
+	c2.SetBottomMargin(c2.GetBottomMargin()+0.25)
 	c1.Draw()
 	c2.Draw()
 	canvas.Update()
@@ -137,7 +137,7 @@ def setStyleTH1Fratio(h):
 	h.GetYaxis().SetRangeUser(0.0,2.0)
 	h.GetYaxis().SetNdivisions(505)
 	# fonts & offsets
-	h.SetTitleOffset(3.25,'X')
+	h.SetTitleOffset(4.75,'X')
 	# filling
 #	h.SetFillColor(kGray)
 #	h.SetFillStyle(1)

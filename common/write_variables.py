@@ -49,6 +49,13 @@ class info:
 		self.print_info()
 		self.write_info()
 
+	def update_info_y(self):
+		l1("Updating content for %s"%self.oname)
+		for k,v in sorted(self.content['variables'].iteritems()):
+			# update title_y
+			title_y_new = 'N / %.2f'%((float(v['xmax'])-float(v['xmin']))/float(v['nbins_x']))
+			v['title_y'] = title_y_new
+
 	def update_info(self):
 		l1("Updating content for %s"%self.oname)
 		for k,v in sorted(self.content['variables'].iteritems()):
@@ -59,9 +66,15 @@ class info:
 				for field in self.content['fields'][1:]:
 					if field=='title_y':
 						field_new = 'N / %.2f'%((float(self.content['variables'][k]['xmax'])-float(self.content['variables'][k]['xmin']))/float(self.content['variables'][k]['nbins_x']))
+					elif field=='bare':
+						field_new = ','.join(re.findall('[A-Za-z0-9]{2,}',v['root']))
+						print "bare: ",field_new
 					else:
 						field_new = str(raw_input("    %s? [%s] "%(field,self.content['variables'][k][field])))
 					if not field_new=="": self.content['variables'][k][field] = field_new
+				# update title_y
+				title_y_new = 'N / %.2f'%((float(v['xmax'])-float(v['xmin']))/float(v['nbins_x']))
+				v['title_y'] = title_y_new
 
 	def add_info(self,passed_content):
 		fields = []
@@ -71,7 +84,7 @@ class info:
 				l2("Adding %s:"%passed_content)
 				for field in self.content['fields'][1:]: 
 					if field=='bare': 
-						field_new = ','.join(re.findall('[A-Za-z]{2,}',fields[1]))
+						field_new = ','.join(re.findall('[A-Za-z0-9]{2,}',fields[1]))
 						print "      %s: %s"%(field,field_new)
 					elif field=='title_y':
 						field_new = 'N / bin' 
@@ -108,6 +121,7 @@ def parser():
 	mp.add_option('-r','--readonly',help='Print content of output file.',action='store_true',default=False)
 	mp.add_option('-c','--clean',help='Clean json file (remove existing variables).',dest='clean',action='store_true',default=False)
 	mp.add_option('-u','--update',help='Update json file (edit existing variables).',dest='update',action='store_true',default=False)
+	mp.add_option('-y','--updatey',help='Update json file (edit existing variables)(auto y-axis label update).',dest='updatey',action='store_true',default=False)
 	return mp
 
 
@@ -123,15 +137,20 @@ if __name__=='__main__':
 	myinfo = info(opts.output)
 	myinfo.print_info()
 
-	if opts.clean and not (opts.readonly or opts.update or opts.add):
+	if opts.clean and not (opts.readonly or opts.update or opts.add or opts.updatey):
 		myinfo.clean_info()
 	
-	if opts.update and not (opts.readonly or opts.clean or opts.add):
+	if opts.update and not (opts.readonly or opts.clean or opts.add or opts.updatey):
 		myinfo.update_info()
 		myinfo.print_info()
 		myinfo.write_info()
 
-	if opts.add and not (opts.clean or opts.update or opts.readonly):
+	if opts.updatey and not (opts.readonly or opts.clean or opts.add or opts.update):
+		myinfo.update_info_y()
+		myinfo.print_info()
+		myinfo.write_info()
+
+	if opts.add and not (opts.clean or opts.update or opts.readonly or opts.updatey):
 		var = str(raw_input("var? [varname] "))
 		while not var == "":
 			myinfo.add_info(var)

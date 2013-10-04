@@ -1,5 +1,5 @@
 {
-"jsonsamp": "../common/vbfHbb_samples_KK_2013_CERN.json",
+"jsonsamp": "../common/vbfHbb_samples_KK_2013.json",
 "jsonvars": "../common/vbfHbb_variables_KK_2013_turnons.json",
 "jsoncuts": "../common/vbfHbb_cuts.json",
 "jsoninfo": "../common/vbfHbb_info_KK_2013.json",

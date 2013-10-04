@@ -33,6 +33,8 @@ def parser(mp=None):
 	mga.add_option('--redraw',help='Draw histogram from root file (refill in all cases).',action='store_true',default=False)
 	mga.add_option('--drawstack',help='Draw histograms from root file (stack samples, fill if not present).',action='store_true',default=False)
 	mga.add_option('--redrawstack',help='Draw histograms from root file (stack samples, refill in all cases).',action='store_true',default=False)
+	mga.add_option('--drawnormalized',help='Draw histograms from root file (stack samples, normalized).',action='store_true',default=False)
+	mga.add_option('--redrawnormalized',help='Draw histograms from root file (stack samples, normalized, refill in all cases).',action='store_true',default=False)
 
 	mp.add_option_group(mga)
 	return mp
@@ -205,7 +207,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,KFWght=None):
 			hnew = TH1F(hname,';'.join([hname,v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
 			hnew.SetTitle(hname)
 			print
-			if not opts.redraw: l3("%s%s doesn\'t exist. Filling first.%s"%(red,path,plain))
+			if not opts.redrawstack: l3("%s%s doesn\'t exist. Filling first.%s"%(red,path,plain))
 			else: l3("Redrawing %s%s first.%s"%(red,path,plain))
 			do_fill(opts,fout,s,v,sel,trg,KFWght)
 			hload = gDirectory.Get(path)
@@ -214,7 +216,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,KFWght=None):
 # setStyleTH1F : f(histo, lineColor, lineStyle, fillColor, fillStyle, markerColor, markerStyle)
 # getRangeTH1F : ymin, ymax = f(histo, ymin, ymax)
 ### DATA
-		if group=='Data':
+		if group=='Data' or group=='DataV':
 			datHistos += [hload]
 			setStyleTH1F(datHistos[-1],jsoninfo['colours'][s['tag']],1,jsoninfo['colours'][s['tag']],0,1,20,0,2)
 			datStack.Add(datHistos[-1])
@@ -239,13 +241,18 @@ def do_drawstack(opts,fout,samples,v,sel,trg,KFWght=None):
 	if not (datHistos == [] or bkgHistos == []):
 		ratio = datStack.GetStack().Last().Clone('data')
 		ratio.Divide(datStack.GetStack().Last(),bkgStack.GetStack().Last())
+	elif not (datHistos == [] or sigHistos == []):
+		ratio = datStack.GetStack().Last().Clone('data')
+		ratio.Divide(datStack.GetStack().Last(),sigStack.GetStack().Last())
 	else:
 		ratio = None
 	### END LOOP over samples
 
 	canvas.SetLogy(1)
-	setRangeTH1F(bkgStack,ymin,ymax)
-	bkgStack.SetTitle("stack_%s;%s;%s"%(bkgStack.GetName()[5:],bkgStack.GetStack().Last().GetXaxis().GetTitle(),bkgStack.GetStack().Last().GetYaxis().GetTitle()))
+	if bkgStack.GetStack(): setRangeTH1F(bkgStack,ymin,ymax)
+	if sigStack.GetStack(): setRangeTH1F(sigStack,ymin,ymax)
+	if datStack.GetStack(): setRangeTH1F(datStack,ymin,ymax)
+	if bkgStack.GetStack(): bkgStack.SetTitle("stack_%s;%s;%s"%(bkgStack.GetName()[5:],bkgStack.GetStack().Last().GetXaxis().GetTitle(),bkgStack.GetStack().Last().GetYaxis().GetTitle()))
 
 	if not ratio==None:
 		# containers
@@ -253,9 +260,11 @@ def do_drawstack(opts,fout,samples,v,sel,trg,KFWght=None):
 		c1.SetLogy()
 		# draw (top)
 		c1.cd()
-		bkgStack.Draw("hist")
-		sigStack.Draw("nostack,hist,same")
-		datStack.GetStack().Last().Draw("same")
+		if not bkgHistos == []: bkgStack.Draw("hist")
+		if not sigHistos == []: sigStack.Draw("nostack,hist"+(",same" if not bkgHistos == [] else ""))
+		if not datHistos == []: 
+			#datStack.Draw("same" if not (bkgHistos == [] and sigHistos == []) else "")
+			datStack.GetStack().Last().Draw("same" if not (bkgHistos == [] and sigHistos == []) else "")
 		# draw (bottom)
 		c2.cd()
 		setStyleTH1Fratio(ratio)
@@ -271,9 +280,11 @@ def do_drawstack(opts,fout,samples,v,sel,trg,KFWght=None):
 	else:
 		canvas.cd()
 		# draw (top only)
-		bkgStack.Draw("hist")
-		sigStack.Draw("nostack,hist,same")
-		datStack.Draw("same")
+		if not bkgHistos == []: bkgStack.Draw("hist")
+		if not sigHistos == []: sigStack.Draw("nostack,hist"+(",same" if not bkgHistos == [] else ""))
+		if not datHistos == []: 
+			#datStack.Draw("same" if not (bkgHistos == [] and sigHistos == []) else "")
+			datStack.GetStack().Last().Draw("same" if not (bkgHistos == [] and sigHistos == []) else "")
 	# draw legend/textinfo
 	legend.Draw()
 	text.Draw()
@@ -297,6 +308,176 @@ def do_drawstack(opts,fout,samples,v,sel,trg,KFWght=None):
 	canvas.Close()
 
 
+########################################
+def do_drawnormalized(opts,fout,samples,v,sel,trg,KFWght=None):
+	# names
+	selname = 's'+'-'.join(sel)
+	trgname = 't'+'-'.join(trg)
+	if not opts.weight == [[''],['']]: weightpars = ('-'.join(sorted(opts.weight[1]))+'/').replace('KFAC','KFAC%s'%("%.2f"%KFWght if KFWght else 'def'))
+	else: weightpars = 'NONE/'
+	# info
+	jsoninfo = json.loads(filecontent(opts.jsoninfo))
+	jsoncuts = json.loads(filecontent(opts.jsoncuts))
+
+	# containers
+	canvas = TCanvas('cdrawnormalized','cdrawnormalized',2400,1800)
+	canvas.cd()
+	sigStackname = '_'.join(['ssig',v['var'],selname,trgname])
+	datStackname = '_'.join(['sdat',v['var'],selname,trgname])
+	bkgStackname = '_'.join(['sbkg',v['var'],selname,trgname])
+	sigStack = THStack(sigStackname,"%s;%s;%s"%(sigStackname,v['title_x'],v['title_y']))
+	datStack = THStack(datStackname,"%s;%s;%s"%(datStackname,v['title_x'],v['title_y']))
+	bkgStack = THStack(bkgStackname,"%s;%s;%s"%(bkgStackname,v['title_x'],v['title_y']))
+	sigHistos = []
+	datHistos = []
+	bkgHistos = []	
+
+	# legend
+	columns = ceil(len(samples)/4.)
+	rows    = ceil(len(samples)/columns)
+	left    = gPad.GetLeftMargin()+0.02
+	bottom  = 1-gPad.GetTopMargin()-0.02 - (0.04*rows) # n rows sized 0.04
+	right   = gPad.GetLeftMargin()+0.02 + (0.12*columns) # n columns width 0.12
+	top     = 1-gPad.GetTopMargin()-0.02
+	legend  = getTLegend(left,bottom,right,top,columns)
+
+	# info text
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']])]) # counting lines about weights + 1 for vbfHbb tag 
+	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
+	right  = 1-gPad.GetRightMargin()-0.02
+	top    = 1-gPad.GetTopMargin()
+	bottom = 1-gPad.GetTopMargin() - (0.04*rows) # n rows size 0.04
+	text = getTPave(left,bottom,right,top)
+	text.AddText("VBF H #rightarrow b#bar{b}: #sqrt{s} = 8 TeV (2012)")
+	if not opts.weight==[[''],['']] and 'LUMI' in opts.weight[1]: text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
+	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
+	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
+	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	# layout scaling
+	ymin=0
+	ymax=0
+
+	### LOOP over all samples
+	for s in sorted(samples,key=lambda x:('QCD' in x['tag'],not 'WJets' in x['tag'],jsoninfo['crosssections'][x['tag']])):
+		# names
+		sname = s['pointer']
+		group = jsoninfo['groups'][s['tag']]
+		hname = '_'.join(['h',v['var'],s['tag'],selname,trgname])
+		# get histogram
+		gDirectory.cd('%s:/'%fout.GetName())
+		path = '/%s/%s%s/%s_%s/%s;1'%('plots',weightpars,s['tag'], selname, trgname, hname)
+		hload = gDirectory.Get(path)
+		# fill if needed/wanted 
+		if (not hload) or opts.redrawnormalized:
+			l2("Sample: %s"%(s['tag']))
+			hnew = TH1F(hname,';'.join([hname,v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
+			hnew.SetTitle(hname)
+			print
+			if not opts.redrawnormalized: l3("%s%s doesn\'t exist. Filling first.%s"%(red,path,plain))
+			else: l3("Redrawing %s%s first.%s"%(red,path,plain))
+			do_fill(opts,fout,s,v,sel,trg,KFWght)
+			hload = gDirectory.Get(path)
+		if opts.debug: l3("%sLoaded: %40s(N=%9d, Int=%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),hload.Integral(),plain))
+		# sort
+# setStyleTH1F : f(histo, lineColor, lineStyle, fillColor, fillStyle, markerColor, markerStyle)
+# getRangeTH1F : ymin, ymax = f(histo, ymin, ymax)
+### DATA
+		if group=='Data' or group=='DataV':
+			datHistos += [hload]
+			setStyleTH1F(datHistos[-1],jsoninfo['colours'][s['tag']],1,jsoninfo['colours'][s['tag']],0,1,20,0,2)
+			datStack.Add(datHistos[-1])
+			legend.AddEntry(datHistos[-1],s['tag'],'P')
+#			ymin, ymax = getRangeTH1F(datHistos[-1],ymin,ymax)
+### SIGNAL
+		elif group=='VBF' or group=='GluGlu':
+			sigHistos += [hload]
+			setStyleTH1F(sigHistos[-1],jsoninfo['colours'][s['tag']],1,jsoninfo['colours'][s['tag']],0,0,0,3,0)
+			sigStack.Add(sigHistos[-1])
+			legend.AddEntry(sigHistos[-1],s['tag'],'L')
+#			ymin, ymax = getRangeTH1F(sigHistos[-1],ymin,ymax)
+### QCD
+		else:
+			bkgHistos += [hload]
+			setStyleTH1F(bkgHistos[-1],1,1,jsoninfo['colours'][s['tag']],1,0,0,1,0)
+			bkgStack.Add(bkgHistos[-1])
+			legend.AddEntry(bkgHistos[-1],s['tag'],'F')
+#			ymin, ymax = getRangeTH1F(bkgHistos[-1],ymin,ymax)
+
+### USE just Data stack, all others
+	data = None
+	histos = []
+	ratios = []
+	if not datHistos == []:
+		data = datStack.GetStack().Last().Clone('data')
+		data.Scale(1./data.Integral())
+		ymin,ymax = getRangeTH1F(data,ymin,ymax)
+		for ih,h in enumerate(sigHistos + bkgHistos):
+			histos += [dc(h)]
+			histos[-1].Scale(1./histos[-1].Integral())
+			ymin,ymax = getRangeTH1F(histos[-1],ymin,ymax)
+			ratios += [data.Clone('ratio%i'%ih)]
+			ratios[-1].Divide(data,histos[-1])
+
+	canvas.SetLogy(0)
+	if not (data==None or histos==[] or ratios==[]):
+		# containers
+		c1,c2 = getRatioPlotCanvas(canvas)
+		c1.SetLogy(0)
+		# draw (top)
+		c1.cd()
+		print ymin,ymax
+		setRangeTH1F(data,ymin,ymax,False)
+		data.SetTitle("")
+		data.Draw()
+		for h in histos:
+			h.Draw("histsame")
+		# draw (bottom)
+		c2.cd()
+		for ir,r in enumerate(ratios):
+			setStyleTH1Fratio(r)
+			r.GetYaxis().SetNdivisions(603)
+			r.SetLineWidth(2)
+			r.GetYaxis().SetRangeUser(0.0,min(round(r.GetBinContent(r.GetMaximumBin())*1.2,0),5))
+			if ir==0: r.Draw('hist')
+			r.Draw('histsame')
+		# line through y=1
+		gPad.Update()
+		line = TLine(gPad.GetUxmin(),1.0,gPad.GetUxmax(),1.0)
+		line.SetLineWidth(2)
+		line.SetLineColor(kBlack)
+		line.Draw("same")
+		c1.cd()
+	else:
+		canvas.cd()
+		# draw (top only)
+		setRangeTH1F(data,ymin,ymax,False)
+		data.Draw()
+		for h in histos:
+			h.Draw("same")
+	# draw legend/textinfo
+	legend.Draw()
+	text.Draw()
+
+	# save
+	gDirectory.cd('%s:/'%fout.GetName())
+	path = '%s/%s%s/%s_%s'%('plots',weightpars,'normalized',selname,trgname)
+	makeDirsRoot(fout,path)
+	gDirectory.cd(path)
+	
+	# var2: strip off the path and the suffix, keep the basename
+	path = '%s/%s/%s%s/%s_%s'%('plots',os.path.split(fout.GetName())[1][:-5],weightpars,'normalized',selname,trgname)
+	makeDirs(path)
+
+	canvas.SetName("c%s"%bkgStack.GetName()[4:])
+	canvas.SetTitle(canvas.GetName())
+	canvas.SaveAs('%s/%s.png'%(path, canvas.GetName()))
+	canvas.SaveAs('%s/%s.pdf'%(path, canvas.GetName()))
+	print
+	if opts.debug: l3("%sWritten plots to: %s%s"%(yellow,'%s/%s.png'%(path, canvas.GetName()),plain))
+	gDirectory.cd('%s:/'%fout.GetName())
+	canvas.Close()
+
+
 
 
 
@@ -306,7 +487,7 @@ def mkHist():
 	opts,samples,variables,loadedSamples,fout = main.main(parser())
 
 	# check actions
-	if not (opts.fill or opts.draw or opts.redraw or opts.drawstack or opts.redrawstack): sys.exit(red+"Specify either fill, draw, redraw, drawstack or redrawstack option to run. Exiting."+plain) 
+	if not (opts.fill or opts.draw or opts.redraw or opts.drawstack or opts.redrawstack or opts.drawnormalized or opts.redrawnormalized): sys.exit(red+"Specify either fill, draw, redraw, drawstack, redrawstack, drawnormalized or redrawnormalized option to run. Exiting."+plain) 
 	
 	if opts.KFWght or len(opts.weight)==4: l1("Including KFWght calculations or manual KFWght.")
 	# fill histograms and save
@@ -328,6 +509,9 @@ def mkHist():
 				if opts.drawstack or opts.redrawstack: 
 					do_drawstack(opts,fout,loadedSamples,v,sel,trg,KFWght)
 					print 
+				if opts.drawnormalized or opts.redrawnormalized:
+					do_drawnormalized(opts,fout,loadedSamples,v,sel,trg,KFWght)
+					print
 				### END LOOP over samples
 			### END LOOP over variables
 		### END LOOP over selections

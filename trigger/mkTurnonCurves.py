@@ -114,20 +114,20 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 
 	# legend
 	columns = 1 #ceil(len(samples)/4.)
-	rows    = 1 #ceil(len(samples)/columns)
+	rows    = 2 #ceil(len(samples)/columns)
 	left    = gPad.GetLeftMargin()+0.02
-	bottom  = 1-gPad.GetTopMargin()-0.02 - (0.04*rows) # n rows sized 0.04
+	bottom  = 1-gPad.GetTopMargin()-0.02 - (0.05*rows) # n rows sized 0.05
 	right   = gPad.GetLeftMargin()+0.02 + (0.12*columns) # n columns width 0.12
 	top     = 1-gPad.GetTopMargin()-0.02
-	legend  = getTLegend(left,bottom,right,top,columns)
+	legend  = getTLegend(left,bottom,right,top,columns,None,0,1,0.035)
 
 	# info text
 	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']])]) # counting lines about weights + 1 for vbfHbb tag 
 	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
 	right  = 1-gPad.GetRightMargin()-0.02
 	top    = 1-gPad.GetTopMargin()
-	bottom = 1-gPad.GetTopMargin() - (0.04*rows) # n rows size 0.04
-	text = getTPave(left,bottom,right,top)
+	bottom = 1-gPad.GetTopMargin() - (0.05*rows) # n rows size 0.05
+	text = getTPave(left,bottom,right,top,None,0,0,1,0.035)
 	text.AddText("VBF H #rightarrow b#bar{b}: #sqrt{s} = 8 TeV (2012)")
 	if not opts.weight==[[''],['']] and 'LUMI' in opts.weight[1]: text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
@@ -201,13 +201,9 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 		ratio[kstack].Divide(stack['Num'].GetStack().Last(),stack['Den'].GetStack().Last(),1.0,1.0,'B')
 		setStyleTH1F(ratio[kstack],allcolours[kstack],1,allcolours[kstack],0,allcolours[kstack],20)
 		print 
-		#ymin, ymax = getRangeTH1F(ratio[kstack],ymin,ymax)
-		#setRangeTH1F(ratio[kstack],ymin,ymax,False)
-		setRangeTH1F(ratio[kstack],0,0.15/1.3,False)
+		ymin, ymax = getRangeTH1F(ratio[kstack],ymin,ymax)
+		setRangeTH1F(ratio[kstack],0.0,1.2,False)
 		legend.AddEntry(ratio[kstack],kstack,'L')
-#		canvas.cd()
-#		ratio[kstack].Draw("" if istack==0 else "same")
-#		istack += 1
 		stack['Rat'] = dc(ratio[kstack])
 
 		# write histogram to file
@@ -235,6 +231,8 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 		# draw (bottom)
 		c2.cd()
 		setStyleTH1Fratio(ratioplot)
+		ratioplot.SetTitleOffset(5.5,'X')
+		ratioplot.SetLabelOffset(0.035,'X')
 		ratioplot.Draw('e0')
 		ratioplot.Draw('psame')
 		# line through y=1

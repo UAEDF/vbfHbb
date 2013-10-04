@@ -50,7 +50,7 @@ def getKFWght(opts,loadedSamples,sel,trg):
 	#	print cut
 	#	print cyan, s['tag'], 'added to:',
 		### Data
-		if 'Data' in s['tag']:
+		if 'Data' in s['tag'] or 'DataV' in s['tag']:
 #			inroot('nDat += (%s.count("%s"))*(%s);'%(s['pointer'],cut,weight))
 			inroot('%s.draw("%s","%s","%s")'%(s['pointer'],ROOT.hDat.GetName(),"0.5",cut))
 	#		print 'Data'
