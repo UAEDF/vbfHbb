@@ -27,6 +27,7 @@ def parser(mp=None):
 	mgj.add_option('-C','--jsoncuts',help="File name for json with cut info.",dest='jsoncuts',default="%s/vbfHbb_cuts.json"%(basepath),type='str')
 	mgj.add_option('-I','--jsoninfo',help="File name for json with general info.",dest='jsoninfo',default="%s/vbfHbb_info.json"%(basepath),type='str')
 	mgj.add_option('-G','--globalpath',help="Global prefix for samples.",dest='globalpath',default="",type='str')
+	mgj.add_option('-F','--fileformat',help="File format for samples (1: 2012, 2: 2013).",dest='fileformat',default=1,type='int')
 
 	mgr = OptionGroup(mp,cyan+"root settings"+plain)
 	mgr.add_option('-o','--fout',help="File name for output file.",dest='fout',default='rootfiles/vbfHbb.root',type='str')
@@ -97,7 +98,7 @@ def convertSamples(opts,samples):
 	for sample in samples.itervalues():
 		sname = opts.globalpath+'/'+sample['fname'][:-5]+'_reformatted.root'
 		if (not os.path.exists(sname)): 
-			inroot('reformat("%s/%s",variables)'%(opts.globalpath,sample['fname']))
+			inroot('reformat("%s/%s",variables,%s)'%(opts.globalpath,sample['fname'],str(opts.fileformat)))
 			sys.exit(red+"Sample reformat function was needed first. Rerun for actual plotting (or more converting)."+plain)
 
 

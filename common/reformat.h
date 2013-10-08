@@ -8,11 +8,12 @@
 
 class reformat {
 	public:
-		reformat(TString, vector<TString>);
+		reformat(TString, vector<TString>, int);
 		~reformat();
 
 	private:
 		TFile *fnew, *fold;
 		TTree *tnew, *told;
 		TString nnew, nold;
+		int format;
 };
