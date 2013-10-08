@@ -120,8 +120,8 @@ def getYields(opts,loadedSamples):
 			for sample in loadedSamples: 
 				cut,cutlabel = write_cuts(sel,trg,sample=sample['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,trigequal=('49' if not opts.usebool else '1'))
 				l3("Cut: %s%s%s: %s"%(blue,cutlabel,plain,cut))
-				nCount = inroot('%s.count("%s")'%(s['pointer'],cut))  
-				l3("Entries: %s%40s%s"%(cyan,nCount,plain))
+				inroot('int nCount = %s.count("%s");'%(sample['pointer'],cut))  
+				l3("Entries: %s%40s%s"%(cyan,ROOT.nCount,plain))
 			print
 
 
