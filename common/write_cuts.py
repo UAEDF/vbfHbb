@@ -98,8 +98,8 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	if not (selold==[] and trgold==[]):
 		if not stgroup:
 			# selection
-			s      = group( seljoin.join( [ group( ' && '.join([ k+v[0]+v[1] for k,v in sorted(selections[si].iteritems(), key=lambda(x,y):x) if not k==varskip ]) ) for si in sel ] ) )
-			scmp   = group( selcmpjoin.join( [ group("! "+group( ' && '.join([ k+v[0]+v[1] for k,v in sorted(selections[si].iteritems(), key=lambda(x,y):x) if not k==varskip ]) )) for si in selcmp ] ) )
+			s      = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections[si].iteritems(), key=lambda(x,y):x) if not k==varskip ]) ) for si in sel ] ) )
+			scmp   = group( selcmpjoin.join( [ group("! "+group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections.iteritems(), key=lambda(x,y):x) if not k==varskip ]) )) for si in selcmp ] ) )
 			if s=='()' : s='(1.)'
 			# trigger
 			t      = group( trgjoin.join( [ get_trigger(triggers[x],kwargs['sample'],kwargs['jsonsamp'],trigequal) for x in trg ] ) )
@@ -117,13 +117,14 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 			stlabels = group(' && '.join([x for x in [slabels,scmplabels,tlabels,tcmplabels] if not x=="()"]))
 	
 		else:
-			st        = group( seljoin.join( [ group( ' && '.join([ k+v[0]+v[1] for k,v in sorted(selections[si].iteritems(), key=lambda(x,y):x) if not k==varskip ]+[get_trigger(triggers[si],kwargs['sample'],kwargs['jsonsamp'],trigequal)]) ) for si in (sel if not sel==[] else selold) ] ) )
+			st        = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections.iteritems(), key=lambda(x,y):x) if not k==varskip ]+[get_trigger(triggers,kwargs['sample'],kwargs['jsonsamp'],trigequal)]) ) for si in (sel if not sel==[] else selold) ] ) )
 			stlabels  = group( seljoin.join( [ group('s'+x+' && t'+x) for x in (sel if not sel==[] else selold) ] ) )
 	
 		# reftrig
 		if len(reftrig)>0:
 			rt       = group( ' && '.join( [ get_trigger(triggers[x],kwargs['sample'],kwargs['jsonsamp'],trigequal) for x in reftrig ] ) )
-			rtlabels = group( ' && '.join( [ 't'+x for x in reftrig ] ) )
+			rtlabels = group( ' && '.join( [ 'r'+x for x in reftrig ] ) )
+			if rt=='(())' : rt='(1.)'
 			st       = group( st + ' && ' + rt ) 
 			stlabels = group( stlabels + ' && ' + rtlabels ) 
 
@@ -151,7 +152,10 @@ if __name__=='__main__':
 	mp = parser(main.parser())
 	opts,args = mp.parse_args()
 
-	st, stlabels = write_cuts(opts.selection[0],opts.trigger[0],opts.selcmp,opts.trgcmp,reftrig=opts.reftrig[0],jsoncuts=opts.jsoncuts,sample=opts.use,jsonsamp=opts.jsonsamp,seljoin=opts.seljoin,trgjoin=opts.trgjoin,varskip=opts.skip,selcmpjoin=opts.selcmpjoin,trgcmpjoin=opts.trgcmpjoin,stgroup=opts.stgroup,weight=opts.weight,trigequal=('49' if not opts.usebool else '1'))
+	for sel in opts.selection:
+		for trg in opts.trigger:
+			for ref in opts.reftrig:
+				st, stlabels = write_cuts(sel,trg,opts.selcmp,opts.trgcmp,reftrig=ref,jsoncuts=opts.jsoncuts,sample=opts.use,jsonsamp=opts.jsonsamp,seljoin=opts.seljoin,trgjoin=opts.trgjoin,varskip=opts.skip,selcmpjoin=opts.selcmpjoin,trgcmpjoin=opts.trgcmpjoin,stgroup=opts.stgroup,weight=opts.weight,trigequal=('49' if not opts.usebool else '1'))
 	print st
 	print
 	print stlabels

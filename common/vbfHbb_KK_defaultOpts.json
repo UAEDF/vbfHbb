@@ -1,5 +1,5 @@
 {
-"globalpath:": "/data/UAData/fromKostas/paper2012",
+"globalpath": "/data/UAData/fromKostas/paper2012",
 "jsonsamp": "../common/vbfHbb_samples_KK_2012Paper.json",
 "jsonvars": "../common/vbfHbb_variables_KK_2012Paper.json",
 "jsoncuts": "../common/vbfHbb_cuts.json",

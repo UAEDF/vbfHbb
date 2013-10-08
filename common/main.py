@@ -40,6 +40,7 @@ def parser(mp=None):
 	mgd.add_option('-K','--KFWght',help="Recalculate KFWght from current list of samples.",action='store_true',default=False)
 	mgd.add_option('-B','--BMapWght',help="Recalculate BMapWght from current list of samples. Provide sel, trg and reftrig. Format: (sample) for standard map or (sample,sample) for ratiomap.",action='callback',callback=optsplit,default=[],type='str')
 	mgd.add_option('--usebool',help="Use original trees, not the char ones.",action='store_true',default=False)
+	mgd.add_option('-y','--yields',help='Print yields for each sample for specified sel+trg+cuts',action='store_true',default=False)
 
 	mgst = OptionGroup(mp,cyan+"Run for subselection determined by variable, sample and/or selection/trigger"+plain)
 	mgst.add_option('-v','--variable',help=purple+"Run only for these variables (comma separated)."+plain,dest='variable',default='',type='str',action='callback',callback=optsplit)
@@ -101,6 +102,27 @@ def convertSamples(opts,samples):
 			inroot('reformat("%s/%s",variables,%s)'%(opts.globalpath,sample['fname'],str(opts.fileformat)))
 			sys.exit(red+"Sample reformat function was needed first. Rerun for actual plotting (or more converting)."+plain)
 
+# GET YIELDS #######################################################################################
+def getYields(opts,loadedSamples):
+	l1("Extracting yields:")
+# selection
+	for sel in opts.selection:
+		l1("Selection: %s"%sel)
+# trigger
+		for trg in opts.trigger:
+			l1("Trigger: %s"%trg)
+			# KFWght
+			if opts.KFWght or len(opts.weight)==4: l1("Including KFWght calculations or manual KFWght.")
+			if opts.KFWght: KFWght = getKFWght(opts,loadedSamples,sel,trg)
+			elif len(opts.weight)==4: KFWght = float(opts.weight[3][0])
+			else: KFWght = None
+			# samples
+			for sample in loadedSamples: 
+				cut,cutlabel = write_cuts(sel,trg,sample=sample['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,trigequal=('49' if not opts.usebool else '1'))
+				l3("Cut: %s%s%s: %s"%(blue,cutlabel,plain,cut))
+				nCount = inroot('%s.count("%s")'%(s['pointer'],cut))  
+				l3("Entries: %s%40s%s"%(cyan,nCount,plain))
+			print
 
 
 
@@ -182,6 +204,10 @@ def main(mp=None):
 		if not os.path.exists(opts.weight[2][0]): sys.exit(red+"Check bMapWght file path. Exiting."+plain)
 		
 		loadBMapWght(fout,opts.weight[2][0],opts.weight[2][1])
+
+# print yields
+	if opts.yields:
+		getYields(opts,loadedSamples)
 
 	
 # continue to subprograms
