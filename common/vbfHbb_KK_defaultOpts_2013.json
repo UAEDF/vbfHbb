@@ -1,4 +1,5 @@
 {
+"globalpath": "/data/UAData/fromKostas/autumn2013",
 "jsonsamp": "../common/vbfHbb_samples_KK_2013.json",
 "jsonvars": "../common/vbfHbb_variables_KK_2013.json",
 "jsoncuts": "../common/vbfHbb_cuts.json",

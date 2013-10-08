@@ -26,6 +26,7 @@ def parser(mp=None):
 	mgj.add_option('-V','--jsonvars',help="File name for json with variable info.",dest='jsonvars',default="%s/vbfHbb_variables.json"%(basepath),type='str')
 	mgj.add_option('-C','--jsoncuts',help="File name for json with cut info.",dest='jsoncuts',default="%s/vbfHbb_cuts.json"%(basepath),type='str')
 	mgj.add_option('-I','--jsoninfo',help="File name for json with general info.",dest='jsoninfo',default="%s/vbfHbb_info.json"%(basepath),type='str')
+	mgj.add_option('-G','--globalpath',help="Global prefix for samples.",dest='globalpath',default="",type='str')
 
 	mgr = OptionGroup(mp,cyan+"root settings"+plain)
 	mgr.add_option('-o','--fout',help="File name for output file.",dest='fout',default='rootfiles/vbfHbb.root',type='str')
@@ -69,8 +70,8 @@ def loadSamples(opts,samples):
 		# veto regex in opts.nosample
 		if not opts.nosample==[] and any([(x in sample['tag']) for x in opts.nosample]): continue
 		# configure
-		if not opts.usebool: inroot('sample mysample%i = sample("%s_reformatted.root","Hbb/events",variables);'%(isample,sample['fname'][:-5]))
-		else: inroot('sample mysample%i = sample("%s.root","Hbb/events",variables);'%(isample,sample['fname'][:-5]))
+		if not opts.usebool: inroot('sample mysample%i = sample("%s/%s_reformatted.root","Hbb/events",variables);'%(isample,opts.globalpath,sample['fname'][:-5]))
+		else: inroot('sample mysample%i = sample("%s/%s.root","Hbb/events",variables);'%(isample,opts.globalpath,sample['fname'][:-5]))
 		samplesroot.append({'pointer':'mysample%i'%isample, 'fname':sample['fname'], 'tag':sample['tag'], 'colour':sample['colour']})
 		l2(samplesroot[-1])
 	return samplesroot
@@ -89,14 +90,14 @@ def convertSamples(opts,samples):
 	# remove files if reformat called
 	if opts.reformat:
 		for sample in samples.itervalues():
-			sname = sample['fname'][:-5]+'_reformatted.root'
+			sname = opts.globalpath+'/'+sample['fname'][:-5]+'_reformatted.root'
 			if os.path.exists(sname): os.remove(sname)
 		sys.exit(red+"Reformat function was called. All reformatted trees were removed. Rerun for more converting, but REMOVE the reformat flag (else you'll keep deleting the files)."+plain)
 	# actually reformat trees (one at a time to avoid memory filling up) 
 	for sample in samples.itervalues():
-		sname = sample['fname'][:-5]+'_reformatted.root'
+		sname = opts.globalpath+'/'+sample['fname'][:-5]+'_reformatted.root'
 		if (not os.path.exists(sname)): 
-			inroot('reformat("%s",variables)'%sample['fname'])
+			inroot('reformat("%s/%s",variables)'%(opts.globalpath,sample['fname']))
 			sys.exit(red+"Sample reformat function was needed first. Rerun for actual plotting (or more converting)."+plain)
 
 
