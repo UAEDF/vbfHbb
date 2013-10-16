@@ -23,6 +23,7 @@ class weightFactory:
 			if iWght == 'LUMI' : self.addLUWght(sample_tag)
 			if iWght == 'KFAC' : self.addKFWght(sample_tag)
 			if iWght == 'BMAP' : self.addBMWght(sample_tag)
+			if iWght == 'TRSF' : self.addTRWght(sample_tag)
 		return self.wOut
 
 	def addPUWght(self,tag):
@@ -45,6 +46,9 @@ class weightFactory:
 		for iFile in self.samples["files"]:
 		   if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 :  self.wOut += '*bMapWght(jetBtag[btagIdx[0]],jetBtag[btagIdx[1]])'
 
+	def addTRWght(self,tag):
+		for iFile in self.samples["files"]:
+			if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 : self.wOut += '*0.85'
 
 
 # Examples:

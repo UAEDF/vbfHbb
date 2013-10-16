@@ -10,6 +10,8 @@ import ROOT
 from ROOT import *
 sys.argv = tempargv
 
+from copy import deepcopy as dc
+
 
 # PRINTING #########################################################################################
 def l1(text):
@@ -62,7 +64,19 @@ def setdefaults(option,opt,value,parser):
 	for ok,oval in jsondefaults.iteritems():
 		if '.json' in oval: oval = os.path.join(basepath,oval)
 		setattr(parser.values, ok, oval)
-		l2("Set from opts file: %s --> %s"%(ok,oval))
+		l2("Set from opts file: %s --> %s"%(ok,oval))		
+	globalpath=''
+	try:
+		if any(['schrodinger' in x for x in os.uname()]) and parser.values.fileformat=='1': globalpath = '/data/UAData/fromKostas/paper2012'
+		if any(['schrodinger' in x for x in os.uname()]) and parser.values.fileformat=='2': globalpath = '/data/UAData/fromKostas/autumn2013'
+		if os.getlogin()=='xjanssen' and parser.values.fileformat=='1': globalpath = '/Users/xjanssen/cms/vbfHbb2012/vbfHbb_flattree/KK_Paper'
+		if os.getlogin()=='xjanssen' and parser.values.fileformat=='2': globalpath = '/Users/xjanssen/cms/vbfHbb2012/vbfHbb_ParkAna_flattree/v0'
+		if any(['lxplus' in x for x in os.uname()]) and os.getlog()=='salderwe' and parser.values.fileformat=='1': globalpath='/afs/cern.ch/work/s/salderwe/groups/Hbb/paper2012'
+		if any(['lxplus' in x for x in os.uname()]) and os.getlog()=='salderwe' and parser.values.fileformat=='2': globalpath='/afs/cern.ch/work/s/salderwe/groups/Hbb/autumn2013'
+	except:
+		pass	
+	setattr(parser.values, 'globalpath', globalpath)
+	if not globalpath=='': l2("Set default: %s --> %s"%('globalpath',globalpath))
 
 # SAVING HELPER FUNCTIONS ##########################################################################
 def makeDirsRoot(fout,ndir):
@@ -161,3 +175,62 @@ def write_bMapWght(bMapWghtFile='%s/bMapWght.root'%basepath):
 	print "double csvBins[5] = {%s};"%(','.join([str(x) for x in bmaplabels]))
 	print "double trig_eff[4][4] = %s;"%json.dumps(bmaparray).replace('[','{').replace(']','}')
 
+
+
+
+# CLOSE BRACKETS OF STRING #########################################################################
+def closeBrackets(text):
+	nLeft = text.count('(')
+	nRight = text.count(')')
+	if nLeft>nRight: text += ")"*(nLeft-nRight)
+	if nRight>nLeft: text  = "("*(nRight-nLeft) + text	
+	return text
+
+# NAMING STRING CREATION ###########################################################################
+def getNames(opts,sample,var,sel,trg,ref):
+	names = {}
+# selection and trigger
+	names['sel'] = 's'+'-'.join(sel)
+	names['trg'] = 't'+'-'.join(trg)
+	names['trg-data'] = 'd'+'-'.join(trg) if opts.datatrigger==[] else 'd'+'-'.join(opts.datatrigger[opts.trigger.index(trg)])
+	names['ref'] = 'r'+'-'.join(ref)
+# variables
+	names['var'] = var['var']
+# samples
+	jsoninfo = json.loads(filecontent(opts.jsoninfo))
+#	names['sample'] = sample['pointer']
+	names['tag']    = sample['tag'] if sample else "global"
+	names['group']  = jsoninfo['groups'][names['tag']] if sample else "global"
+# histograms
+	names['hist']   = '_'.join(['h',names['var']+"-B%s-%s-%s"%(var['nbins_x'],var['xmin'],var['xmax']),names['group'],names['tag'],names['sel'],names['trg'],names['trg-data'],names['ref']])
+	names['hist-title'] = names['hist']+";%s;%s"%(var['title_x'],var['title_y'])
+	names['stack-sig'] = '_'.join(['ssig',names['var']+"-B%s-%s-%s"%(var['nbins_x'],var['xmin'],var['xmax']),names['sel'],names['trg'],names['trg-data'],names['ref']])
+	names['stack-bkg'] = '_'.join(['sbkg',names['var']+"-B%s-%s-%s"%(var['nbins_x'],var['xmin'],var['xmax']),names['sel'],names['trg'],names['trg-data'],names['ref']])
+	names['stack-dat'] = '_'.join(['sdat',names['var']+"-B%s-%s-%s"%(var['nbins_x'],var['xmin'],var['xmax']),names['sel'],names['trg'],names['trg-data'],names['ref']])
+	names['stack-sig-title'] = names['stack-sig']+";%s;%s"%(var['title_x'],var['title_y'])
+	names['stack-bkg-title'] = names['stack-bkg']+";%s;%s"%(var['title_x'],var['title_y'])
+	names['stack-dat-title'] = names['stack-dat']+";%s;%s"%(var['title_x'],var['title_y'])
+# paths
+	names['path-hist'] = "%s/%s"%('_'.join([x for x in [names['group'],names['tag']] if not x==""]),'_'.join([x for x in [names['sel'],names['trg']] if not x==""]))
+	return names
+
+# WEIGHT INFO ######################################################################################
+def weightInfo(weights,KFWght=None):
+	if weights==[[''],['']]: return 'NONE'
+	else: return ('-'.join(sorted(weights[1]))).replace('KFAC','KFAC%s'%("%.2f"%KFWght if KFWght else 'def')) 
+
+# TRIGTRUTH ########################################################################################
+def trigTruth(usebool):
+	if usebool: return '1'
+	else: return '49'
+
+def trigData(opts,s,trg):
+	#print "in: ",trg
+	if (not s==None) and (not opts.datatrigger==[]) and any([x in s['tag'] for x in ['Data','DataV','JetMon']]):
+		trg_orig = dc(trg)
+		trg = opts.datatrigger[opts.trigger.index(trg)]
+	else:
+		trg_orig = dc(trg)
+	#print "out: ",trg,trg_orig
+	return trg, trg_orig
+	

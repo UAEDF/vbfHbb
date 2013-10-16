@@ -39,37 +39,30 @@ def getKFWght(opts,loadedSamples,sel,trg):
 	for s in loadedSamples:
 		### Skip some
 		if any([x in s['tag'] for x in ['JetMon','VBF','GluGlu']]): continue
+		if opts.debug: l3("%sSample: %s%s"%(purple,s['tag'],plain))
 		### Clean some
 		if opts.debug and 'KFAC' in opts.weight[1]: l3("Option specified k-factor ignored in k-factor calculation.")
 		opts.weightlocal = dc(opts.weight)
 		opts.weightlocal[1] = list(set(opts.weight[1])-set(['KFAC']))
 		### Get cut and weight
-		cut = write_cuts(sel,trg,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weightlocal,trigequal=('49' if not opts.usebool else '1'))[0]
-#		wf = weightFactory(opts.jsonsamp,opts.weight[0][0] if not opts.weight[0][0]=='' else '19000')
-#		weight = wf.getFormula(','.join(['XSEC','LUMI']),s['tag']) 
-	#	print cut
-	#	print cyan, s['tag'], 'added to:',
+		trg,trg_orig = trigData(opts,s,trg)
+		cut = write_cuts(sel,trg,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weightlocal,trigequal=trigTruth(opts.usebool))[0]
+		trg = dc(trg_orig)
+		if opts.debug: l3("Cut: %s"%cut)
 		### Data
 		if 'Data' in s['tag'] or 'DataV' in s['tag']:
-#			inroot('nDat += (%s.count("%s"))*(%s);'%(s['pointer'],cut,weight))
 			inroot('%s.draw("%s","%s","%s")'%(s['pointer'],ROOT.hDat.GetName(),"0.5",cut))
-	#		print 'Data'
 		### QCD 
 		elif 'QCD' in s['tag']:
-#			inroot('nQCD += (%s.count("%s"))*(%s);'%(s['pointer'],cut,weight))
 			inroot('%s.draw("%s","%s","%s")'%(s['pointer'],ROOT.hQCD.GetName(),"0.5",cut))
-	#		print 'QCD'
 		### Bkg
 		else:
-#			inroot('nBkg += (%s.count("%s"))*(%s);'%(s['pointer'],cut,weight))
 			inroot('%s.draw("%s","%s","%s")'%(s['pointer'],ROOT.hBkg.GetName(),"0.5",cut))
-	#		print 'Bkg'
-	#	print plain
 	#	print "Data: %8.2f  | Bkg: %8.2f  | QCD: %8.2f"%(ROOT.hDat.Integral(),ROOT.hBkg.Integral(),ROOT.hQCD.Integral())
 	### finish
-	#KFWght = (ROOT.nDat-ROOT.nBkg)/ROOT.nQCD
 	KFWght = (ROOT.hDat.Integral()-ROOT.hBkg.Integral())/ROOT.hQCD.Integral()
-	l2("KFWght calculated at: %f"%KFWght)
+	inroot('delete hDat; delete hQCD; delete hBkg;')
+	if opts.debug: l2("KFWght calculated at: %f"%KFWght)
 	return KFWght
 
 def getBMapWght(opts,fout,samples,sel,trg,reftrig):
@@ -91,7 +84,7 @@ def getBMapWght(opts,fout,samples,sel,trg,reftrig):
 		for s in samples:
 			if not tag=='Rat': 
 				inroot('t = (TTree*)%s.gett();'%s['pointer'])
-				cuts['Num'] = write_cuts(sel,trg,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,reftrig=reftrig,trigequal=('49' if not opts.usebool else '1'))[0]
+				cuts['Num'] = write_cuts(sel,trg if (opts.datatrigger==[] or not ('Data' in s['tag'] or 'JetMon' in s['tag'])) else opts.datatrigger[opts.trigger.index(trg)],sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,reftrig=reftrig,trigequal=('49' if not opts.usebool else '1'))[0]
 				cuts['Den'] = write_cuts(sel,['NONE'],sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,reftrig=reftrig,trigequal=('49' if not opts.usebool else '1'))[0]
 				wf = weightFactory(opts.jsonsamp,opts.weight[0][0] if not opts.weight[0][0]=='' else '19000')
 				weight = wf.getFormula(','.join(opts.weight[1] if not opts.weight[1]==[''] else ['XSEC','LUMI']),s['tag']) 

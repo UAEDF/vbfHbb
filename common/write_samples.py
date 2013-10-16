@@ -21,7 +21,7 @@ class info:
 		self.content = {}
 		self.content['files'] = {}
 		self.content['other'] = []
-		self.content['fields'] = {'fname':100,'npassed':12,'xsec':12,'scale':15,'tag':8,'trigger':25,'colour':8} # field lengths
+		self.content['fields'] = {'fname':60,'npassed':12,'xsec':12,'scale':15,'tag':8,'trigger':25,'colour':8} # field lengths
 		self.content['trigger'] = ['HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v* OR HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v* OR HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v* OR HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v* OR HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v*','HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v*','HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v*','HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v*','HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_DiJet35_MJJ650_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ700_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ750_AllJets_DEta3p5_VBF_v*','HLT_QuadJet50_v*','HLT_PFJet80_v*']
 		self.read_info()
 
@@ -82,7 +82,7 @@ class info:
 						found=True
 						break
 				if not found: trigarray.append('-')
-			fields[0] = iname
+			fields[0] = os.path.split(iname)[1]
 			fields[1] = "%i"%npassed
 			done = False
 			if fields[0] in self.content['files']: pass

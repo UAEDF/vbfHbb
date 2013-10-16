@@ -44,9 +44,9 @@ def do_fill(opts,fout,s,v,sel,trg,reftrig,KFWght=None):
 	cuts = {}
 	canvas = TCanvas("cfill","cfill",2400,1800)
 	# cut
-	cuts['Num'],cutlabelnum = write_cuts(sel,trg,reftrig=reftrig,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,varskip=v['root'],trigequal=('49' if not opts.usebool else '1'))
+	cuts['Num'],cutlabelnum = write_cuts(sel,trg,reftrig=reftrig,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,varskip=opts.skip+[v['root']],trigequal=('49' if not opts.usebool else '1'))
 	if opts.debug: l3("Cut numerator: %s%s%s: %s"%(blue,cutlabelnum,plain,cuts['Num']))
-	cuts['Den'],cutlabelden = write_cuts(sel,reftrig=reftrig,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,varskip=v['root'],trigequal=('49' if not opts.usebool else '1'))
+	cuts['Den'],cutlabelden = write_cuts(sel,reftrig=reftrig,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,varskip=opts.skip+[v['root']],trigequal=('49' if not opts.usebool else '1'))
 	if opts.debug: l3("Cut denominator: %s%s%s: %s"%(blue,cutlabelden,plain,cuts['Den']))
 
 	for itag,icut,isel,itrg in [('Num',cuts['Num'],sel,trg),('Den',cuts['Den'],sel,['None'])]:
@@ -101,6 +101,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 	# names
 	selname = 's'+'-'.join(sel)
 	trgname = 't'+'-'.join(trg)
+	trgnamedata = 't'+'-'.join(trg) if (opts.datatrigger==[]) else 't'+'-'.join(opts.datatrigger[opts.trigger.index(trg)])
 	refname = 'r'+'-'.join(reftrg)
 	if not opts.weight == [[''],['']]: weightpars = ('-'.join(sorted(opts.weight[1]))+'/').replace('KFAC','KFAC%s'%("%.2f"%KFWght if KFWght else 'def'))
 	else: weightpars = 'NONE/'
@@ -153,18 +154,18 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 		if not group in allstacks:
 			stackname = {}
 			stack = {}
-			stackname['Num'] = '_'.join(['turnonCurveNum',v['var'],group,selname,trgname,refname])
+			stackname['Num'] = '_'.join(['turnonCurveNum',v['var'],group,selname,trgname if not ('Data' in s['tag'] or 'JetMon' in s['tag']) else trgnamedata,refname])
 			stack['Num'] = THStack(stackname['Num'],"%s;%s;%s"%(stackname['Num'],v['title_x'],v['title_y']))
-			stackname['Den'] = '_'.join(['turnonCurveDen',v['var'],group,selname,trgname,refname])
+			stackname['Den'] = '_'.join(['turnonCurveDen',v['var'],group,selname,trgname if not ('Data' in s['tag'] or 'JetMon' in s['tag']) else trgnamedata,refname])
 			stack['Den'] = THStack(stackname['Den'],"%s;%s;%s"%(stackname['Den'],v['title_x'],v['title_y']))
 			histos = {'Num': [], 'Den': []}
 			allcolours[group] = jsoninfo['colours'][s['tag']]
 
 		hload = {}
 		hname = {}
-		hname['Num'] = '_'.join(['hNum',v['var'],s['tag'],selname,trgname,refname])
+		hname['Num'] = '_'.join(['hNum',v['var'],s['tag'],selname,trgname if not ('Data' in s['tag'] or 'JetMon' in s['tag']) else trgnamedata,refname])
 		hname['Den'] = '_'.join(['hDen',v['var'],s['tag'],selname,'tNone',refname])
-		hname['Rat'] = '_'.join(['hRat',v['var'],group,selname,trgname,refname])
+		hname['Rat'] = '_'.join(['hRat',v['var'],group,selname,trgname if not ('Data' in s['tag'] or 'JetMon' in s['tag']) else trgnamedata,refname])
 		allstacknames[group] = dc(hname)
 		allstacks[group] = {}
 		# get histograms
@@ -181,7 +182,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 				if not (opts.redraw or opts.redrawstack): l3("%s%s doesn\'t exist. Filling first.%s"%(red,fullpath,plain))
 				elif (opts.redraw or opts.redrawstack) and tag=='Den': l3("%sLoading %s since it was redrawn with 'Num'.%s"%(red,fullpath,plain))
 				else: l3("%sRedrawing %s first.%s"%(red,fullpath,plain))
-				if not ((opts.redraw or opts.redrawstack) and tag=='Den'): do_fill(opts,fout,s,v,sel,trg,reftrg,KFWght)
+				if not ((opts.redraw or opts.redrawstack) and tag=='Den'): do_fill(opts,fout,s,v,sel,trg if (opts.datatrigger==[] or not ('Data' in s['tag'] or 'JetMon' in s['tag'])) else opts.datatrigger[opts.trigger.index(trg)],reftrg,KFWght)
 				hload[tag] = gDirectory.Get(fullpath)
 			if opts.debug: l3("%sLoaded: %40s(N=%9d, Int=%9d)%s"%(yellow,hload[tag].GetName(),hload[tag].GetEntries(),hload[tag].Integral(),plain))
 			histos[tag] += [hload[tag]]
@@ -288,7 +289,7 @@ def mkTurnonCurves():
 						if opts.fill or opts.draw or opts.redraw: 
 							print
 							l2("Sample: %s"%s['tag'])
-						if opts.fill: do_fill(opts,fout,s,v,sel,trg,reftrg,KFWght)
+						if opts.fill: do_fill(opts,fout,s,v,sel,trg if (opts.datatrigger==[] or not ('Data' in s['tag'] or 'JetMon' in s['tag'])) else opts.datatrigger[opts.trigger.index(trg)],reftrg,KFWght)
 					if opts.drawstack or opts.redrawstack: 
 						do_drawstack(opts,fout,loadedSamples,v,sel,trg,reftrg,KFWght)
 						print 

@@ -20,7 +20,10 @@ void sample::draw(TString h, TString var, TString cut) {
 }
 
 float sample::count(TString cut) {
-	float n = t->GetEntries(TCut(cut.Data()));
+	//float n = t->GetEntries(TCut(cut.Data()));
+	t->Draw("1.>>hcount",TCut(cut.Data()));
+	TH1F *h = (TH1F*)gDirectory->Get("hcount");
+	float n = h->Integral();
 	return n;
 }
 

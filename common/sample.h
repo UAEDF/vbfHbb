@@ -4,6 +4,7 @@
 #include "TString.h"
 #include "TCut.h"
 #include "TDirectory.h"
+#include "TH1F.h"
 
 #include <iostream>
 #include <iomanip>

@@ -1,7 +1,0 @@
-{
-"jsonsamp": "../common/vbfHbb_samples_KK_2012May.json",
-"jsonvars": "../common/vbfHbb_variables_KK_2012May.json",
-"jsoncuts": "../common/vbfHbb_cuts.json",
-"jsoninfo": "../common/vbfHbb_info_KK.json",
-"debug": "True"
-}
