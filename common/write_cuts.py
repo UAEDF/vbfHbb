@@ -15,7 +15,6 @@ today=datetime.date.today().strftime('%Y%m%d')
 ####################################################################################################
 def get_trigger(trigs,sample,samplejson,trigequal="49",trigjoin=" || "):
 	content = json.loads(filecontent(samplejson))
-	#print trigs
 	samplename = [x for x,y in content['files'].iteritems() if y['tag']==sample][0]
 	trg = group( trigjoin.join( ["triggerResult[%s]==%s"%(content['files'][samplename]['trigger'].split(',')[content['trigger'].index(x)],trigequal) for x in trigs] ))
 	if "triggerResult[-]" in trg: sys.exit('  %sUnknown trigger in trigger string. Check! Exiting.\n  --> %s (from %s)%s'%(red,trg,','.join(trigs),plain))
@@ -68,8 +67,8 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	cuts = json.loads(filecontent(kwargs["jsoncuts"]))
 	selections = cuts['sel']
 	triggers = cuts['trg']
-	selnew = dc(list(set(sel)-set(['NONE'])))
-	trgnew = dc(list(set(trg)-set(['NONE'])))
+	selnew = dc(list(set(sel)-set(['None'])))
+	trgnew = dc(list(set(trg)-set(['None'])))
 	selold = sel
 	trgold = trg
 	sel = selnew
@@ -98,7 +97,7 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	if not (selold==[] and trgold==[]):
 		if not stgroup:
 			# selection
-			s      = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections[si].iteritems(), key=lambda(x,y):x) if not k in varskip ]) ) for si in sel ] ) )
+			s      = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections[si].iteritems(), key=lambda(x,y):x) if not k in varskip ]) ) for si in sel ] ) ).replace(' && ()','').replace('() &&','')
 			scmp   = group( selcmpjoin.join( [ group("! "+group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections.iteritems(), key=lambda(x,y):x) if not k in varskip ]) )) for si in selcmp ] ) )
 			if s=='()' : s='(1.)'
 			# trigger
@@ -128,7 +127,7 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 			st       = group( st + ' && ' + rt ) 
 			stlabels = group( stlabels + ' && ' + rtlabels ) 
 
-	# when only NONE for sel/trg
+	# when only None for sel/trg
 	else:
 		st=group("1.")
 		stlabels=group("1.")

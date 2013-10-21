@@ -22,10 +22,10 @@ class info:
 		self.content['files'] = {}
 		self.content['other'] = []
 		self.content['fields'] = {'fname':60,'npassed':12,'xsec':12,'scale':15,'tag':8,'trigger':25,'colour':8} # field lengths
-		self.content['trigger'] = ['HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v* OR HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v* OR HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v* OR HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v* OR HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v*','HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v*','HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v*','HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v*','HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_DiJet35_MJJ650_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ700_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ750_AllJets_DEta3p5_VBF_v*','HLT_QuadJet50_v*','HLT_PFJet80_v*']
+		self.content['trigger'] = ['HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v* OR HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v* OR HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v* OR HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v* OR HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v*','HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v*','HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v*','HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v*','HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_DiJet35_MJJ650_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ700_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ750_AllJets_DEta3p5_VBF_v*','HLT_QuadJet50_v*','HLT_PFJet80_v*','HLT_DiPFJetAve80_v*']
 		self.read_info()
 
-	def print_info(self):
+	def print_info(self):	
 		l1("Printing content for %s"%self.oname)
 		l2("samples:")
 		if len(self.content['files'])>0:

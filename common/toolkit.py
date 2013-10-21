@@ -109,6 +109,13 @@ def getTPave(left,bottom,right,top,rows=None,fillColor=0,fillStyle=0,textColor=1
 	text.SetBorderSize(0)
 	return text
 
+def getTLine(x1,y1,x2,y2,color=616,width=5,style=9):
+	line = TLine(x1,y1,x2,y2)
+	line.SetLineColor(color)
+	line.SetLineWidth(width)
+	line.SetLineStyle(style)
+	return line
+
 def setStyleTH1F(h,lineColor=1,lineStyle=1,fillColor=0,fillStyle=0,markerColor=1,markerStyle=0,lineWidth=3,markerSize=3):
 	h.SetLineColor(lineColor)
 	h.SetLineStyle(lineStyle)
@@ -148,7 +155,8 @@ def setStyleTH1Fratio(h):
 	h.SetTitle("")
 	h.GetYaxis().SetTitle('Data / MC')
 	#h.GetYaxis().SetRangeUser(0.5,1.5)
-	h.GetYaxis().SetRangeUser(0.0,2.0)
+	#h.GetYaxis().SetRangeUser(0.0,2.0)
+	h.GetYaxis().SetRangeUser(0.25,1.25)
 	h.GetYaxis().SetNdivisions(505)
 	# fonts & offsets
 	h.SetTitleOffset(4.75,'X')
@@ -187,12 +195,12 @@ def closeBrackets(text):
 	return text
 
 # NAMING STRING CREATION ###########################################################################
-def getNames(opts,sample,var,sel,trg,ref):
+def getNames(opts,sample,var,sel,trg,ref,extra=""):
 	names = {}
 # selection and trigger
 	names['sel'] = 's'+'-'.join(sel)
 	names['trg'] = 't'+'-'.join(trg)
-	names['trg-data'] = 'd'+'-'.join(trg) if opts.datatrigger==[] else 'd'+'-'.join(opts.datatrigger[opts.trigger.index(trg)])
+	names['trg-data'] = 'd'+'-'.join(trg) if (opts.datatrigger==[] or trg==['None']) else 'd'+'-'.join(opts.datatrigger[opts.trigger.index(trg)])
 	names['ref'] = 'r'+'-'.join(ref)
 # variables
 	names['var'] = var['var']
@@ -202,21 +210,27 @@ def getNames(opts,sample,var,sel,trg,ref):
 	names['tag']    = sample['tag'] if sample else "global"
 	names['group']  = jsoninfo['groups'][names['tag']] if sample else "global"
 # histograms
-	names['hist']   = '_'.join(['h',names['var']+"-B%s-%s-%s"%(var['nbins_x'],var['xmin'],var['xmax']),names['group'],names['tag'],names['sel'],names['trg'],names['trg-data'],names['ref']])
+	binningstring = "-B%s-%s-%s"%(var['nbins_x'],var['xmin'],var['xmax'])
+	names['hist']   = '_'.join(['h'+extra,names['var']+binningstring,names['group'],names['tag'],names['sel'],names['trg'],names['trg-data'],names['ref']])
 	names['hist-title'] = names['hist']+";%s;%s"%(var['title_x'],var['title_y'])
-	names['stack-sig'] = '_'.join(['ssig',names['var']+"-B%s-%s-%s"%(var['nbins_x'],var['xmin'],var['xmax']),names['sel'],names['trg'],names['trg-data'],names['ref']])
-	names['stack-bkg'] = '_'.join(['sbkg',names['var']+"-B%s-%s-%s"%(var['nbins_x'],var['xmin'],var['xmax']),names['sel'],names['trg'],names['trg-data'],names['ref']])
-	names['stack-dat'] = '_'.join(['sdat',names['var']+"-B%s-%s-%s"%(var['nbins_x'],var['xmin'],var['xmax']),names['sel'],names['trg'],names['trg-data'],names['ref']])
+	names['stack-sig'] = '_'.join(['ssig',names['var']+binningstring,names['sel'],names['trg'],names['trg-data'],names['ref']])
+	names['stack-bkg'] = '_'.join(['sbkg',names['var']+binningstring,names['sel'],names['trg'],names['trg-data'],names['ref']])
+	names['stack-dat'] = '_'.join(['sdat',names['var']+binningstring,names['sel'],names['trg'],names['trg-data'],names['ref']])
 	names['stack-sig-title'] = names['stack-sig']+";%s;%s"%(var['title_x'],var['title_y'])
 	names['stack-bkg-title'] = names['stack-bkg']+";%s;%s"%(var['title_x'],var['title_y'])
 	names['stack-dat-title'] = names['stack-dat']+";%s;%s"%(var['title_x'],var['title_y'])
+	names['stack'] = '_'.join(['hTurnon'+extra,names['var']+binningstring,names['group'],names['tag'],names['sel'],names['trg'],names['trg-data'],names['ref']])
+	names['stack-title'] = names['stack']+";%s;%s"%(var['title_x'],var['title_y'])
+	names['turnon']   = '_'.join(['t',names['var']+binningstring,names['group'],names['tag'],names['sel'],names['trg'],names['trg-data'],names['ref']])
+	names['turnon-title'] = names['turnon']+";%s;%s"%(var['title_x'],'Trigger Efficiency (N-1 Cuts)') 
 # paths
 	names['path-hist'] = "%s/%s"%('_'.join([x for x in [names['group'],names['tag']] if not x==""]),'_'.join([x for x in [names['sel'],names['trg']] if not x==""]))
+	names['path-turnon'] = "%s/%s"%('_'.join([x for x in [names['group'],names['tag']] if not x==""]),'_'.join([x for x in [names['sel'],names['trg']] if not x==""]))
 	return names
 
 # WEIGHT INFO ######################################################################################
 def weightInfo(weights,KFWght=None):
-	if weights==[[''],['']]: return 'NONE'
+	if weights==[[''],['']]: return 'None'
 	else: return ('-'.join(sorted(weights[1]))).replace('KFAC','KFAC%s'%("%.2f"%KFWght if KFWght else 'def')) 
 
 # TRIGTRUTH ########################################################################################
@@ -226,7 +240,10 @@ def trigTruth(usebool):
 
 def trigData(opts,s,trg):
 	#print "in: ",trg
-	if (not s==None) and (not opts.datatrigger==[]) and any([x in s['tag'] for x in ['Data','DataV','JetMon']]):
+	if s=="" and (not opts.datatrigger==[]):
+		trg_orig = dc(trg)
+		trg = opts.datatrigger[opts.trigger.index(trg)]
+	elif (not s==None) and (not opts.datatrigger==[]) and any([x in s['tag'] for x in ['Data','DataV','JetMon']]):
 		trg_orig = dc(trg)
 		trg = opts.datatrigger[opts.trigger.index(trg)]
 	else:

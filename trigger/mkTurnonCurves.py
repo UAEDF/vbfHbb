@@ -27,6 +27,7 @@ def parser(mp=None):
 	mgtc.add_option('--redraw',help='Draw histogram from root file (refill in all cases).',action='store_true',default=False)
 	mgtc.add_option('--drawstack',help='Draw histogram (stacked) from root file (fill if not present).',action='store_true',default=False)
 	mgtc.add_option('--redrawstack',help='Draw histogram (stacked) from root file (refill in all cases).',action='store_true',default=False)
+	mgtc.add_option('--closure',help='Run also without reference trigger and add curve to plots.',action='store_true',default=False)
 
 	mp.add_option_group(mgtc)
 	return mp
@@ -36,75 +37,78 @@ def parser(mp=None):
 
 
 # FUNCTIONS FOR FILLING AND DRAWING HISTOGRAMS #####################################################
-def do_fill(opts,fout,s,v,sel,trg,reftrig,KFWght=None):
+def do_fill(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	# info
 	l2("Filling for %s"%v['var'])
 	# containers
 	histos = {}
 	cuts = {}
+	cutlabels = {}
+	names = {}
 	canvas = TCanvas("cfill","cfill",2400,1800)
-	# cut
-	cuts['Num'],cutlabelnum = write_cuts(sel,trg,reftrig=reftrig,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,varskip=opts.skip+[v['root']],trigequal=('49' if not opts.usebool else '1'))
-	if opts.debug: l3("Cut numerator: %s%s%s: %s"%(blue,cutlabelnum,plain,cuts['Num']))
-	cuts['Den'],cutlabelden = write_cuts(sel,reftrig=reftrig,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,varskip=opts.skip+[v['root']],trigequal=('49' if not opts.usebool else '1'))
-	if opts.debug: l3("Cut denominator: %s%s%s: %s"%(blue,cutlabelden,plain,cuts['Den']))
+	# trg
+	trg, trg_orig = trigData(opts,s,trg)
+	# names
+	names['global'] = getNames(opts,s,v,sel,trg_orig,ref)
+	wpars = weightInfo(opts.weight,KFWght)
 
-	for itag,icut,isel,itrg in [('Num',cuts['Num'],sel,trg),('Den',cuts['Den'],sel,['None'])]:
-		# names
-		sample   = s['pointer']
-		selname  = 's'+'-'.join(isel)
-		trgname  = 't'+'-'.join(itrg)
-		refname  = 'r'+'-'.join(reftrig)
-		hname    = '_'.join(['h',v['var'],s['tag'],selname,trgname,refname])
-		hnamenew = 'h'+itag+hname[1:]
-		if not opts.weight == [[''],['']]: weightpars = ('-'.join(sorted(opts.weight[1]))+'/').replace('KFAC','KFAC%s'%("%.2f"%KFWght if KFWght else 'def'))
-		else: weightpars = 'NONE/'
-		h = fout.FindObjectAny(hname)
-		if h: 
-			hnew = h.Clone(hnamenew)
-			hnew.SetTitle(hnamenew+';%s;%s'%(v['title_x'],v['title_y']))
-			if opts.debug: l3("%sCloned: %40s(N=%9d, Int=%9d)%s"%(yellow,hnew.GetName(),hnew.GetEntries(),hnew.Integral(),plain))
-		else:
-			fout.Delete(hnamenew)
-			hnew = TH1F(hnamenew,';'.join([hnamenew,v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
-			hnew.Sumw2()
-			inroot('%s.draw("%s","%s","%s");'%(sample,hnew.GetName(),v['root'],icut))
-			if opts.debug: l3("%sFilled: %40s(N=%9d, Int=%9d)%s"%(yellow,hnew.GetName(),hnew.GetEntries(),hnew.Integral(),plain))
-		histos[itag] = dc(hnew)
+	# looping over different tags
+	for tag in ['Num','Den']:
+		# cuts
+		locweight = dc(opts.weight)
+		if tag=='Den' and 'MAP' in [x[:3] for x in opts.weight[1]]: locweight[1] = [x for x in opts.weight[1] if not x[:3]=='MAP']
+		cuts[tag],cutlabels[tag] = write_cuts(sel,trg if tag=='Num' else ['None'],reftrig=ref,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=locweight,KFWght=KFWght,varskip=opts.skip+[v['root']],trigequal=trigTruth(opts.usebool))
+		if opts.debug: l3("Cut %s: %s%s%s: %s"%(tag,blue,cutlabels[tag],plain,cuts[tag]))
 
-		# write histogram to file
+		# loading/filling
+		sample     = s['pointer']
+		names[tag] = getNames(opts,s,v,sel,trg_orig if tag=='Num' else ['None'],ref,tag)
+#		h          = fout.FindObjectAny(names[tag]['hist'])
+		h = None
+		if not h:
+			fout.Delete(names[tag]['hist'])
+			h = TH1F(names[tag]['hist'],names[tag]['hist-title'],int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
+			h.Sumw2()
+			inroot('%s.draw("%s","%s","%s");'%(sample,h.GetName(),v['root'],cuts[tag]))
+			if opts.debug: l3("%sFilled: %40s(N=%9d, Int=%9d)%s"%(yellow,h.GetName(),h.GetEntries(),h.Integral(),plain))
+#		else: 
+#			if opts.debug: l3("%sLoaded: %40s(N=%9d, Int=%9d)%s"%(yellow,h.GetName(),h.GetEntries(),h.Integral(),plain))
+		histos[tag] = dc(h)
+
+		# write histogram to file			
 		gDirectory.cd('%s:/'%fout.GetName())
-		path = "%s/%s%s"%('turnonCurves',weightpars,s['tag'])
+		path = "%s/%s/%s"%('turnonCurves',wpars,names['global']['path-turnon'])
 		makeDirsRoot(fout,path)
 		gDirectory.cd(path)
-		hnew.Write(hnew.GetName(),TH1.kOverwrite)
+		h.Write(h.GetName(),TH1.kOverwrite)
 		gDirectory.cd('%s:/'%fout.GetName())
-	
+
 		# clean
 		if h: h.Delete()
-		if hnew: hnew.Delete()
 	
-	histos['Rat'] = histos['Num'].Clone(histos['Num'].GetName().replace('hNum','hRat'))
-	histos['Rat'].SetTitle(histos['Rat'].GetName()+';%s;%s'%(v['title_x'],'Trigger Efficiency (N-1 Cuts)'))
-	histos['Rat'].Divide(histos['Num'],histos['Den'],1.0,1.0,"B")
+	# consider ratio
+	tag = 'Rat'
+	names[tag]  = getNames(opts,s,v,sel,trg_orig,ref,tag)
+	histos[tag] = histos['Num'].Clone(names[tag]['hist'])
+	histos[tag].SetTitle(names[tag]['hist-title'])
+	histos[tag].GetYaxis().SetTitle('Trigger Efficiency (N-1 Cuts)')
+	histos[tag].Divide(histos['Num'],histos['Den'],1.0,1.0,"B")
+
 	# write histogram to file
 	gDirectory.cd('%s:/'%fout.GetName())
-	path = "%s/%s%s"%('turnonCurves',weightpars,s['tag'])
+	path = "%s/%s/%s"%('turnonCurves',wpars,names['global']['path-turnon'])
 	makeDirsRoot(fout,path)
 	gDirectory.cd(path)
 	histos['Rat'].Write(histos['Rat'].GetName(),TH1.kOverwrite)
 	gDirectory.cd('%s:/'%fout.GetName())
 
 	canvas.Close()
+	trg = dc(trg_orig)
 	
-def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
+def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	# names
-	selname = 's'+'-'.join(sel)
-	trgname = 't'+'-'.join(trg)
-	trgnamedata = 't'+'-'.join(trg) if (opts.datatrigger==[]) else 't'+'-'.join(opts.datatrigger[opts.trigger.index(trg)])
-	refname = 'r'+'-'.join(reftrg)
-	if not opts.weight == [[''],['']]: weightpars = ('-'.join(sorted(opts.weight[1]))+'/').replace('KFAC','KFAC%s'%("%.2f"%KFWght if KFWght else 'def'))
-	else: weightpars = 'NONE/'
+	namesGlobal = getNames(opts,None,v,sel,trg,ref)
+	wpars = weightInfo(opts.weight,KFWght)
 	# info
 	jsoninfo = json.loads(filecontent(opts.jsoninfo))
 	jsoncuts = json.loads(filecontent(opts.jsoncuts))
@@ -123,7 +127,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 	legend  = getTLegend(left,bottom,right,top,columns,None,0,1,0.035)
 
 	# info text
-	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']])]) # counting lines about weights + 1 for vbfHbb tag 
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI','MAP']])]) # counting lines about weights + 1 for vbfHbb tag 
 	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
 	right  = 1-gPad.GetRightMargin()-0.02
 	top    = 1-gPad.GetTopMargin()
@@ -139,96 +143,144 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 	ymax=0
 
 	# containers
-	allstacknames = {}
-	allstacks = {}
-	allcolours = {}
+	stacks = {}
 
 	### LOOP over all samples
-	for s in sorted(samples,key=lambda x:('QCD' in x['tag'],jsoninfo['crosssections'][x['tag']])):
+	for s in sorted(samples,key=lambda x:('QCD' in x['tag'],-jsoninfo['crosssections'][x['tag']])):
+		# trg
+		trg,trg_orig = trigData(opts,s,trg)
 		# names
-		sname = s['pointer']
-		group = jsoninfo['groups'][s['tag']]
-		print
-		l3("%sStack group: %s%s"%(blue,group,plain))
+		sample = s['pointer']
+		names = {}
+		names['global'] = getNames(opts,s,v,sel,trg_orig,ref)
+		for tag in ['Num','Den','Rat']:
+			names[tag] = getNames(opts,s,v,sel,trg_orig if not tag=='Den' else ['None'],ref,tag)
+		# info	
+		l3("%sStack group: %s (sample: %s)%s"%(blue,names['global']['group'],s['tag'],plain))
 
-		if not group in allstacks:
-			stackname = {}
-			stack = {}
-			stackname['Num'] = '_'.join(['turnonCurveNum',v['var'],group,selname,trgname if not ('Data' in s['tag'] or 'JetMon' in s['tag']) else trgnamedata,refname])
-			stack['Num'] = THStack(stackname['Num'],"%s;%s;%s"%(stackname['Num'],v['title_x'],v['title_y']))
-			stackname['Den'] = '_'.join(['turnonCurveDen',v['var'],group,selname,trgname if not ('Data' in s['tag'] or 'JetMon' in s['tag']) else trgnamedata,refname])
-			stack['Den'] = THStack(stackname['Den'],"%s;%s;%s"%(stackname['Den'],v['title_x'],v['title_y']))
-			histos = {'Num': [], 'Den': []}
-			allcolours[group] = jsoninfo['colours'][s['tag']]
+		group = names['global']['group']
+		if not group in stacks:
+			stacks[group] = {}
+			stacks[group]['stack']    = {}
+			stacks[group]['histos']   = {}
+			stacks[group]['names']    = names
+			stacks[group]['colours']  = jsoninfo['colours'][s['tag']]
 
-		hload = {}
-		hname = {}
-		hname['Num'] = '_'.join(['hNum',v['var'],s['tag'],selname,trgname if not ('Data' in s['tag'] or 'JetMon' in s['tag']) else trgnamedata,refname])
-		hname['Den'] = '_'.join(['hDen',v['var'],s['tag'],selname,'tNone',refname])
-		hname['Rat'] = '_'.join(['hRat',v['var'],group,selname,trgname if not ('Data' in s['tag'] or 'JetMon' in s['tag']) else trgnamedata,refname])
-		allstacknames[group] = dc(hname)
-		allstacks[group] = {}
-		# get histograms
+			for tag in ['Num','Den']:
+				stacks[group]['stack'][tag]  = THStack(names[tag]['stack'],names[tag]['stack-title'])
+				stacks[group]['histos'][tag] = []
+
+		# load histograms from file
 		gDirectory.cd('%s:/'%fout.GetName())
-		path = '/%s/%s%s/'%('turnonCurves',weightpars,s['tag'])
+		path = '/%s/%s/%s/'%('turnonCurves',wpars,names['global']['path-turnon'])
 		# fill if needed/wanted 
 		for tag in ['Num','Den']:
-			fullpath = path+hname[tag]+';1'
-			hload[tag] = gDirectory.Get(fullpath) 
-			if (not hload[tag]) or opts.redrawstack:
-				hnew = TH1F(hname[tag],';'.join([hname[tag],v['title_x'],v['title_y']]),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
-				hnew.SetTitle(';'.join([hname[tag],v['title_x'],v['title_y']]))
-				#print Green, opts.redraw, opts.redrawstack, tag, plain
+			fullpath  = path+names[tag]['hist']+';1'
+			hload     = gDirectory.Get(fullpath) 
+			if (not hload) or opts.redrawstack:
 				if not (opts.redraw or opts.redrawstack): l3("%s%s doesn\'t exist. Filling first.%s"%(red,fullpath,plain))
 				elif (opts.redraw or opts.redrawstack) and tag=='Den': l3("%sLoading %s since it was redrawn with 'Num'.%s"%(red,fullpath,plain))
 				else: l3("%sRedrawing %s first.%s"%(red,fullpath,plain))
-				if not ((opts.redraw or opts.redrawstack) and tag=='Den'): do_fill(opts,fout,s,v,sel,trg if (opts.datatrigger==[] or not ('Data' in s['tag'] or 'JetMon' in s['tag'])) else opts.datatrigger[opts.trigger.index(trg)],reftrg,KFWght)
-				hload[tag] = gDirectory.Get(fullpath)
-			if opts.debug: l3("%sLoaded: %40s(N=%9d, Int=%9d)%s"%(yellow,hload[tag].GetName(),hload[tag].GetEntries(),hload[tag].Integral(),plain))
-			histos[tag] += [hload[tag]]
-			setStyleTH1F(histos[tag][-1],jsoninfo['colours'][s['tag']],1,jsoninfo['colours'][s['tag']],0,1,20)
-			stack[tag].Add(histos[tag][-1])
-			#legend.AddEntry(histos[tag][-1],s['tag'],'L')
-			allstacks[group][tag] = dc(stack[tag])
+				if not ((opts.redraw or opts.redrawstack) and tag=='Den'): do_fill(opts,fout,s,v,sel,trg_orig,ref,KFWght)
+				hload = gDirectory.Get(fullpath)
+			if opts.debug: l3("%sLoaded: %40s(N=%9d, Int=%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),hload.Integral(),plain))
+			stacks[group]['histos'][tag] += [dc(hload)]
+			setStyleTH1F(stacks[group]['histos'][tag][-1],stacks[group]['colours'],1,stacks[group]['colours'],0,1,20)
+			stacks[group]['stack'][tag].Add(stacks[group]['histos'][tag][-1])
+		print
+		trg = dc(trg_orig)
+
+	if opts.closure:
+		### LOOP over all samples (again, without reference trigger)
+		for s in sorted(samples,key=lambda x:('QCD' in x['tag'],-jsoninfo['crosssections'][x['tag']])):
+			if any([x in s['tag'] for x in ['Data','JetMon']]): continue
+			# trg
+			trg,trg_orig = trigData(opts,s,trg)
+			# names
+			sample = s['pointer']
+			names = {}
+			names['global'] = getNames(opts,s,v,sel,trg_orig,['None'])
+			for tag in ['Num','Den','Rat']:
+				names[tag] = getNames(opts,s,v,sel,trg_orig if not tag=='Den' else ['None'],['None'],tag)
+			# info	
+			l3("%sStack group: %s (sample: %s)%s"%(blue,names['global']['group'],s['tag'],plain))
+	
+			group = names['global']['group'] + '_NoRef'
+			if not group in stacks:
+				stacks[group] = {}
+				stacks[group]['stack']    = {}
+				stacks[group]['histos']   = {}
+				stacks[group]['names']    = names
+				stacks[group]['colours']  = jsoninfo['colours'][s['tag']]
+	
+				for tag in ['Num','Den']:
+					stacks[group]['stack'][tag]  = THStack(names[tag]['stack'],names[tag]['stack-title'])
+					stacks[group]['histos'][tag] = []
+	
+			# load histograms from file
+			gDirectory.cd('%s:/'%fout.GetName())
+			path = '/%s/%s/%s/'%('turnonCurves',wpars,names['global']['path-turnon'])
+			# fill if needed/wanted 
+			for tag in ['Num','Den']:
+				fullpath  = path+names[tag]['hist']+';1'
+				hload     = gDirectory.Get(fullpath) 
+				if (not hload) or opts.redrawstack:
+					if not (opts.redraw or opts.redrawstack): l3("%s%s doesn\'t exist. Filling first.%s"%(red,fullpath,plain))
+					elif (opts.redraw or opts.redrawstack) and tag=='Den': l3("%sLoading %s since it was redrawn with 'Num'.%s"%(red,fullpath,plain))
+					else: l3("%sRedrawing %s first.%s"%(red,fullpath,plain))
+					if not ((opts.redraw or opts.redrawstack) and tag=='Den'): do_fill(opts,fout,s,v,sel,trg_orig,['None'],KFWght)
+					hload = gDirectory.Get(fullpath)
+				if opts.debug: l3("%sLoaded: %40s(N=%9d, Int=%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),hload.Integral(),plain))
+				stacks[group]['histos'][tag] += [dc(hload)]
+				setStyleTH1F(stacks[group]['histos'][tag][-1],stacks[group]['colours'],1,stacks[group]['colours'],0,1,26)
+				stacks[group]['stack'][tag].Add(stacks[group]['histos'][tag][-1])
+			print
+			trg = dc(trg_orig)
 
 	istack=0
-	ratio = {}
-	for kstack,stack in allstacks.iteritems():
-		#print kstack,stack
-		#print stack['Num'].GetStack().Last().GetEntries()
-		#print stack['Den'].GetStack().Last().GetEntries()
-		# get ratios
-		ratio[kstack] = TH1F(allstacknames[kstack]['Rat'],';'.join([allstacknames[kstack]['Rat'],v['title_x'],'Trigger Efficiency (N-1 Cuts)']),int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
-		ratio[kstack].Divide(stack['Num'].GetStack().Last(),stack['Den'].GetStack().Last(),1.0,1.0,'B')
-		setStyleTH1F(ratio[kstack],allcolours[kstack],1,allcolours[kstack],0,allcolours[kstack],20)
+	for group,g in stacks.iteritems():
+		# get ratio
+		tag = 'Rat'
+		g['stack'][tag] = TH1F(g['names'][tag]['turnon'],g['names'][tag]['turnon-title'],int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
+		g['stack'][tag].Divide(g['stack']['Num'].GetStack().Last(),g['stack']['Den'].GetStack().Last(),1.0,1.0,'B')
+		setStyleTH1F(g['stack'][tag],g['colours'],1,g['colours'],0,g['colours'],20 if not 'NoRef' in group else 26)
 		print 
-		ymin, ymax = getRangeTH1F(ratio[kstack],ymin,ymax)
-		setRangeTH1F(ratio[kstack],0.0,1.2,False)
-		legend.AddEntry(ratio[kstack],kstack,'L')
-		stack['Rat'] = dc(ratio[kstack])
+		ymin, ymax = getRangeTH1F(g['stack'][tag],ymin,ymax)
+		setRangeTH1F(g['stack'][tag],0.0,1.2,False)
+		legend.AddEntry(g['stack'][tag],group,'LP')
 
 		# write histogram to file
 		gDirectory.cd('%s:/'%fout.GetName())
-		path = "%s/%s%s"%('turnonCurvePlots',weightpars,group)
+		path = "%s/%s/%s"%('turnonCurves',wpars,g['names']['global']['path-turnon'])
 		makeDirsRoot(fout,path)
 		gDirectory.cd(path)
-		ratio[kstack].Write(ratio[kstack].GetName(),TH1.kOverwrite)
+		g['stack'][tag].Write(g['stack'][tag].GetName(),TH1.kOverwrite)
 		gDirectory.cd('%s:/'%fout.GetName())
 	
 	# Data / MC ratio
-	if 'JetMon' in allstacks.keys() and 'QCD' in allstacks.keys():
-		ratioplot = allstacks['JetMon']['Rat'].Clone('Data / MC')
+	if 'JetMon' in stacks.keys() and 'QCD' in stacks.keys():
+		ratioplot = stacks['JetMon']['stack']['Rat'].Clone('Data / MC')
 		ratioplot.SetTitle('Data / MC')
-		ratioplot.Divide(allstacks['JetMon']['Rat'],allstacks['QCD']['Rat'])
+		ratioplot.Divide(stacks['JetMon']['stack']['Rat'],stacks['QCD']['stack']['Rat'])
 	else: ratioplot=None
 
+	cutsjson = json.loads(filecontent(opts.jsoncuts))
 	if not ratioplot==None:
 		# containers
 		c1,c2 = getRatioPlotCanvas(canvas)
 		# draw (top)
 		c1.cd()
-		for istack,stack in enumerate(allstacks.itervalues()):
+		plotcut = None
+		for istack,stack in enumerate([stacks[g]['stack'] for g in stacks.keys()]):
 			stack['Rat'].Draw("" if istack==0 else "same")
+			if istack==0: 
+				stack['Rat'].SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
+				for isel in sel:
+					if v['root'] in cutsjson['sel'][isel]: 
+						gPad.Update()
+						plotcut = float(cutsjson['sel'][isel][v['root']][1])
+						vline1 = getTLine(plotcut,stack['Rat'].GetMinimum(),plotcut,stack['Rat'].GetMaximum(),kMagenta,5,9)
+						vline1.Draw("same")
 		# draw (bottom)
 		c2.cd()
 		setStyleTH1Fratio(ratioplot)
@@ -236,28 +288,34 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 		ratioplot.SetLabelOffset(0.035,'X')
 		ratioplot.Draw('e0')
 		ratioplot.Draw('psame')
+		# line at cut
+		if plotcut:
+			gPad.Update()
+			vline2 = getTLine(plotcut,ratioplot.GetMinimum(),plotcut,ratioplot.GetMaximum(),kMagenta,5,9)
+			vline2.Draw("same")
+			plotcut = None
 		# line through y=1
 		gPad.Update()
-		line = TLine(gPad.GetUxmin(),1.0,gPad.GetUxmax(),1.0)
-		line.SetLineWidth(2)
-		line.SetLineColor(kBlack)
+		line = getTLine(gPad.GetUxmin(),1.0,gPad.GetUxmax(),1.0,kBlack,2,1)
 		line.Draw("same")
 		c1.cd()
 	else:
 		canvas.cd()
-		for istack,stack in enumerate(allstacks.itervalues()):
+		for istack,stack in enumerate([stacks[g]['stack'] for g in stacks.keys()]):
 			stack['Rat'].Draw("" if istack==0 else "same")
 
 	# write plot to file
 	legend.Draw()
 	text.Draw()
-	path = '%s/%s/%s%s'%('plots',os.path.split(fout.GetName())[1][:-5],weightpars,'turnonCurves')
+	path = '%s/%s/%s/%s/%s'%('plots',os.path.split(fout.GetName())[1][:-5],wpars,'turnonCurves',namesGlobal['path-turnon'])
 	makeDirs(path)
-	canvas.SetName("c%s"%ratio[kstack].GetName()[4:].replace(kstack+'_',''))
-	canvas.SetTitle(ratio[kstack].GetName().replace(kstack+'_',''))
+	canvas.SetName(namesGlobal['turnon'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon'])
+	canvas.SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
+	canvas.Update()
 	canvas.SaveAs('%s/%s.png'%(path, canvas.GetName()))
+	canvas.SaveAs('%s/%s.pdf'%(path, canvas.GetName()))
 	print
-	if opts.debug: l3("%sWritten plots to: %s%s"%(yellow,'%s/%s.png'%(path, canvas.GetName()),plain))
+	if opts.debug: l3("%sWritten plots to: %s%s"%(yellow,'%s/%s.{png,pdf}'%(path, canvas.GetName()),plain))
 	gDirectory.cd('%s:/'%fout.GetName())
 	canvas.Close()
 
@@ -268,20 +326,18 @@ def do_drawstack(opts,fout,samples,v,sel,trg,reftrg,KFWght=None):
 ####################################################################################################
 def mkTurnonCurves():
 	# init main (including option parsing)
-	opts,samples,variables,loadedSamples,fout = main.main(parser())
+	opts,samples,variables,loadedSamples,fout,KFWghts = main.main(parser())
 
 	# check actions
 	if not (opts.fill or opts.draw or opts.redraw or opts.drawstack or opts.redrawstack): sys.exit(red+"Specify either fill, draw, redraw, drawstack or redrawstack option to run. Exiting."+plain) 
 
-	if opts.KFWght or len(opts.weight)==4: l1("Including KFWght calculations or manual KFWght.")
+	#if opts.KFWght or len(opts.weight)==4: l1("Including KFWght calculations or manual KFWght.")
 	# fill histograms and save
 	l1('Filling and drawing histograms:')
 	for trg in opts.trigger:
 		for sel in opts.selection:
-			for reftrg in opts.reftrig:
-				if opts.KFWght: KFWght = getKFWght(opts,loadedSamples,sel,trg)
-				elif len(opts.weight)==4: KFWght = float(opts.weight[3][0])
-				else: KFWght = None
+			for ref in opts.reftrig:
+				KFWght = KFWghts[('-'.join(sel),'-'.join(trg))]
 				for v in variables.itervalues():
 					if not v['var'] in opts.variable: continue
 					if v['var'] in opts.novariable: continue
@@ -289,9 +345,11 @@ def mkTurnonCurves():
 						if opts.fill or opts.draw or opts.redraw: 
 							print
 							l2("Sample: %s"%s['tag'])
-						if opts.fill: do_fill(opts,fout,s,v,sel,trg if (opts.datatrigger==[] or not ('Data' in s['tag'] or 'JetMon' in s['tag'])) else opts.datatrigger[opts.trigger.index(trg)],reftrg,KFWght)
+						if opts.fill: 
+							do_fill(opts,fout,s,v,sel,trg,ref,KFWght)
+							if opts.closure: do_fill(opts,fout,s,v,sel,trg,['None'],KFWght)
 					if opts.drawstack or opts.redrawstack: 
-						do_drawstack(opts,fout,loadedSamples,v,sel,trg,reftrg,KFWght)
+						do_drawstack(opts,fout,loadedSamples,v,sel,trg,ref,KFWght)
 						print 
 					### END LOOP over samples
 				### END LOOP over variables

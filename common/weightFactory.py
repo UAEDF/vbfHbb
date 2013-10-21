@@ -24,6 +24,7 @@ class weightFactory:
 			if iWght == 'KFAC' : self.addKFWght(sample_tag)
 			if iWght == 'BMAP' : self.addBMWght(sample_tag)
 			if iWght == 'TRSF' : self.addTRWght(sample_tag)
+			if iWght[0:3] == 'MAP'  : self.add2DWght(sample_tag,iWght.split('#')[1:])
 		return self.wOut
 
 	def addPUWght(self,tag):
@@ -50,12 +51,16 @@ class weightFactory:
 		for iFile in self.samples["files"]:
 			if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 : self.wOut += '*0.85'
 
+	def add2DWght(self,tag,variables):
+		for iFile in self.samples["files"]:
+		   if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 :  self.wOut += '*twoDWght(%s,%s)'%(variables[0],variables[1])
 
 # Examples:
 if __name__=='__main__':
   wf = weightFactory('vbfHbb_samples_XJ_2012Paper.json',18500)
   print 'Data   : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','Data') 
   print 'QCD100 : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','QCD100')
+  print 'QCD100 : ' , wf.getFormula('PU,XSEC,KFAC,LUMI,MAP#ht#dEtaqq[3]','QCD100')
   print 'QCD250 : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','QCD250')
   print 'QCD500 : ' , wf.getFormula('PU,XSEC,KFAC,LUMI','QCD500')
   print 'QCD1000: ' , wf.getFormula('PU,XSEC,KFAC,LUMI','QCD1000')

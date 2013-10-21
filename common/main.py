@@ -12,6 +12,7 @@ sys.argv = tempargv
 
 from toolkit import *
 from dependencyFactory import *
+from write_cuts import *
 from optparse import OptionParser,OptionGroup
 import datetime
 today=datetime.date.today().strftime('%Y%m%d')
@@ -25,6 +26,12 @@ def parser(mp=None):
 	\n
 	\nTesting the plotter:
 	\n./mkHist.py -D ../common/vbfHbb_defaultOpts_2012.json -v 'jetPt0,jetPt1,dEtaqq' --drawstack -w '19012.,XSEC;LUMI;PU;KFAC,,1.31' -d -t 'NOMMC' --datatrigger 'NOM' -p 'ElfMuf;puId;Btag0;softHt;NOMoldPlusPhi' -o rootfiles/testPlotter.root -y -K --binning 'jetPt0;46;80;1000,jetPt1;46;80;1000'
+	\n
+	\nCreating a 2D map:
+	\n./main.py -D vbfHbb_defaultOpts_2013.json -s 'JetMon,QCD' -t 'VBF' --datatrigger 'VBFOR' -p 'mjjMax850;HT300;dEta;jetPt1;ElfMuf' -r 'AV80' -o 'rootfiles/2DMaps_2013.root' -w '19012.,XSEC;LUMI;PU' -m 'ht;300#325#350#425#500#1000,dEtaqq3;3.5#4.25#5.4#6.0#8.0'
+	\n
+	\nJust print cutstrings:
+	\n./main.py -D ../common/vbfHbb_defaultOpts_2013.json -w '19012.,XSEC;LUMI;PU;MAP#ht#dEtaqq[3],,,../common/rootfiles/2DMaps_2013.root;2DMaps/JetMon-QCD/2DMap_JetMon-QCD-Rat_smjjMax850-HT300-dEta-jetPt1-ElfMuf-tVBF-rAV80-dVBFOR_ht-dEtaqq3;1' -d -t 'VBF' --datatrigger 'VBFOR' -p 'ElfMuf;dEta;jetPt1;HT300;mjjMax850' -o rootfiles/vbfHbb_2013_2DMapCorrected_turnons.root --binning 'mjjMax;70;500;1200,mqq2;70;500;1200,mbb2;30;0;300,ht;50;0;1000,dEtaqq2;60;2;8,dEtaqq3;60;2;8,mbbReg2;30;0;300,jetPt0;40;0;400,jetPt1;30;0;300' -s 'JetMon,QCD' -r 'AV80'
 	'''+plain
 
 	mgj = OptionGroup(mp,cyan+"json settings"+plain)
@@ -49,19 +56,20 @@ def parser(mp=None):
 	mgd.add_option('--usebool',help="Use original trees, not the char ones.",action='store_true',default=False)
 	mgd.add_option('-y','--yields',help='Print yields for each sample for specified sel+trg+cuts',action='store_true',default=False)
 	mgd.add_option('-l','--latex',help='Print latex output.',action='store_true',default=False)
+	mgd.add_option('-m','--map',help='Create 2D map ("var1;binlim1#binlim2#...,var2;binlim1#binlim2#...").',type='str',action='callback',callback=optsplitlist)
 
 	mgst = OptionGroup(mp,cyan+"Run for subselection determined by variable, sample and/or selection/trigger"+plain)
 	mgst.add_option('-v','--variable',help=purple+"Run only for these variables (comma separated)."+plain,dest='variable',default='',type='str',action='callback',callback=optsplit)
 	mgst.add_option('--novariable',help=purple+"Don't run for these variables (comma separated)."+plain,dest='novariable',default='',type='str',action='callback',callback=optsplit)
 	mgst.add_option('-s','--sample',help=purple+"Run only for these samples (comma separated)."+plain,dest='sample',default='',type='str',action='callback',callback=optsplit)
 	mgst.add_option('--nosample',help=purple+"Don't run for these samples (comma separated)."+plain,dest='nosample',default='',type='str',action='callback',callback=optsplit)
-	mgst.add_option('-t','--trigger',help=purple+"Run only for these triggers (comma and colon separated)."+plain,dest='trigger',default=[['NONE']],type='str',action='callback',callback=optsplitlist)
+	mgst.add_option('-t','--trigger',help=purple+"Run only for these triggers (comma and colon separated)."+plain,dest='trigger',default=[['None']],type='str',action='callback',callback=optsplitlist)
 	mgst.add_option('--datatrigger',help=purple+"Run only for these triggers (comma and colon separated) (override for data sample(s))."+plain,dest='datatrigger',default=[],type='str',action='callback',callback=optsplitlist)
-	mgst.add_option('-p','--selection',help=purple+"Run only for these selections (comma and colon separated)."+plain,dest='selection',default=[['NONE']],type='str',action='callback',callback=optsplitlist)
-	mgst.add_option('-r','--reftrig',help=purple+"Add reference trigger to selection."+plain,dest='reftrig',default=[['NONE']],type='str',action='callback',callback=optsplitlist)
+	mgst.add_option('-p','--selection',help=purple+"Run only for these selections (comma and colon separated)."+plain,dest='selection',default=[['None']],type='str',action='callback',callback=optsplitlist)
+	mgst.add_option('-r','--reftrig',help=purple+"Add reference trigger to selection."+plain,dest='reftrig',default=[['None']],type='str',action='callback',callback=optsplitlist)
 	mgst.add_option('-w','--weight',help=purple+"Put this weight (\"lumi,weight1;weight2;...,bmapfilename,manualKFWght\")"+plain,dest='weight',default=[[''],['']],type='str',action='callback',callback=optsplitlist)
 	mgst.add_option('--skip',help=purple+"Skip certain variable for selection."+plain,dest='skip',default=[],type='str',action='callback',callback=optsplit)
-	mgst.add_option('--binning',help=purple+"Override default binning for certain variables",dest='binning',default=[[]],type='str',action='callback',callback=optsplitlist)
+	mgst.add_option('--binning',help=purple+"Override default binning for certain variables",dest='binning',type='str',action='callback',callback=optsplitlist)
 	
 	mp.add_option_group(mgj)
 	mp.add_option_group(mgr)
@@ -113,6 +121,22 @@ def convertSamples(opts,samples):
 		if (not os.path.exists(sname)): 
 			inroot('reformat("%s/%s",variables,%s)'%(opts.globalpath,sample['fname'],str(opts.fileformat)))
 			sys.exit(red+"Sample reformat function was needed first. Rerun for actual plotting (or more converting)."+plain)
+
+# PRINT SEL & TRG OPTIONS ##########################################################################
+def printSelTrg(opts,KFWghts):
+	from write_cuts import write_cuts
+	l1("Listing cutstrings for control:")
+	for s in opts.selection:
+		for t in opts.trigger:
+			KFWght = KFWghts[('-'.join(s),'-'.join(t))]
+			l2("Sel: %20s, Trg: %20s"%("(%s)"%s,"(%s)"%t))
+			cutsel    = write_cuts(s,[],sample='Data' if opts.fileformat=='1' else 'DataA',jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,trigequal=trigTruth(opts.usebool))[0]
+			cuttrg    = write_cuts([],t,sample='QCD250',jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,trigequal=trigTruth(opts.usebool))[0]
+			cuttrgdat = write_cuts([],trigData(opts,"",t)[0],sample='Data' if opts.fileformat=='1' else 'DataA',jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,trigequal=trigTruth(opts.usebool))[0]
+			l3("%s   Sel:   (e.g. Data) %s %s"%(Red,plain,cutsel))
+			l3("%s   Trg: (e.g. QCD250) %s %s"%(Red,plain,cuttrg))
+			l3("%sTrgDat:   (e.g. Data) %s %s"%(Red,plain,cuttrgdat))
+			print
 
 # GET YIELDS #######################################################################################
 def getYields(opts,loadedSamples,KFWghts):
@@ -237,6 +261,7 @@ def main(mp=None):
 	inroot('.L %s'%(os.path.join(basepath,'../common/sample.C+')))
 	if not opts.usebool: inroot('.L %s'%(os.path.join(basepath,'../common/reformat.C+')))
 	inroot('.L %s'%(os.path.join(basepath,'../common/bMapWght.C+')))
+	inroot('.L %s'%(os.path.join(basepath,'../common/twoDWght.C+')))
 	# load style
 	inroot('.x %s'%(os.path.join(basepath,'../common/styleCMS.C++')))
 	inroot('gROOT->ForceStyle();')
@@ -279,7 +304,6 @@ def main(mp=None):
 # load samples
 	loadedSamples = loadSamples(opts,samples)
 
-
 # open/create output file
 	if not os.path.exists(os.path.split(opts.fout)[0]) and not os.path.split(opts.fout)[0]=='': os.makedirs(os.path.split(opts.fout)[0])
 	fout = TFile(opts.fout,'recreate' if (not os.path.exists(opts.fout) or opts.new) else 'update')
@@ -303,9 +327,17 @@ def main(mp=None):
 		if not len(opts.weight)>2: sys.exit(red+"Check bMapWght weight settings. Exiting."+plain)
 		if not len(opts.weight[2])>1: sys.exit(red+"Please provide filename;keyname for the BMap. Exiting."+plain)
 		if not os.path.exists(opts.weight[2][0]): sys.exit(red+"Check bMapWght file path. Exiting."+plain)
-		
 		loadBMapWght(fout,opts.weight[2][0],opts.weight[2][1])
 
+# load twoDWght (if needed)
+	if not opts.weight == [[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: 
+		l1("Loaded twoDWght() and map.")
+		# checks
+		if not len(opts.weight)>4: sys.exit(red+"Check twoDWght weight settings. Exiting."+plain)
+		if not len(opts.weight[4])>1: sys.exit(red+"Please provide filename;keyname for the twoDMap. Exiting."+plain)
+		if not os.path.exists(opts.weight[4][0]): sys.exit(red+"Check twoDWght file path. Exiting."+plain)
+		loadTwoDWght(fout,opts.weight[4][0],opts.weight[4][1])
+		
 # print kfwght
 	KFWghts = {}
 	for sel in opts.selection:
@@ -319,10 +351,19 @@ def main(mp=None):
 	print KFWghts
 	printKFWghtsTable(KFWghts)
 	
+# print sel & trg info
+	printSelTrg(opts,KFWghts)
+
 # print yields
 	if opts.yields:
 		getYields(opts,loadedSamples,KFWghts)
 
+# 2D map creation
+	if opts.map:
+		for s in opts.selection:
+			for t in opts.trigger:
+				for r in opts.reftrig:
+					get2DMap(opts,fout,loadedSamples,variables,s,t,r,opts.map[0],opts.map[1])
 	
 # continue to subprograms
 	return opts, samples, variables, loadedSamples, fout, KFWghts
