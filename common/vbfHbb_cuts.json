@@ -24,6 +24,9 @@
 "HT300": {"ht":[">","300."]},
 "HT350": {"ht":[">","350."]},
 "mjjMax850": {"mjjMax":[">","850."]},
+"BtagLM" : {"jetBtag[b1[2]]":[">","0.679"],"jetBtag[b2[2]]":[">","0.244"]},
+"HTlt500": {"ht":["<","500."]},
+"HTgt400": {"ht":[">","400."]},
 
 "QJT": {"jetBtag[btagIdx[0]]":[">","0.679"],"jetBtag[btagIdx[1]]":[">","0.244"],"jetPt[3]":[">","50"]},
 
@@ -63,6 +66,7 @@
 "VBFOR": ["HLT_DiJet35_MJJ650_AllJets_DEta3p5_VBF_v*","HLT_DiJet35_MJJ700_AllJets_DEta3p5_VBF_v*","HLT_DiJet35_MJJ750_AllJets_DEta3p5_VBF_v*"],
 "QJT": ["HLT_QuadJet50_v*"],
 "PF80": ["HLT_PFJet80_v*"],
+"AV40": ["HLT_DiPFJetAve40_v*"],
 "AV80": ["HLT_DiPFJetAve80_v*"]
 }
 }

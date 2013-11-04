@@ -12,8 +12,10 @@ from ROOT import *
 sys.argv = tempargv 
 
 from toolkit import * 
+from copy import deepcopy as dc
 
 today = datetime.date.today().strftime('%Y%m%d')
+
 
 class info:
 	def __init__(self,oname):
@@ -21,9 +23,23 @@ class info:
 		self.content = {}
 		self.content['files'] = {}
 		self.content['other'] = []
-		self.content['fields'] = {'fname':60,'npassed':12,'xsec':12,'scale':15,'tag':8,'trigger':25,'colour':8} # field lengths
-		self.content['trigger'] = ['HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v* OR HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v* OR HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v* OR HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v* OR HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v*','HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v*','HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v*','HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v*','HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_DiJet35_MJJ650_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ700_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ750_AllJets_DEta3p5_VBF_v*','HLT_QuadJet50_v*','HLT_PFJet80_v*','HLT_DiPFJetAve80_v*']
+		self.content['fields'] = {'fname':60,'npassed':12,'xsec':12,'scale':15,'tag':18,'trigger':35,'colour':8} # field lengths
+		self.content['trigger'] = ['HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v* OR HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v* OR HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v* OR HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v* OR HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v*','HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v*','HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v*','HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v*','HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_DiJet35_MJJ650_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ700_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ750_AllJets_DEta3p5_VBF_v*','HLT_QuadJet50_v*','HLT_PFJet80_v*','HLT_DiPFJetAve40_v*','HLT_DiPFJetAve80_v*']
+		self.basefields = dc(self.content['fields'])
+		self.basetrigger = dc(self.content['trigger'])
 		self.read_info()
+
+	def help_TrigArray(self,h):
+		trigarray = []
+		for tname in self.content['trigger']: 
+			found=False
+			for i in range(h.GetXaxis().GetNbins()):
+				if h.GetXaxis().GetBinLabel(i+1)==tname: 
+					trigarray.append('%i'%i)
+					found=True
+					break
+			if not found: trigarray.append('-')
+		return trigarray
 
 	def print_info(self):	
 		l1("Printing content for %s"%self.oname)
@@ -64,24 +80,16 @@ class info:
 		self.write_info()
 
 
-	def add_info(self,infojson,passed_content):
+	def add_info(self,infojson,iname):
 		fields = [None,None,None,None,None,None,None]
-		if type(passed_content)==str: 
+		if type(iname)==str: 
 			f = TFile.Open(iname)
 			h1 = f.FindObjectAny('TriggerPass;1')
 			if not h1: sys.exit('TriggerPass;1 problematic for %s. Exiting'%iname)
 			npassed = h1.GetBinContent(1)
 			h2 = f.FindObjectAny('TriggerNames;1')
 			if not h2: sys.exit('TriggerNames;1 problematic for %s. Exiting'%iname)
-			trigarray = []
-			for tname in self.content['trigger']: 
-				found=False
-				for i in range(h2.GetXaxis().GetNbins()):
-					if h2.GetXaxis().GetBinLabel(i+1)==tname: 
-						trigarray.append('%i'%i)
-						found=True
-						break
-				if not found: trigarray.append('-')
+			trigarray = self.help_TrigArray(h2)
 			fields[0] = os.path.split(iname)[1]
 			fields[1] = "%i"%npassed
 			done = False
@@ -110,8 +118,8 @@ class info:
 				if not new_value=="": fields[2]=new_value
 				if fields[6]=="": fields[6]="1"
 			f.Close()
-		elif type(passed_content)==list: 
-			fields=passed_content
+		elif type(iname)==list: 
+			fields=iname
 			if not fields[0] in self.content['files']: l2("Adding %s:"%fields[0])
 		else: l2(yellow+"Unknown passed content. Skipping."+plain)
 		#
@@ -133,13 +141,33 @@ class info:
 		f.write(json.dumps(self.content))
 		f.close()
 
-	def update_info(self,infojson):
+	def update_info(self,infojson,globalpath):
 		l1("Updating content for %s"%self.oname)
+		# reset
+		self.content['fields'] = dc(self.basefields) 
+		self.content['trigger'] = dc(self.basetrigger)
+		# update
 		for f in sorted(self.content['files'].keys()):
 			l2("%s: "%f)
 			for field in self.content['files'][f].keys():
 				if field=='colour': new_value = raw_input("%s? [%s(%s)]"%(field,str(self.content['files'][f][field]),str(infojson['colours'][self.content['files'][f]['tag']])))
 				elif field=='xsec': new_value = raw_input("%s? [%s(%s)]"%(field,str(self.content['files'][f][field]),str(infojson['crosssections'][self.content['files'][f]['tag']])))
+				elif field=='trigger': 
+					rootf = TFile.Open(os.path.join(globalpath,f))
+					h2 = rootf.FindObjectAny('TriggerNames;1')
+					if not h2: sys.exit('TriggerNames;1 problematic for %s. Exiting'%f)
+					trigarray = self.help_TrigArray(h2)
+					rootf.Close()
+					self.content['files'][f][field] = ','.join(trigarray)
+					print "trigger: %s"%(self.content['files'][f][field])
+				elif field=='npassed': 
+					rootf = TFile.Open(os.path.join(globalpath,f))
+					h1 = rootf.FindObjectAny('TriggerPass;1')
+					if not h1: sys.exit('TriggerPass;1 problematic for %s. Exiting'%f)
+					npassed = h1.GetBinContent(1)
+					rootf.Close()
+					self.content['files'][f][field] = "%d"%npassed
+					print "npassed: %s"%(self.content['files'][f][field])
 				else: new_value = raw_input("%s? [%s]"%(field,str(self.content['files'][f][field])))
 				if not new_value == "": self.content['files'][f][field] = new_value
 			for field in ['scale']:
@@ -157,6 +185,7 @@ def parser():
 	mp.add_option('-c','--clean',help='Clean json file.',dest='clean',action='store_true',default=False)
 	mp.add_option('-u','--update',help='Update json file.',dest='update',action='store_true',default=False)
 	mp.add_option('-b','--baseinfo',help='File with cross section info (including prefix).',dest='baseinfo',type='str',default='%s/vbfHbb_info.json'%basepath)
+	mp.add_option('-G','--globalpath',help='Restate globalpath when updating.',dest='globalpath',type='str')
 	return mp
 
 
@@ -174,7 +203,7 @@ if __name__=='__main__':
 		myinfo.clean_info()
 	
 	if opts.update and not opts.readonly:
-		myinfo.update_info(mybaseinfo)
+		myinfo.update_info(mybaseinfo,opts.globalpath)
 
 	if not opts.readonly and not opts.clean:
 		l1("Looping over new inputs:")

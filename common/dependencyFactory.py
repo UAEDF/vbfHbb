@@ -18,6 +18,7 @@ from ROOT import *
 sys.argv = tempargv
 
 from copy import deepcopy as dc
+from array import array
 
 
 def parser(mp=None):
@@ -64,6 +65,92 @@ def getKFWght(opts,loadedSamples,sel,trg):
 	if opts.debug: l2("KFWght calculated at: %f"%KFWght)
 	return KFWght
 
+def get2DMapCombo(opts,fout,inputs):
+	# info
+	map1 = inputs[0]
+	map2 = inputs[1]
+	cutx = float(inputs[2]) if not inputs[2]=="" else None
+	cuty = float(inputs[3]) if not inputs[3]=="" else None
+	extra = inputs[4]
+	l1("Combining 2D maps:")
+	l2("Using map1: %s"%map1)
+	l2("Using map2: %s"%map2)
+	# check
+	if not (cutx==None or cuty==None):
+		sys.exit("%sSpecify either x or y cut, not both. Exiting.%s"%(red,plain))
+	l2("Cut at x=%.3f"%cutx if cutx else "Cut at y=%.3f"%cuty)  
+	l2("Extra tag: %s"%extra)
+	path,name = os.path.split(map1)
+	name += "_%s"%extra
+	# get
+	m1 = fout.Get(map1)
+	m2 = fout.Get(map2)
+	# combine
+	canvas = TCanvas("cmap","cmap",1800,1200)
+	gPad.SetGrid(0,0)
+	gPad.SetRightMargin(0.12)
+	gStyle.SetPaintTextFormat("6.2f")
+	# limits
+	binsx1 = []
+	binsy1 = []
+	binsx2 = []
+	binsy2 = []
+	for xi in range(m1.GetXaxis().GetNbins()+1): binsx1 += [m1.GetXaxis().GetBinUpEdge(xi)]
+	for yi in range(m1.GetYaxis().GetNbins()+1): binsy1 += [m1.GetYaxis().GetBinUpEdge(yi)]
+	for xi in range(m2.GetXaxis().GetNbins()+1): binsx2 += [m2.GetXaxis().GetBinUpEdge(xi)]
+	for yi in range(m2.GetYaxis().GetNbins()+1): binsy2 += [m2.GetYaxis().GetBinUpEdge(yi)]
+	if cutx and not binsy1==binsy2: sys.exit(red+"Maps should match in non-cut dimension (y). Exiting."+plain)
+	elif cuty and not binsx1==binsx2: sys.exit(red+"Maps should match in non-cut dimension (x). Exiting."+plain)
+	if cutx: 
+		binsx3 = dc([x for x in binsx1 if x<=cutx] + [x for x in binsx2 if x>cutx])
+		binsy3 = dc(binsy1)
+	if cuty: 
+		binsx3 = dc(binsx1)
+		binsy3 = dc([x for x in binsx1 if x<=cuty] + [x for x in binsx2 if x>cuty])
+	# new map
+	mc = TH2F(name,"%s;%s;%s"%(name,m1.GetXaxis().GetTitle(),m1.GetYaxis().GetTitle()),len(binsx3)-1,array('f',binsx3),len(binsy3)-1,array('f',binsy3))
+	mc.Sumw2()
+	# names
+	mc.SetName(name)
+	mc.SetTitle("%s;%s;%s"%(name,m1.GetXaxis().GetTitle(),m1.GetYaxis().GetTitle()))
+	gStyle.SetPaintTextFormat("6.2f")
+
+	# fill
+	for xi in range(mc.GetXaxis().GetNbins()+1):
+		for yi in range(mc.GetYaxis().GetNbins()+1):
+			xi1 = m1.GetXaxis().FindBin(mc.GetXaxis().GetBinUpEdge(xi)-0.001)
+			yi1 = m1.GetYaxis().FindBin(mc.GetYaxis().GetBinUpEdge(yi)-0.001)
+			xi2 = m2.GetXaxis().FindBin(mc.GetXaxis().GetBinUpEdge(xi)-0.001)
+			yi2 = m2.GetYaxis().FindBin(mc.GetYaxis().GetBinUpEdge(yi)-0.001)
+			if cutx: 
+				binUpLim = mc.GetXaxis().GetBinUpEdge(xi)
+				if binUpLim <= cutx: 
+					mc.SetBinContent(xi,yi,m1.GetBinContent(xi1,yi1))
+					mc.SetBinError(xi,yi,m1.GetBinError(xi1,yi1))
+				if binUpLim > cutx:  
+					mc.SetBinContent(xi,yi,m2.GetBinContent(xi2,yi2))
+					mc.SetBinError(xi,yi,m2.GetBinError(xi2,yi2))
+			elif cuty:
+				binUpLim = mc.GetYaxis().GetBinUpEdge(yi)
+				if binUpLim <= cuty: 
+					mc.SetBinContent(xi,yi,m1.GetBinContent(xi1,yi1))
+					mc.SetBinError(xi,yi,m1.GetBinError(xi1,yi1))
+				if binUpLim > cuty:  
+					mc.SetBinContent(xi,yi,m2.GetBinContent(xi2,yi2))
+					mc.SetBinError(xi,yi,m2.GetBinError(xi2,yi2))
+	# save		
+	makeDirsRoot(fout,path)
+	gDirectory.cd('%s:/%s'%(fout.GetName(),path))
+	mc.Write(mc.GetName(),TH1.kOverwrite)
+	mc.Draw("colz,error,text90")
+	makeDirs('plots/%s'%path)
+	canvas.SaveAs('plots/%s/%s.png'%(path,name))
+	canvas.SaveAs('plots/%s/%s.pdf'%(path,name))
+	l2("Written map to plots/%s/%s.png"%(path,name))
+	# clean
+	canvas.Close()
+
+
 def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 	# info 
 	l1("Creating 2D maps for (%s,%s):"%(vx[0],vy[0]))
@@ -80,11 +167,17 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 	for group in groups:
 		makeDirsRoot(fout,'2DMaps/%s'%group)
 # calculate
-	xvals = array.array('f',[float(x) for x in vx[1].split("#")])
-	yvals = array.array('f',[float(x) for x in vy[1].split("#")])
+	xvals = array('f',[float(x) for x in vx[1].split("#")])
+	yvals = array('f',[float(x) for x in vy[1].split("#")])
 	maps = {}
 	cuts = {}
 	inroot('TTree *t = 0;')
+# TO Save
+	canvas = TCanvas("cmap","cmap",1800,1200)
+	canvas.cd()
+	gPad.SetGrid(0,0)
+	gPad.SetRightMargin(0.12)
+	gStyle.SetPaintTextFormat("6.2f")
 # LOOP over ALL GROUPS
 	for group in groups:
 		l2("Filling for group: %s%s%s"%(purple,group,plain))
@@ -96,11 +189,11 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 			maptitle = "%s;%s;%s"%(mapname,variables[vx[0]]['title_x'],variables[vy[0]]['title_x'])
 			trg = dc(trg_orig)
 			maps[group][tag] = fout.FindObjectAny(mapname)
-			if not maps[group][tag]:
+			if (not maps[group][tag]) or (not len(xvals)-1==maps[group][tag].GetXaxis().GetNbins()) or (not len(yvals)-1==maps[group][tag].GetYaxis().GetNbins()):
 				maps[group][tag] = TH2F(mapname,maptitle,len(xvals)-1,xvals,len(yvals)-1,yvals)
 				maps[group][tag].Sumw2()
 ## LOOP over ALL SAMPLES
-				for s in samplesbygroup[group]:
+				for s in sorted(samplesbygroup[group],key=lambda x:('QCD' in x['tag'],not 'WJets' in x['tag'],jsoninfo['crosssections'][x['tag']])):
 					if tag=='Rat': continue
 					l3("Filling for sample: %s%s (%s)%s"%(cyan,s['tag'],tag,plain))
 					trg,trg_orig = trigData(opts,s,trg)
@@ -111,12 +204,25 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 			else:
 				l3("Loaded from file for group: %s%s%s"%(cyan,group,plain))
 ## END LOOP over ALL SAMPLES
+		# to save
+		path = 'plots/2DMaps/%s'%group
+		makeDirs(path)
 		# ratio
 		maps[group]['Rat'].Divide(maps[group]['Num'],maps[group]['Den'],1.0,1.0,'B')
 		# save		
 		gDirectory.cd('%s:/2DMaps/%s'%(fout.GetName(),group))
+		for xi in range(1,maps[group]['Rat'].GetXaxis().GetNbins()):
+			for yi in range(1,maps[group]['Rat'].GetYaxis().GetNbins()):
+				if maps[group]['Rat'].GetBinContent(xi,yi) < 0.00001: 
+					maps[group]['Rat'].SetBinContent(xi,yi,float(maps[group]['Rat'].GetBinContent(xi+1,yi)+maps[group]['Rat'].GetBinContent(xi,yi+1))/2.) 
+					maps[group]['Rat'].SetBinError(xi,yi,sqrt((float(maps[group]['Rat'].GetBinError(xi+1,yi))*float(maps[group]['Rat'].GetBinError(xi+1,yi)))+(float(maps[group]['Rat'].GetBinError(xi,yi+1))*float(maps[group]['Rat'].GetBinError(xi,yi+1)))))
 		for tag in ['Num','Den','Rat']:
+			if not tag in maps[group]: continue
 			maps[group][tag].Write(maps[group][tag].GetName(),TH1.kOverwrite)
+			maps[group][tag].Draw("colz,text90,error")
+			maps[group][tag].SetTitleOffset(1.0,"Y")
+			canvas.SaveAs('%s/%s.png'%(path,maps[group][tag].GetName()))
+			canvas.SaveAs('%s/%s.pdf'%(path,maps[group][tag].GetName()))
 # END LOOP over ALL GROUPS
 
 # FOCUS ON RATIO MAPS JetMon / QCD
@@ -138,16 +244,21 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		gDirectory.cd('%s:/2DMaps/%s'%(fout.GetName(),ratio))
 		maps[ratio]['Rat'].Write(maps[ratio]['Rat'].GetName(),TH1.kOverwrite)
 		# plot
-		canvas = TCanvas("cmap","cmap",1800,1200)
 		canvas.cd()
-		gPad.SetGrid(0,0)
-		gPad.SetRightMargin(0.12)
 		maps[ratio]['Rat'].SetTitleOffset(1.0,"Y")
-		gStyle.SetPaintTextFormat("6.3f")
 		maps[ratio]['Rat'].Draw('colz,error,text90')
+		for xi in range(1,maps[ratio]['Rat'].GetXaxis().GetNbins()):
+			for yi in range(1,maps[ratio]['Rat'].GetYaxis().GetNbins()):
+				if maps[ratio]['Rat'].GetBinContent(xi,yi) < 0.00001: 
+					maps[ratio]['Rat'].SetBinContent(xi,yi,float(maps[ratio]['Rat'].GetBinContent(xi+1,yi)+maps[ratio]['Rat'].GetBinContent(xi,yi+1))/2.) 
+					maps[ratio]['Rat'].SetBinError(xi,yi,sqrt((float(maps[ratio]['Rat'].GetBinError(xi+1,yi))*float(maps[ratio]['Rat'].GetBinError(xi+1,yi)))+(float(maps[ratio]['Rat'].GetBinError(xi,yi+1))*float(maps[ratio]['Rat'].GetBinError(xi,yi+1)))))
 		path = "plots/2DMaps/%s"%ratio
 		makeDirs(path)
-		canvas.SaveAs("%s/%s.png"%(path,maps[ratio]['Rat'].GetName()))
+		for tag in ['Num','Den','Rat']:
+			if not tag in maps[ratio]: continue
+			canvas.SaveAs("%s/%s.png"%(path,maps[ratio][tag].GetName()))
+			canvas.SaveAs("%s/%s.pdf"%(path,maps[ratio][tag].GetName()))
+		l2("Written map to (eog %s/%s.png)"%(path,maps[ratio]['Rat'].GetName()))
 		canvas.Close()
 
 
@@ -162,7 +273,7 @@ def getBMapWght(opts,fout,samples,sel,trg,reftrig):
 	gDirectory.cd("%s:/"%fout.GetName())
 	makeDirsRoot(fout,'bMapWghts/%s/'%group)
 	# calculate
-	xvals = array.array('f',[0.0,0.244,0.679,0.898,1.001])
+	xvals = array('f',[0.0,0.244,0.679,0.898,1.001])
 	maps = {}
 	cuts = {}
 	inroot('TTree *t = 0;')

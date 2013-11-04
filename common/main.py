@@ -32,6 +32,9 @@ def parser(mp=None):
 	\n
 	\nJust print cutstrings:
 	\n./main.py -D ../common/vbfHbb_defaultOpts_2013.json -w '19012.,XSEC;LUMI;PU;MAP#ht#dEtaqq[3],,,../common/rootfiles/2DMaps_2013.root;2DMaps/JetMon-QCD/2DMap_JetMon-QCD-Rat_smjjMax850-HT300-dEta-jetPt1-ElfMuf-tVBF-rAV80-dVBFOR_ht-dEtaqq3;1' -d -t 'VBF' --datatrigger 'VBFOR' -p 'ElfMuf;dEta;jetPt1;HT300;mjjMax850' -o rootfiles/vbfHbb_2013_2DMapCorrected_turnons.root --binning 'mjjMax;70;500;1200,mqq2;70;500;1200,mbb2;30;0;300,ht;50;0;1000,dEtaqq2;60;2;8,dEtaqq3;60;2;8,mbbReg2;30;0;300,jetPt0;40;0;400,jetPt1;30;0;300' -s 'JetMon,QCD' -r 'AV80'
+	\n
+	\nThe full thing: turnon curves
+	\n./mkHist.py -D ../common/vbfHbb_defaultOpts_2013.json -w '14014,XSEC;LUMI;PU;KFAC;MAP#ht#dEtaqq[3],,,../common/rootfiles/2DMaps_2013.root;2DMaps/JetMon-QCD/2DMap_JetMon-QCD-Rat_smjjMax850-HT300-dEta-jetPt1-ElfMuf-tVBF-rAV80-dVBFOR_ht-dEtaqq3;1' -d -t 'VBF' --datatrigger 'VBFOR' -p 'ElfMuf;dEta;jetPt1;HT300;mjjMax850;BtagLM' -o rootfiles/vbfHbb_2013_2DMapCorrected_controlplots.root --binning 'mjjMax;70;500;1200,mqq2;70;500;1200,mbb2;30;0;300,ht;50;0;1000,dEtaqq2;60;2;8,dEtaqq3;60;2;8,mbbReg2;30;0;300,jetPt0;40;0;400,jetPt1;30;0;300' --nosample 'JetMon,VBF115,VBF120,VBF130,VBF135,DataA,DataB,DataC,DataD' -v 'mqq2' --drawstack -K
 	'''+plain
 
 	mgj = OptionGroup(mp,cyan+"json settings"+plain)
@@ -53,9 +56,11 @@ def parser(mp=None):
 	mgd.add_option('-R','--reformat',help="Reformat all trees, even when present allready.",action='store_true',default=False)
 	mgd.add_option('-K','--KFWght',help="Recalculate KFWght from current list of samples.",action='store_true',default=False)
 	mgd.add_option('-B','--BMapWght',help="Recalculate BMapWght from current list of samples. Provide sel, trg and reftrig. Format: (sample) for standard map or (sample,sample) for ratiomap.",action='callback',callback=optsplit,default=[],type='str')
+	mgd.add_option('--BMapWghtCombo',help="Create BMapWghtCombo from two maps with a provided cut. Syntax: 'name1,name2,eithercutx,orcuty'",action='callback',callback=optsplit,default=[],type='str')
 	mgd.add_option('--usebool',help="Use original trees, not the char ones.",action='store_true',default=False)
 	mgd.add_option('-y','--yields',help='Print yields for each sample for specified sel+trg+cuts',action='store_true',default=False)
 	mgd.add_option('-l','--latex',help='Print latex output.',action='store_true',default=False)
+	mgd.add_option('--shrunk',help='Use small flattrees.',action='store_true',default=False)
 	mgd.add_option('-m','--map',help='Create 2D map ("var1;binlim1#binlim2#...,var2;binlim1#binlim2#...").',type='str',action='callback',callback=optsplitlist)
 
 	mgst = OptionGroup(mp,cyan+"Run for subselection determined by variable, sample and/or selection/trigger"+plain)
@@ -87,12 +92,13 @@ def loadSamples(opts,samples):
 	samplesroot = [] 
 	l2("Global path: "+opts.globalpath)
 	for isample,sample in enumerate(sorted(samples.itervalues())): 
+		tag = 'reformatted' if not opts.shrunk else 'shrunk' 
 		# require regex in opts.sample
 		if not opts.sample==[] and not any([(x in sample['tag']) for x in opts.sample]): continue
 		# veto regex in opts.nosample
 		if not opts.nosample==[] and any([(x in sample['tag']) for x in opts.nosample]): continue
 		# configure
-		if not opts.usebool: inroot('sample mysample%i = sample("%s/%s_reformatted.root","Hbb/events",variables);'%(isample,opts.globalpath,sample['fname'][:-5]))
+		if not opts.usebool: inroot('sample mysample%i = sample("%s/%s_%s.root","Hbb/events",variables);'%(isample,opts.globalpath,sample['fname'][:-5],tag))
 		else: inroot('sample mysample%i = sample("%s/%s.root","Hbb/events",variables);'%(isample,opts.globalpath,sample['fname'][:-5]))
 		samplesroot.append({'pointer':'mysample%i'%isample, 'fname':sample['fname'], 'tag':sample['tag'], 'colour':sample['colour']})
 		l2(samplesroot[-1])
@@ -267,6 +273,19 @@ def main(mp=None):
 	inroot('gROOT->ForceStyle();')
 
 
+# open/create output file
+	if not os.path.exists(os.path.split(opts.fout)[0]) and not os.path.split(opts.fout)[0]=='': os.makedirs(os.path.split(opts.fout)[0])
+	fout = TFile(opts.fout,'recreate' if (not os.path.exists(opts.fout) or opts.new) else 'update')
+	fout.cd()
+
+
+# get bMapWghtCombo (if asked)
+	if not opts.BMapWghtCombo == []:
+		l1("Combining bMapWghts.")
+		get2DMapCombo(opts,fout,opts.BMapWghtCombo)
+		sys.exit(red+"BMapWghtCombo was created and written. Rerun for further calculations."+plain)
+
+
 # load sample info
 	samplesfull = json.loads(filecontent(opts.jsonsamp))
 	samples = samplesfull['files'] # dictionary
@@ -304,12 +323,6 @@ def main(mp=None):
 # load samples
 	loadedSamples = loadSamples(opts,samples)
 
-# open/create output file
-	if not os.path.exists(os.path.split(opts.fout)[0]) and not os.path.split(opts.fout)[0]=='': os.makedirs(os.path.split(opts.fout)[0])
-	fout = TFile(opts.fout,'recreate' if (not os.path.exists(opts.fout) or opts.new) else 'update')
-	fout.cd()
-	
-
 # get bMapWght (if asked)
 	if not opts.BMapWght == []:
 		l1("Calculating bMapWghts.")
@@ -345,7 +358,7 @@ def main(mp=None):
 		for trg in opts.trigger:
 			if opts.debug: l1("Running for trg: %s"%('-'.join(trg))+("" if opts.datatrigger==[] else " (data: %s)"%('-'.join(opts.datatrigger[opts.trigger.index(trg)]))))
 			# two cases
-			if opts.KFWght: KFWghts[('-'.join(sel),'-'.join(trg))] = getKFWght(opts,loadedSamples,sel,trg) if (not len(opts.weight)>3) else float(opts.weight[3][0])
+			if opts.KFWght: KFWghts[('-'.join(sel),'-'.join(trg))] = getKFWght(opts,loadedSamples,sel,trg) if ((not len(opts.weight)>3) or opts.weight[3][0] == '') else float(opts.weight[3][0])
 			else: KFWghts[('-'.join(sel),'-'.join(trg))] = None 
 	print
 	print KFWghts

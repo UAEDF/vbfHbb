@@ -230,8 +230,10 @@ def getNames(opts,sample,var,sel,trg,ref,extra=""):
 
 # WEIGHT INFO ######################################################################################
 def weightInfo(weights,KFWght=None):
+	localweights = dc(weights)
+	localweights[1] = [x.replace('#','.').replace(']','').replace('[','').replace('KFAC','KFAC%s'%("%.2f"%KFWght if KFWght else "def")) for x in weights[1] if not x=='']
 	if weights==[[''],['']]: return 'None'
-	else: return ('-'.join(sorted(weights[1]))).replace('KFAC','KFAC%s'%("%.2f"%KFWght if KFWght else 'def')) 
+	else: return ('-'.join(sorted(localweights[1])))
 
 # TRIGTRUTH ########################################################################################
 def trigTruth(usebool):

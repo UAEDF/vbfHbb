@@ -23,31 +23,31 @@ reformat::reformat(TString _nold, vector<TString> _variables, int _format) :
 	std::vector<bool> *vb = 0;
 	std::vector<char> *vc = 0;
 	
-	TLorentzVector jet1,jet2;
-	float mqqTrig = 0;
-	float dEtaqqTrig = 0;
+//	TLorentzVector jet1,jet2;
+//	float mqqTrig = 0;
+//	float dEtaqqTrig = 0;
 
 	told->SetBranchStatus("triggerResult",1); // activate branch to loop over it
-	told->SetBranchStatus("jetPt",1); // activate branch to loop over it
-	told->SetBranchStatus("jetEta",1); // activate branch to loop over it
-	told->SetBranchStatus("jetPhi",1); // activate branch to loop over it
-	told->SetBranchStatus("jetMass",1); // activate branch to loop over it
+//	told->SetBranchStatus("jetPt",1); // activate branch to loop over it
+//	told->SetBranchStatus("jetEta",1); // activate branch to loop over it
+//	told->SetBranchStatus("jetPhi",1); // activate branch to loop over it
+//	told->SetBranchStatus("jetMass",1); // activate branch to loop over it
 	told->SetBranchAddress("triggerResult",&vb);
 	TBranch *bc = tnew->Branch("triggerResult","std::vector<char>",&vc);			// new branch of different type in new tree
-	TBranch *bmqqTrig = tnew->Branch("mqqTrig",&mqqTrig,"mqqTrig/F"); 				// new branch of different type in new tree
-	TBranch *bdEtaqqTrig = tnew->Branch("dEtaqqTrig",&dEtaqqTrig,"dEtaqqTrig/F"); 	// new branch of different type in new tree
+//	TBranch *bmqqTrig = tnew->Branch("mqqTrig",&mqqTrig,"mqqTrig/F"); 				// new branch of different type in new tree
+//	TBranch *bdEtaqqTrig = tnew->Branch("dEtaqqTrig",&dEtaqqTrig,"dEtaqqTrig/F"); 	// new branch of different type in new tree
 	tnew->SetBasketSize("triggerResult",512000); // use larger basket size
-	tnew->SetBasketSize("mqqTrig",512000); // use larger basket size
-	tnew->SetBasketSize("dEtaqqTrig",512000); // use larger basket size
+//	tnew->SetBasketSize("mqqTrig",512000); // use larger basket size
+//	tnew->SetBasketSize("dEtaqqTrig",512000); // use larger basket size
 	int nentries = told->GetEntries();
 	printf("\tLooping to convert branch...\n");
 
 	if (format==1) {
-		Float_t vjetPt[5], vjetEta[5], vjetPhi[5], vjetMass[5];
-		told->SetBranchAddress("jetPt",&vjetPt);
-		told->SetBranchAddress("jetEta",&vjetEta);
-		told->SetBranchAddress("jetPhi",&vjetPhi);
-		told->SetBranchAddress("jetMass",&vjetMass);
+//		Float_t vjetPt[5], vjetEta[5], vjetPhi[5], vjetMass[5];
+//		told->SetBranchAddress("jetPt",&vjetPt);
+//		told->SetBranchAddress("jetEta",&vjetEta);
+//		told->SetBranchAddress("jetPhi",&vjetPhi);
+//		told->SetBranchAddress("jetMass",&vjetMass);
 		for (int ientry=0; ientry<nentries; ++ientry) { // loop over tree to convert branch
 			if (ientry%(nentries/20)==0) printf("\t\tevent %8i / %8i\n",ientry,nentries);
 			told->GetEntry(ientry);
@@ -56,7 +56,7 @@ reformat::reformat(TString _nold, vector<TString> _variables, int _format) :
 				char c = (char)(vb->at(i)+48); // chars 0 and 1 are values 48 and 49
 				vc->push_back(c);
 			}
-			mqqTrig = -1;
+/*			mqqTrig = -1;
 			dEtaqqTrig = -1;
 			for (int i=0; i<5; ++i) {
 				for (int j=i+1; j<5; ++j) {
@@ -73,17 +73,17 @@ reformat::reformat(TString _nold, vector<TString> _variables, int _format) :
 					//printf("%12f  %12f  %12f  %12f\n",vjetPt[i],vjetPt[j],mqqTrig,dEtaqqTrig);
 				}
 			}
-			bc->Fill();
-			bmqqTrig->Fill();
-			bdEtaqqTrig->Fill();
+*/			bc->Fill();
+//			bmqqTrig->Fill();
+//			bdEtaqqTrig->Fill();
 		}
 	}
 	if (format==2) {
-		vector<float> *vjetPt=0, *vjetEta=0, *vjetPhi=0, *vjetMass=0;
-		told->SetBranchAddress("jetPt",&vjetPt);
-		told->SetBranchAddress("jetEta",&vjetEta);
-		told->SetBranchAddress("jetPhi",&vjetPhi);
-		told->SetBranchAddress("jetMass",&vjetMass);
+//		vector<float> *vjetPt=0, *vjetEta=0, *vjetPhi=0, *vjetMass=0;
+//		told->SetBranchAddress("jetPt",&vjetPt);
+//		told->SetBranchAddress("jetEta",&vjetEta);
+//		told->SetBranchAddress("jetPhi",&vjetPhi);
+//		told->SetBranchAddress("jetMass",&vjetMass);
 		for (int ientry=0; ientry<nentries; ++ientry) { // loop over tree to convert branch
 			if (ientry%(nentries/20)==0) printf("\t\tevent %8i / %8i\n",ientry,nentries);
 			told->GetEntry(ientry);
@@ -92,7 +92,7 @@ reformat::reformat(TString _nold, vector<TString> _variables, int _format) :
 				char c = (char)(vb->at(i)+48); // chars 0 and 1 are values 48 and 49
 				vc->push_back(c);
 			}
-			mqqTrig = -1;
+/*			mqqTrig = -1;
 			dEtaqqTrig = -1;
 			for (int i=0; i<(int)(vjetPt->size()); ++i) {
 				for (int j=i+1; j<(int)(vjetPt->size()); ++j) {
@@ -109,9 +109,9 @@ reformat::reformat(TString _nold, vector<TString> _variables, int _format) :
 					//printf("%12f  %12f  %12f  %12f\n",vjetPt->at(i),vjetPt->at(j),mqqTrig,dEtaqqTrig);
 				}
 			}
-			bc->Fill();
-			bmqqTrig->Fill();
-			bdEtaqqTrig->Fill();
+*/			bc->Fill();
+//			bmqqTrig->Fill();
+//			bdEtaqqTrig->Fill();
 		}
 	}
 	tnew->SetEntries(nentries);

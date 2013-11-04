@@ -90,8 +90,10 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 
 	wfString = ''
 	if not weight == [[''],['']]:
+		parsedWeight = dc(weight)
+		if (trg==[]) and ('MAP' in [x[:3] for x in weight[1]]): parsedWeight[1] = [x for x in weight[1] if not x[:3]=='MAP'] 
 		wf = weightFactory(kwargs['jsonsamp'],weight[0][0],KFWght) 
-		wfString = wf.getFormula(','.join(weight[1]),kwargs['sample'])
+		wfString = wf.getFormula(','.join(parsedWeight[1]),kwargs['sample'])
 
 	# construct
 	if not (selold==[] and trgold==[]):
@@ -154,7 +156,7 @@ if __name__=='__main__':
 	for sel in opts.selection:
 		for trg in opts.trigger:
 			for ref in opts.reftrig:
-				st, stlabels = write_cuts(sel,trg,opts.selcmp,opts.trgcmp,reftrig=ref,jsoncuts=opts.jsoncuts,sample=opts.use,jsonsamp=opts.jsonsamp,seljoin=opts.seljoin,trgjoin=opts.trgjoin,varskip=opts.skip,selcmpjoin=opts.selcmpjoin,trgcmpjoin=opts.trgcmpjoin,stgroup=opts.stgroup,weight=opts.weight,trigequal=('49' if not opts.usebool else '1'))
+				st, stlabels = write_cuts(sel,trg,opts.selcmp,opts.trgcmp,reftrig=ref,jsoncuts=opts.jsoncuts,sample=opts.use,jsonsamp=opts.jsonsamp,seljoin=opts.seljoin,trgjoin=opts.trgjoin,varskip=opts.skip,selcmpjoin=opts.selcmpjoin,trgcmpjoin=opts.trgcmpjoin,stgroup=opts.stgroup,weight=opts.weight,trigequal=trigTruth(opts.usebool))
 	print st
 	print
 	print stlabels

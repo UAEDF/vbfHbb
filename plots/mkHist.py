@@ -82,7 +82,7 @@ def do_fill(opts,fout,s,v,sel,trg,ref,KFWght=None):
 ########################################
 def do_draw(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	# names
-	trg,trg_orig(opts,s,trg)
+	trg,trg_orig = trigData(opts,s,trg)
 	names  = getNames(opts,s,v,sel,trg_orig,ref)
 	wpars  = weightInfo(opts.weight,KFWght)
 	
@@ -125,6 +125,7 @@ def do_draw(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2D MAP reweighted (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[0],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1]))
 	text.Draw()
 
 	# write
@@ -160,10 +161,10 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	bkgHistos = []	
 
 	# legend
-	columns = ceil(len(samples)/4.)
+	columns = ceil(len(samples)/5.)
 	rows    = ceil(len(samples)/columns)
 	left    = gPad.GetLeftMargin()+0.02
-	bottom  = 1-gPad.GetTopMargin()-0.02 - (0.04*rows) # n rows sized 0.04
+	bottom  = 1-gPad.GetTopMargin()-0.02 - (0.035*rows) # n rows sized 0.035
 	right   = gPad.GetLeftMargin()+0.02 + (0.12*columns) # n columns width 0.12
 	top     = 1-gPad.GetTopMargin()-0.02
 	legend  = getTLegend(left,bottom,right,top,columns)
@@ -180,6 +181,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2D MAP reweighted (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[0],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1]))
 	# layout scaling
 	ymin=0
 	ymax=0
@@ -258,6 +260,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		# draw (bottom)
 		c2.cd()
 		setStyleTH1Fratio(ratio)
+		ratio.GetYaxis().SetRangeUser(0.5,1.5)
 		ratio.Draw('e0')
 		# line through y=1
 		gPad.Update()
@@ -321,6 +324,7 @@ def do_drawnormalized(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	bkgHistos = []	
 
 	# legend
+	print samples
 	columns = ceil(len(samples)/4.)
 	rows    = ceil(len(samples)/columns)
 	left    = gPad.GetLeftMargin()+0.02
@@ -341,6 +345,7 @@ def do_drawnormalized(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2D MAP reweighted (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[0],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1]))
 	# layout scaling
 	ymin=0
 	ymax=0
