@@ -211,11 +211,13 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		maps[group]['Rat'].Divide(maps[group]['Num'],maps[group]['Den'],1.0,1.0,'B')
 		# save		
 		gDirectory.cd('%s:/2DMaps/%s'%(fout.GetName(),group))
-		for xi in range(1,maps[group]['Rat'].GetXaxis().GetNbins()):
-			for yi in range(1,maps[group]['Rat'].GetYaxis().GetNbins()):
-				if maps[group]['Rat'].GetBinContent(xi,yi) < 0.00001: 
-					maps[group]['Rat'].SetBinContent(xi,yi,float(maps[group]['Rat'].GetBinContent(xi+1,yi)+maps[group]['Rat'].GetBinContent(xi,yi+1))/2.) 
-					maps[group]['Rat'].SetBinError(xi,yi,sqrt((float(maps[group]['Rat'].GetBinError(xi+1,yi))*float(maps[group]['Rat'].GetBinError(xi+1,yi)))+(float(maps[group]['Rat'].GetBinError(xi,yi+1))*float(maps[group]['Rat'].GetBinError(xi,yi+1)))))
+		# empty bins 
+		if not any('jetBtag' in x for x in [variables[vx[0]]['var'],variables[vy[0]]['var']]):
+			for xi in range(1,maps[group]['Rat'].GetXaxis().GetNbins()):
+				for yi in range(1,maps[group]['Rat'].GetYaxis().GetNbins()):
+					if maps[group]['Rat'].GetBinContent(xi,yi) < 0.00001: 
+						maps[group]['Rat'].SetBinContent(xi,yi,float(maps[group]['Rat'].GetBinContent(xi+1,yi)+maps[group]['Rat'].GetBinContent(xi,yi+1))/2.) 
+						maps[group]['Rat'].SetBinError(xi,yi,sqrt((float(maps[group]['Rat'].GetBinError(xi+1,yi))*float(maps[group]['Rat'].GetBinError(xi+1,yi)))+(float(maps[group]['Rat'].GetBinError(xi,yi+1))*float(maps[group]['Rat'].GetBinError(xi,yi+1)))))
 		for tag in ['Num','Den','Rat']:
 			if not tag in maps[group]: continue
 			maps[group][tag].Write(maps[group][tag].GetName(),TH1.kOverwrite)
@@ -247,11 +249,13 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		canvas.cd()
 		maps[ratio]['Rat'].SetTitleOffset(1.0,"Y")
 		maps[ratio]['Rat'].Draw('colz,error,text90')
-		for xi in range(1,maps[ratio]['Rat'].GetXaxis().GetNbins()):
-			for yi in range(1,maps[ratio]['Rat'].GetYaxis().GetNbins()):
-				if maps[ratio]['Rat'].GetBinContent(xi,yi) < 0.00001: 
-					maps[ratio]['Rat'].SetBinContent(xi,yi,float(maps[ratio]['Rat'].GetBinContent(xi+1,yi)+maps[ratio]['Rat'].GetBinContent(xi,yi+1))/2.) 
-					maps[ratio]['Rat'].SetBinError(xi,yi,sqrt((float(maps[ratio]['Rat'].GetBinError(xi+1,yi))*float(maps[ratio]['Rat'].GetBinError(xi+1,yi)))+(float(maps[ratio]['Rat'].GetBinError(xi,yi+1))*float(maps[ratio]['Rat'].GetBinError(xi,yi+1)))))
+		# empty bins 
+		if not any('jetBtag' in x for x in [variables[vx[0]]['var'],variables[vy[0]]['var']]):
+			for xi in range(1,maps[ratio]['Rat'].GetXaxis().GetNbins()):
+				for yi in range(1,maps[ratio]['Rat'].GetYaxis().GetNbins()):
+					if maps[ratio]['Rat'].GetBinContent(xi,yi) < 0.00001: 
+						maps[ratio]['Rat'].SetBinContent(xi,yi,float(maps[ratio]['Rat'].GetBinContent(xi+1,yi)+maps[ratio]['Rat'].GetBinContent(xi,yi+1))/2.) 
+						maps[ratio]['Rat'].SetBinError(xi,yi,sqrt((float(maps[ratio]['Rat'].GetBinError(xi+1,yi))*float(maps[ratio]['Rat'].GetBinError(xi+1,yi)))+(float(maps[ratio]['Rat'].GetBinError(xi,yi+1))*float(maps[ratio]['Rat'].GetBinError(xi,yi+1)))))
 		path = "plots/2DMaps/%s"%ratio
 		makeDirs(path)
 		for tag in ['Num','Den','Rat']:

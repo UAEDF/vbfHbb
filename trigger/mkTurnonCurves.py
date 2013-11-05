@@ -56,6 +56,7 @@ class TEffiType():
 		self.s[tag].Add(self.h[tag][sample])
 
 	def get(self,sample,tag,fullpath,names):
+		if not gDirectory.Get(fullpath): return
 		self.h[tag][sample] = TH1F(gDirectory.Get(fullpath).GetStack().Last())
 		self.fillstack(sample,tag,names)
 
@@ -242,7 +243,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		for tag in ['Num','Den']:
 			fullpath = path+names[tag]['stack']+';1'
 			stacks[group]['effis'].get(s['tag'],tag,fullpath,stacks[group]['names'][tag])
-			if not stacks[group]['effis'].h[tag][s['tag']] or opts.redrawstack:
+			if (not s['tag'] in stacks[group]['effis'].h[tag]) or opts.redrawstack:
 				if not (opts.redraw or opts.redrawstack): l3("%s%s doesn\'t exist. Filling first.%s"%(red,fullpath,plain))
 				elif (opts.redraw or opts.redrawstack) and tag=='Den': l3("%sLoading %s since it was redrawn with 'Num'.%s"%(red,fullpath,plain))
 				else: l3("%sRedrawing %s first.%s"%(red,fullpath,plain))
@@ -253,66 +254,51 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		print
 		trg = dc(trg_orig)
 
-#	if opts.closure:
-#		### LOOP over all samples (again, without reference trigger)
-#		for s in sorted(samples,key=lambda x:('QCD' in x['tag'],-jsoninfo['crosssections'][x['tag']])):
-#			if any([x in s['tag'] for x in ['Data','JetMon']]): continue
-#			# trg
-#			trg,trg_orig = trigData(opts,s,trg)
-#			# names
-#			sample = s['pointer']
-#			names = {}
-#			names['global'] = getNames(opts,s,v,sel,trg_orig,['None'])
-#			for tag in ['Num','Den','Rat']:
-#				names[tag] = getNames(opts,s,v,sel,trg_orig if not tag=='Den' else ['None'],['None'],tag)
-#			# info	
-#			l3("%sStack group: %s (sample: %s)%s"%(blue,names['global']['group'],s['tag'],plain))
-#	
-#			group = names['global']['group'] + '_NoRef'
-#			if not group in stacks:
-#				stacks[group] = {}
-#				stacks[group]['stack']    = {}
-#				stacks[group]['histos']   = {}
-#				stacks[group]['names']    = names
-#				stacks[group]['colours']  = jsoninfo['colours'][s['tag']]
-#	
-#				for tag in ['Num','Den']:
-#					stacks[group]['stack'][tag]  = THStack(names[tag]['stack'],names[tag]['stack-title'])
-#					stacks[group]['histos'][tag] = []
-#	
-#			# load histograms from file
-#			gDirectory.cd('%s:/'%fout.GetName())
-#			path = '/%s/%s/%s/'%('turnonCurves',wpars,names['global']['path-turnon'])
-#			# fill if needed/wanted 
-#			for tag in ['Num','Den']:
-#				fullpath  = path+names[tag]['hist']+';1'
-#				hload     = gDirectory.Get(fullpath) 
-#				if (not hload) or opts.redrawstack:
-#					if not (opts.redraw or opts.redrawstack): l3("%s%s doesn\'t exist. Filling first.%s"%(red,fullpath,plain))
-#					elif (opts.redraw or opts.redrawstack) and tag=='Den': l3("%sLoading %s since it was redrawn with 'Num'.%s"%(red,fullpath,plain))
-#					else: l3("%sRedrawing %s first.%s"%(red,fullpath,plain))
-#					if not ((opts.redraw or opts.redrawstack) and tag=='Den'): do_fill(opts,fout,s,v,sel,trg_orig,['None'],KFWght)
-#					hload = gDirectory.Get(fullpath)
-#				if opts.debug: l3("%sLoaded: %40s(N=%9d, Int=%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),hload.Integral(),plain))
-#				stacks[group]['histos'][tag] += [dc(hload)]
-#				setStyleTH1F(stacks[group]['histos'][tag][-1],stacks[group]['colours'],1,stacks[group]['colours'],0,1,26)
-#				stacks[group]['stack'][tag].Add(stacks[group]['histos'][tag][-1])
-#			print
-#			trg = dc(trg_orig)
+	if opts.closure:
+		### LOOP over all samples (again, without reference trigger)
+		for s in sorted(samples,key=lambda x:('QCD' in x['tag'],-jsoninfo['crosssections'][x['tag']])):
+			if any([x in s['tag'] for x in ['Data','JetMon']]): continue
+			# trg
+			trg,trg_orig = trigData(opts,s,trg)
+			# names
+			sample = s['pointer']
+			names = {}
+			names['global'] = getNames(opts,s,v,sel,trg_orig,['None'])
+			for tag in ['Num','Den','Rat']:
+				names[tag] = getNames(opts,s,v,sel,trg_orig if not tag=='Den' else ['None'],['None'],tag)
+			# info	
+			l3("%sStack group: %s (sample: %s)%s"%(blue,names['global']['group'],s['tag'],plain))
+	
+			group = names['global']['group'] + '_NoRef'
+			if not group in stacks:
+				stacks[group] = {}
+				stacks[group]['effis']    = TEffiType(v) 
+				stacks[group]['names']    = names
+				stacks[group]['colours']  = jsoninfo['colours'][s['tag']]
+	
+			# load histograms from file
+			gDirectory.cd('%s:/'%fout.GetName())
+			path = '/%s/%s/%s/'%('turnonCurves',wpars,names['global']['path-turnon'])
+			# fill if needed/wanted 
+			for tag in ['Num','Den']:
+				fullpath  = path+names[tag]['stack']+';1'
+				stacks[group]['effis'].get(s['tag'],tag,fullpath,stacks[group]['names'][tag])
+				if (not s['tag'] in stacks[group]['effis'].h[tag]) or opts.redrawstack:
+					if not (opts.redraw or opts.redrawstack): l3("%s%s doesn\'t exist. Filling first.%s"%(red,fullpath,plain))
+					elif (opts.redraw or opts.redrawstack) and tag=='Den': l3("%sLoading %s since it was redrawn with 'Num'.%s"%(red,fullpath,plain))
+					else: l3("%sRedrawing %s first.%s"%(red,fullpath,plain))
+					if not ((opts.redraw or opts.redrawstack) and tag=='Den'): do_fill(opts,fout,s,v,sel,trg_orig,['None'],KFWght)
+					stacks[group]['effis'].get(s['tag'],tag,fullpath,stacks[group]['names'][tag])
+				if opts.debug: l3("%sLoaded: %40s(N=%9d, Int=%9d)%s"%(yellow,stacks[group]['effis'].h[tag][s['tag']].GetName(),stacks[group]['effis'].h[tag][s['tag']].GetEntries(),stacks[group]['effis'].h[tag][s['tag']].Integral(),plain))
+				setStyleTH1F(stacks[group]['effis'].h[tag][s['tag']],stacks[group]['colours'],1,stacks[group]['colours'],0,1,26)
+			print
+			trg = dc(trg_orig)
 
 	istack=0
 	for group,g in stacks.iteritems():
 		# get ratio
 		tag = 'Rat'
-		g['effis'].effi(g['names'][tag],g['colours'],20 if any([x in group for x in ['Data','JetMon']]) else (22 if not 'NoRef' in g['names'][tag]['hist'] else 26))
-#		hRat = TH1F(g['names'][tag]['turnon'],g['names'][tag]['turnon-title'],int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
-#		hRat.Divide(g['stack']['Num'].GetStack().Last(),g['stack']['Den'].GetStack().Last(),1.0,1.0,'B')
-#		g['stack'][tag] = TEfficiency(g['stack']['Num'].GetStack().Last(),g['stack']['Den'].GetStack().Last())
-#		g['stack'][tag].SetName(g['names'][tag]['turnon'])
-#		g['stack'][tag].SetTitle(g['names'][tag]['turnon-title'])
-#		g['stack'][tag].Paint("")
-#		setStyleTH1F(g['stack'][tag],g['colours'],1,g['colours'],0,g['colours'],20 if not 'NoRef' in group else 26)
-#		setStyleTH1F(g['effis'].h[tag],g['colours'],1,g['colours'],0,g['colours'],20 if not 'NoRef' in group else 26)
+		g['effis'].effi(g['names'][tag],g['colours'],20 if any([x in group for x in ['Data','JetMon']]) else (22 if not 'NoRef' in group else 26))
 		print 
 #		ymin, ymax = getRangeTH1F(g['teffis'].h[tag],ymin,ymax)
 #		setRangeTH1F(g['teffis'].h[tag],0.0,1.2,False)
