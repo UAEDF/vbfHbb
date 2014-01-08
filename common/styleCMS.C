@@ -4,22 +4,22 @@
 void styleCMS() {
   TStyle *tdrStyle = new TStyle("tdrStyle_edited","Style for P-TDR");
 
-  tdrStyle->SetPalette(13);;
+  tdrStyle->SetPalette(1);;
 
 // For the canvas:
   tdrStyle->SetCanvasBorderMode(0);
   tdrStyle->SetCanvasColor(kWhite);
-  tdrStyle->SetCanvasDefH(2400); //Height of canvas
-  tdrStyle->SetCanvasDefW(1800); //Width of canvas
+  tdrStyle->SetCanvasDefH(3600); //Height of canvas
+  tdrStyle->SetCanvasDefW(2400); //Width of canvas
   tdrStyle->SetCanvasDefX(0);   //POsition on screen
   tdrStyle->SetCanvasDefY(0);
 
 // For the Pad:
   tdrStyle->SetPadBorderMode(0);
-  // tdrStyle->SetPadBorderSize(Width_t size = 1);
+  //tdrStyle->SetPadBorderSize(3);
   tdrStyle->SetPadColor(kWhite);
-  tdrStyle->SetPadGridX(true);
-  tdrStyle->SetPadGridY(true);
+  tdrStyle->SetPadGridX(false);
+  tdrStyle->SetPadGridY(false);
   tdrStyle->SetGridColor(0);
   tdrStyle->SetGridStyle(3);
   tdrStyle->SetGridWidth(1);
@@ -68,7 +68,7 @@ void styleCMS() {
   tdrStyle->SetOptStat(0); // To display the mean and RMS:   SetOptStat("mr");
   tdrStyle->SetStatColor(kWhite);
   tdrStyle->SetStatFont(42);
-  tdrStyle->SetStatFontSize(0.025); // 0.025
+  tdrStyle->SetStatFontSize(0.022); // 0.025
   tdrStyle->SetStatTextColor(1);
   tdrStyle->SetStatFormat("6.4g");
   tdrStyle->SetStatBorderSize(1);
@@ -79,11 +79,15 @@ void styleCMS() {
   // tdrStyle->SetStatY(Float_t y = 0);
 
 // Margins:
-  tdrStyle->SetPadTopMargin(0.10);
-  tdrStyle->SetPadBottomMargin(0.13);
-  tdrStyle->SetPadLeftMargin(0.12);
-  //tdrStyle->SetPadRightMargin(0.14);
-  tdrStyle->SetPadRightMargin(0.04);
+//old//  tdrStyle->SetPadTopMargin(0.10);
+//old//  tdrStyle->SetPadBottomMargin(0.13);
+//old//  tdrStyle->SetPadLeftMargin(0.12);
+//old//  //tdrStyle->SetPadRightMargin(0.14);
+//old//  tdrStyle->SetPadRightMargin(0.04);
+  tdrStyle->SetPadTopMargin(0.05);
+  tdrStyle->SetPadBottomMargin(0.10);
+  tdrStyle->SetPadLeftMargin(0.10);
+  tdrStyle->SetPadRightMargin(0.20);
 
 // For the Global title:
 
@@ -92,7 +96,7 @@ void styleCMS() {
   tdrStyle->SetTitleColor(1);
   tdrStyle->SetTitleTextColor(kBlue-2);
   tdrStyle->SetTitleFillColor(10);
-  tdrStyle->SetTitleFontSize(0.045); // 0.050
+  tdrStyle->SetTitleFontSize(0.035); // 0.050
   //tdrStyle->SetTitleFontSize(10);
   // tdrStyle->SetTitleH(0); // Set the height of the title box
   // tdrStyle->SetTitleW(0); // Set the width of the title box
@@ -106,11 +110,12 @@ void styleCMS() {
   tdrStyle->SetTitleColor(kBlue-2, "XYZ");
   tdrStyle->SetTitleFont(43, "XYZ");
   //tdrStyle->SetTitleSize(0.035, "XYZ"); // 0.04
-  tdrStyle->SetTitleSize(0.03*tdrStyle->GetCanvasDefW(), "XYZ"); // 0.04
+  tdrStyle->SetTitleSize(0.025*tdrStyle->GetCanvasDefW(), "XYZ"); // 0.04
+  tdrStyle->SetTitleSize(0.025*1200, "XYZ"); // 0.04
   // tdrStyle->SetTitleXSize(Float_t size = 0.02); // Another way to set the size?
   // tdrStyle->SetTitleYSize(Float_t size = 0.02);
-  tdrStyle->SetTitleXOffset(1.25);
-  tdrStyle->SetTitleYOffset(1.55);
+  tdrStyle->SetTitleXOffset(1.05);
+  tdrStyle->SetTitleYOffset(1.10);
   // tdrStyle->SetTitleOffset(1.1, "Y"); // Another way to set the Offset
 
 // For the axis labels:
@@ -119,7 +124,8 @@ void styleCMS() {
   tdrStyle->SetLabelFont(43, "XYZ");
   tdrStyle->SetLabelOffset(0.007, "XYZ");
   //tdrStyle->SetLabelSize(0.035, "XYZ"); // 0.04
-  tdrStyle->SetLabelSize(0.03*tdrStyle->GetCanvasDefW(), "XYZ"); // 0.04
+  tdrStyle->SetLabelSize(0.022*tdrStyle->GetCanvasDefW(), "XYZ"); // 0.04
+  tdrStyle->SetLabelSize(0.022*1200, "XYZ"); // 0.04
 
 // For the axis:
 

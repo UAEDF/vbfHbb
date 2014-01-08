@@ -56,9 +56,10 @@ class info:
 			title_y_new = 'N / %.2f'%((float(v['xmax'])-float(v['xmin']))/float(v['nbins_x']))
 			v['title_y'] = title_y_new
 
-	def update_info(self):
+	def update_info(self,var):
 		l1("Updating content for %s"%self.oname)
 		for k,v in sorted(self.content['variables'].iteritems()):
+			if (not var=='') and (not k==var): continue
 			update = True if str(raw_input("Update %s? [y/(n)] "%k))=="y" else False
 			if not update: continue
 			else: 
@@ -120,7 +121,7 @@ def parser():
 	mp.add_option('-a','--add',help='Add content to the file.',action='store_true',default=False)
 	mp.add_option('-r','--readonly',help='Print content of output file.',action='store_true',default=False)
 	mp.add_option('-c','--clean',help='Clean json file (remove existing variables).',dest='clean',action='store_true',default=False)
-	mp.add_option('-u','--update',help='Update json file (edit existing variables).',dest='update',action='store_true',default=False)
+	mp.add_option('-u','--update',help='Update json file (edit existing variables).',dest='update',type='str',default='')
 	mp.add_option('-y','--updatey',help='Update json file (edit existing variables)(auto y-axis label update).',dest='updatey',action='store_true',default=False)
 	return mp
 
@@ -141,7 +142,7 @@ if __name__=='__main__':
 		myinfo.clean_info()
 	
 	if opts.update and not (opts.readonly or opts.clean or opts.add or opts.updatey):
-		myinfo.update_info()
+		myinfo.update_info(opts.update)
 		myinfo.print_info()
 		myinfo.write_info()
 

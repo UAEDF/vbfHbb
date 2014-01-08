@@ -60,8 +60,8 @@ def parser(mp=None):
 	mgd.add_option('--usebool',help="Use original trees, not the char ones.",action='store_true',default=False)
 	mgd.add_option('-y','--yields',help='Print yields for each sample for specified sel+trg+cuts',action='store_true',default=False)
 	mgd.add_option('-l','--latex',help='Print latex output.',action='store_true',default=False)
-	mgd.add_option('--shrunk',help='Use small flattrees.',action='store_true',default=False)
 	mgd.add_option('-m','--map',help='Create 2D map ("var1;binlim1#binlim2#...,var2;binlim1#binlim2#...").',type='str',action='callback',callback=optsplitlist)
+	mgd.add_option('--significance',help='Do significance map calculations; give: var1,var2.',type='str',action='callback',callback=optsplit)
 
 	mgst = OptionGroup(mp,cyan+"Run for subselection determined by variable, sample and/or selection/trigger"+plain)
 	mgst.add_option('-v','--variable',help=purple+"Run only for these variables (comma separated)."+plain,dest='variable',default='',type='str',action='callback',callback=optsplit)
@@ -69,12 +69,16 @@ def parser(mp=None):
 	mgst.add_option('-s','--sample',help=purple+"Run only for these samples (comma separated)."+plain,dest='sample',default='',type='str',action='callback',callback=optsplit)
 	mgst.add_option('--nosample',help=purple+"Don't run for these samples (comma separated)."+plain,dest='nosample',default='',type='str',action='callback',callback=optsplit)
 	mgst.add_option('-t','--trigger',help=purple+"Run only for these triggers (comma and colon separated)."+plain,dest='trigger',default=[['None']],type='str',action='callback',callback=optsplitlist)
+	#mgst.add_option('--trgcmp',help=purple+"Veto these triggers (comma and colon separated)."+plain,dest='trgcmp',default=[['None']],type='str',action='callback',callback=optsplitlist)
 	mgst.add_option('--datatrigger',help=purple+"Run only for these triggers (comma and colon separated) (override for data sample(s))."+plain,dest='datatrigger',default=[],type='str',action='callback',callback=optsplitlist)
 	mgst.add_option('-p','--selection',help=purple+"Run only for these selections (comma and colon separated)."+plain,dest='selection',default=[['None']],type='str',action='callback',callback=optsplitlist)
+	#mgst.add_option('--selcmp',help=purple+"Veto these selections (comma and colon separated)."+plain,dest='selcmp',default=[['None']],type='str',action='callback',callback=optsplitlist)
 	mgst.add_option('-r','--reftrig',help=purple+"Add reference trigger to selection."+plain,dest='reftrig',default=[['None']],type='str',action='callback',callback=optsplitlist)
 	mgst.add_option('-w','--weight',help=purple+"Put this weight (\"lumi,weight1;weight2;...,bmapfilename,manualKFWght\")"+plain,dest='weight',default=[[''],['']],type='str',action='callback',callback=optsplitlist)
 	mgst.add_option('--skip',help=purple+"Skip certain variable for selection."+plain,dest='skip',default=[],type='str',action='callback',callback=optsplit)
 	mgst.add_option('--binning',help=purple+"Override default binning for certain variables",dest='binning',type='str',action='callback',callback=optsplitlist)
+	mgst.add_option('--treepreselection',help=purple+"Put this selection on the trees before running (comma separated)."+plain,dest='treepreselection',default=[],type='str',action='callback',callback=optsplit)
+	mgst.add_option('--preselect',help=purple+"Preselect all trees, even when present allready.",action='store_true',default=False)
 	
 	mp.add_option_group(mgj)
 	mp.add_option_group(mgr)
@@ -92,7 +96,7 @@ def loadSamples(opts,samples):
 	samplesroot = [] 
 	l2("Global path: "+opts.globalpath)
 	for isample,sample in enumerate(sorted(samples.itervalues())): 
-		tag = 'reformatted' if not opts.shrunk else 'shrunk' 
+		tag = 'reformatted' if opts.treepreselection == [] else 'preselected' 
 		# require regex in opts.sample
 		if not opts.sample==[] and not any([(x in sample['tag']) for x in opts.sample]): continue
 		# veto regex in opts.nosample
@@ -121,12 +125,26 @@ def convertSamples(opts,samples):
 			sname = opts.globalpath+'/'+sample['fname'][:-5]+'_reformatted.root'
 			if os.path.exists(sname): os.remove(sname)
 		sys.exit(red+"Reformat function was called. All reformatted trees were removed. Rerun for more converting, but REMOVE the reformat flag (else you'll keep deleting the files)."+plain)
-	# actually reformat trees (one at a time to avoid memory filling up) 
+	elif opts.preselect:
+		for sample in samples.itervalues():
+			sname = opts.globalpath+'/'+sample['fname'][:-5]+'_preselected.root'
+			if os.path.exists(sname): os.remove(sname)
+		sys.exit(red+"Preselect function was called. All preselected trees were removed. Rerun for more converting, but REMOVE the preselect flag (else you'll keep deleting the files)."+plain)
+
+	# actually reformat/preselect trees (one at a time to avoid memory filling up) 
 	for sample in samples.itervalues():
-		sname = opts.globalpath+'/'+sample['fname'][:-5]+'_reformatted.root'
-		if (not os.path.exists(sname)): 
-			inroot('reformat("%s/%s",variables,%s)'%(opts.globalpath,sample['fname'],str(opts.fileformat)))
-			sys.exit(red+"Sample reformat function was needed first. Rerun for actual plotting (or more converting)."+plain)
+		if opts.treepreselection == []:
+			sname = opts.globalpath+'/'+sample['fname'][:-5]+'_reformatted.root'
+			if (not os.path.exists(sname)): 
+				inroot('reformat("%s/%s",variables,%s)'%(opts.globalpath,sample['fname'],str(opts.fileformat)))
+				sys.exit(red+"Sample reformat function was needed first. Rerun for actual plotting (or more converting)."+plain)
+		else:
+			sname = opts.globalpath+'/'+sample['fname'][:-5]+'_preselected.root'
+			if (not os.path.exists(sname)): 
+				cut,label = write_cuts(opts.treepreselection,[],[],[],sample=sample['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,trigequal=trigTruth(opts.usebool),varskip=opts.skip)
+				inroot('preselect("%s/%s",variables,"%s")'%(opts.globalpath,sample['fname'],cut))
+				sys.exit(red+"Sample preselect function was needed first. Rerun for actual plotting (or more converting)."+plain)
+
 
 # PRINT SEL & TRG OPTIONS ##########################################################################
 def printSelTrg(opts,KFWghts):
@@ -134,14 +152,16 @@ def printSelTrg(opts,KFWghts):
 	l1("Listing cutstrings for control:")
 	for s in opts.selection:
 		for t in opts.trigger:
-			KFWght = KFWghts[('-'.join(s),'-'.join(t))]
+			KFWght = KFWghts[('-'.join(sorted(s)),'-'.join(t))]
 			l2("Sel: %20s, Trg: %20s"%("(%s)"%s,"(%s)"%t))
 			cutsel    = write_cuts(s,[],sample='Data' if opts.fileformat=='1' else 'DataA',jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,trigequal=trigTruth(opts.usebool))[0]
+			cutsel2   = write_cuts(s,[],sample='QCD250',jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,trigequal=trigTruth(opts.usebool))[0]
 			cuttrg    = write_cuts([],t,sample='QCD250',jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,trigequal=trigTruth(opts.usebool))[0]
 			cuttrgdat = write_cuts([],trigData(opts,"",t)[0],sample='Data' if opts.fileformat=='1' else 'DataA',jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,KFWght=KFWght,trigequal=trigTruth(opts.usebool))[0]
 			l3("%s   Sel:   (e.g. Data) %s %s"%(Red,plain,cutsel))
-			l3("%s   Trg: (e.g. QCD250) %s %s"%(Red,plain,cuttrg))
-			l3("%sTrgDat:   (e.g. Data) %s %s"%(Red,plain,cuttrgdat))
+			l3("%s   Sel: (e.g. QCD250) %s %s"%(Red,plain,cutsel2))
+			l3("%s   Trg: (e.g. QCD250) %s %s"%(Purple,plain,cuttrg))
+			l3("%sTrgDat:   (e.g. Data) %s %s"%(Purple,plain,cuttrgdat))
 			print
 
 # GET YIELDS #######################################################################################
@@ -151,18 +171,18 @@ def getYields(opts,loadedSamples,KFWghts):
 	yieldarchive = {}
 # selection
 	for sel in opts.selection:
-		l1("Running for sel: %s"%('-'.join(sel)))
+		l1("Running for sel: %s"%('-'.join(sorted(sel))))
 # trigger
 		for itrg,trg in enumerate(opts.trigger):
 			l1("Running for trg: %s"%('-'.join(trg))+("" if opts.datatrigger==[] else " (data: %s)"%('-'.join(opts.datatrigger[opts.trigger.index(trg)]))))
 			# KFWght
-			KFWght = KFWghts[('-'.join(sel),'-'.join(trg))]	
+			KFWght = KFWghts[('-'.join(sorted(sel)),'-'.join(trg))]	
 			# samples
 			groupcounts = {}
 			# category
-			if 'CAT' in '-'.join(sel): cat = re.search('(CAT[0-9]{1})','-'.join(sel)).group(1)
+			if 'CAT' in '-'.join(sorted(sel)): cat = re.search('(CAT[0-9]{1})','-'.join(sorted(sel))).group(1)
 			else: cat='ALL'
-			selmincat = ('-'.join(sel)).replace('-'+cat,'')
+			selmincat = ('-'.join(sorted(sel))).replace('-'+cat,'')
 			if not (selmincat,'-'.join(trg)) in yieldarchive: yieldarchive[(selmincat,'-'.join(trg))] = {}
 			for k,v in {'ALL':{},'CAT0':{},'CAT1':{},'CAT2':{},'CAT3':{},'CAT4':{}}.iteritems():
 				if not k in yieldarchive[(selmincat,'-'.join(trg))]: yieldarchive[(selmincat,'-'.join(trg))][k] = v		
@@ -266,8 +286,10 @@ def main(mp=None):
 	# load C++ modules
 	inroot('.L %s'%(os.path.join(basepath,'../common/sample.C+')))
 	if not opts.usebool: inroot('.L %s'%(os.path.join(basepath,'../common/reformat.C+')))
+	if not opts.treepreselection == []: inroot('.L %s'%(os.path.join(basepath,'../common/preselect.C+')))
 	inroot('.L %s'%(os.path.join(basepath,'../common/bMapWght.C+')))
 	inroot('.L %s'%(os.path.join(basepath,'../common/twoDWght.C+')))
+	inroot('.L %s'%(os.path.join(basepath,'../common/twoDWghtFun.C+')))
 	# load style
 	inroot('.x %s'%(os.path.join(basepath,'../common/styleCMS.C++')))
 	inroot('gROOT->ForceStyle();')
@@ -315,10 +337,11 @@ def main(mp=None):
 				variables[v]['nbins_x'] = b
 				variables[v]['xmin'] = x1
 				variables[v]['xmax'] = x2
+				variables[v]['title_y'] = 'N / %.2f'%((float(x2)-float(x1))/float(b))
 
 
 # convert samples
-	if not opts.usebool: convertSamples(opts,samples)
+	if not (opts.usebool and not opts.preselect): convertSamples(opts,samples)
 
 # load samples
 	loadedSamples = loadSamples(opts,samples)
@@ -351,15 +374,24 @@ def main(mp=None):
 		if not os.path.exists(opts.weight[4][0]): sys.exit(red+"Check twoDWght file path. Exiting."+plain)
 		loadTwoDWght(fout,opts.weight[4][0],opts.weight[4][1])
 		
+# load twoDWghtFun (if needed)
+	if not opts.weight == [[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: 
+		l1("Loaded twoDWghtFun() and fun.")
+		# checks
+		if not len(opts.weight)>4: sys.exit(red+"Check twoDWghtFun weight settings. Exiting."+plain)
+		if not len(opts.weight[4])>1: sys.exit(red+"Please provide filename;keyname for the twoDFun. Exiting."+plain)
+		if not os.path.exists(opts.weight[4][0]): sys.exit(red+"Check twoDWghtFun file path. Exiting."+plain)
+		loadTwoDWghtFun(fout,opts.weight[4][0],opts.weight[4][1])
+		
 # print kfwght
 	KFWghts = {}
 	for sel in opts.selection:
-		if opts.debug: l1("Running for sel: %s"%('-'.join(sel)))
+		if opts.debug: l1("Running for sel: %s"%('-'.join(sorted(sel))))
 		for trg in opts.trigger:
 			if opts.debug: l1("Running for trg: %s"%('-'.join(trg))+("" if opts.datatrigger==[] else " (data: %s)"%('-'.join(opts.datatrigger[opts.trigger.index(trg)]))))
 			# two cases
-			if opts.KFWght: KFWghts[('-'.join(sel),'-'.join(trg))] = getKFWght(opts,loadedSamples,sel,trg) if ((not len(opts.weight)>3) or opts.weight[3][0] == '') else float(opts.weight[3][0])
-			else: KFWghts[('-'.join(sel),'-'.join(trg))] = None 
+			if opts.KFWght: KFWghts[('-'.join(sorted(sel)),'-'.join(trg))] = getKFWght(opts,loadedSamples,sel,trg) if ((not len(opts.weight)>3) or opts.weight[3][0] == '') else float(opts.weight[3][0])
+			else: KFWghts[('-'.join(sorted(sel)),'-'.join(trg))] = None 
 	print
 	print KFWghts
 	printKFWghtsTable(KFWghts)
@@ -378,6 +410,12 @@ def main(mp=None):
 				for r in opts.reftrig:
 					get2DMap(opts,fout,loadedSamples,variables,s,t,r,opts.map[0],opts.map[1])
 	
+# significance maps
+	if opts.significance:
+		for s in opts.selection:
+			for t in opts.trigger:
+					getSignificance(opts,fout,opts.sample,variables,s,t,opts.reftrig,opts.significance[0],opts.significance[1])
+
 # continue to subprograms
 	return opts, samples, variables, loadedSamples, fout, KFWghts
 

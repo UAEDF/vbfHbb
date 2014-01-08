@@ -84,14 +84,37 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	weight         = ([[''],['']] if not 'weight'      in kwargs else kwargs['weight'])
 	KFWght         = (None    if not 'KFWght'          in kwargs else kwargs['KFWght'])
 	trigequal      = ('49'    if not 'trigequal'       in kwargs else kwargs['trigequal'])
+	sample         = (None    if not 'sample'          in kwargs else kwargs['sample'])
 	if not (seljoin[0]==' ' and seljoin[-1]==' '): seljoin = ' '+seljoin+' '
 	if not (trgjoin[0]==' ' and trgjoin[-1]==' '): trgjoin = ' '+trgjoin+' '
 
+	# trivialize run conditions in selection if not data sample
+	if (not any([x in kwargs['sample'] for x in ['Data','JetMon']])) or (not 'sample' in kwargs):
+		for y in cuts['sel'].keys():
+			if 'run' in y: cuts['sel'][y] = {'runNo':['==','1']}
+	
+	# catch selection VETOs
+	est = ""
+	for k in sel:
+		if not ('selection' in cuts['sel'][k].keys() or 'trigger' in cuts['sel'][k].keys()): continue
+		else:
+			if 'selection' in cuts['sel'][k].keys():
+				subsel = [y[1] for x,y in cuts['sel'][k].iteritems() if x=='selection']
+				es, eslabels = write_cuts(subsel,['None'],[],[],sample=sample,jsonsamp=kwargs['jsonsamp'],jsoncuts=kwargs['jsoncuts'],weight=[[''],['']],KFWght=KFWght,trigequal=kwargs['trigequal'])
+				es = '(!'+es[1:]
+				est += es + ' && '
+			if 'trigger' in cuts['sel'][k].keys():
+				subtrg = [y[1] for x,y in cuts['sel'][k].iteritems() if x=='trigger']
+				et, etlabels = write_cuts(['None'],subtrg,[],[],sample=sample,jsonsamp=kwargs['jsonsamp'],jsoncuts=kwargs['jsoncuts'],weight=[[''],['']],KFWght=KFWght,trigequal=kwargs['trigequal'])
+				et = '(!'+et[1:]
+				est += et + ' && '
+	if not est=='': est = group(est.rstrip(' && '))
 
+	# edit weights if needed
 	wfString = ''
 	if not weight == [[''],['']]:
 		parsedWeight = dc(weight)
-		if (trg==[]) and ('MAP' in [x[:3] for x in weight[1]]): parsedWeight[1] = [x for x in weight[1] if not x[:3]=='MAP'] 
+		if (trg==[]) and (('MAP' in [x[:3] for x in weight[1]]) or ('FUN' in [x[:3] for x in weight[1]])): parsedWeight[1] = [x for x in weight[1] if not (x[:3]=='MAP' or x[:3]=='FUN')] 
 		wf = weightFactory(kwargs['jsonsamp'],weight[0][0],KFWght) 
 		wfString = wf.getFormula(','.join(parsedWeight[1]),kwargs['sample'])
 
@@ -99,7 +122,7 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	if not (selold==[] and trgold==[]):
 		if not stgroup:
 			# selection
-			s      = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections[si].iteritems(), key=lambda(x,y):x) if not k in varskip ]) ) for si in sel ] ) ).replace(' && ()','').replace('() &&','')
+			s      = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections[si].iteritems(), key=lambda(x,y):x) if not (k in varskip or k=='selection' or k=='trigger') ]) ) for si in sel] ) ).replace(' && ()','').replace('() &&','')
 			scmp   = group( selcmpjoin.join( [ group("! "+group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections.iteritems(), key=lambda(x,y):x) if not k in varskip ]) )) for si in selcmp ] ) )
 			if s=='()' : s='(1.)'
 			# trigger
@@ -114,11 +137,11 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 			tcmplabels   = group( trgcmpjoin.join( [ group('! t'+x) for x in trgcmp ] ) )
 	
 			# combo
-			st = group(' && '.join([x for x in [s,scmp,t,tcmp] if not x=="()"]))
+			st = group(' && '.join([x for x in [s,scmp,t,tcmp] if not (x=="()" or x=='(1.)')]))
 			stlabels = group(' && '.join([x for x in [slabels,scmplabels,tlabels,tcmplabels] if not x=="()"]))
 	
 		else:
-			st        = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections.iteritems(), key=lambda(x,y):x) if not k in varskip ]+[get_trigger(triggers,kwargs['sample'],kwargs['jsonsamp'],trigequal)]) ) for si in (sel if not sel==[] else selold) ] ) )
+			st        = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections.iteritems(), key=lambda(x,y):x) if not (k in varskip or k=='selection' or k=='trigger') ]+[get_trigger(triggers,kwargs['sample'],kwargs['jsonsamp'],trigequal)]) ) for si in (sel if not sel==[] else selold) ] ) )
 			stlabels  = group( seljoin.join( [ group('s'+x+' && t'+x) for x in (sel if not sel==[] else selold) ] ) )
 	
 		# reftrig
@@ -128,6 +151,11 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 			if rt=='(())' : rt='(1.)'
 			st       = group( st + ' && ' + rt ) 
 			stlabels = group( stlabels + ' && ' + rtlabels ) 
+
+		# extra selection (from veto)
+		if not est == '':
+			st = group( st + ' && ' + est )
+
 
 	# when only None for sel/trg
 	else:

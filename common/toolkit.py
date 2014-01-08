@@ -67,8 +67,8 @@ def setdefaults(option,opt,value,parser):
 		l2("Set from opts file: %s --> %s"%(ok,oval))		
 	globalpath=''
 	try:
-		if any(['schrodinger' in x for x in os.uname()]) and parser.values.fileformat=='1': globalpath = '/data/UAData/fromKostas/paper2012'
-		if any(['schrodinger' in x for x in os.uname()]) and parser.values.fileformat=='2': globalpath = '/data/UAData/fromKostas/autumn2013'
+		if any(['schrodinger' in x for x in os.uname()]) and parser.values.fileformat=='1': globalpath = '/data/UAData/paper2012'
+		if any(['schrodinger' in x for x in os.uname()]) and parser.values.fileformat=='2': globalpath = '/data/UAData/autumn2013'
 		if os.getlogin()=='xjanssen' and parser.values.fileformat=='1': globalpath = '/Users/xjanssen/cms/vbfHbb2012/vbfHbb_flattree/KK_Paper'
 		if os.getlogin()=='xjanssen' and parser.values.fileformat=='2': globalpath = '/Users/xjanssen/cms/vbfHbb2012/vbfHbb_ParkAna_flattree/v0'
 		if any(['lxplus' in x for x in os.uname()]) and os.getlog()=='salderwe' and parser.values.fileformat=='1': globalpath='/afs/cern.ch/work/s/salderwe/groups/Hbb/paper2012'
@@ -95,8 +95,20 @@ def getTLegend(left,bottom,right,top,columns=None,header=None,fillStyle=0,textCo
 	if not header==None: legend.SetHeader(header)
 	if not columns==None: legend.SetNColumns(int(columns))
 	legend.SetFillStyle(fillStyle)
+	legend.SetFillColor(kWhite)
 	legend.SetTextColor(textColor)
 	legend.SetTextSize(textSize)
+	return legend
+
+def getTLegendRight(left,bottom,right,top,columns=None,header=None,fillStyle=0,textColor=1,textSize=0.025):
+	legend = TLegend(left,bottom,right,top)
+	if not header==None: legend.SetHeader(header)
+	if not columns==None: legend.SetNColumns(int(columns))
+	legend.SetFillStyle(fillStyle)
+	legend.SetFillColor(kWhite)
+	legend.SetTextColor(textColor)
+	legend.SetTextSize(textSize)
+	legend.SetTextFont(42)
 	return legend
 
 def getTPave(left,bottom,right,top,rows=None,fillColor=0,fillStyle=0,textColor=1,textSize=0.025):
@@ -106,6 +118,7 @@ def getTPave(left,bottom,right,top,rows=None,fillColor=0,fillStyle=0,textColor=1
 	text.SetTextColor(textColor)
 	text.SetTextSize(textSize)
 	text.SetTextAlign(13)
+	text.SetTextFont(42)
 	text.SetBorderSize(0)
 	return text
 
@@ -126,6 +139,27 @@ def setStyleTH1F(h,lineColor=1,lineStyle=1,fillColor=0,fillStyle=0,markerColor=1
 	h.SetMarkerStyle(markerStyle)
 	h.SetMarkerSize(markerSize)
 
+def setStyleTHStack(stack,ratio=True):
+	stack.Draw()
+	stack.GetYaxis().SetLabelSize(stack.GetYaxis().GetLabelSize()*1.25)
+	stack.GetYaxis().SetLabelOffset(stack.GetYaxis().GetLabelOffset()/3)
+	stack.GetYaxis().SetTickLength(0.02)
+	if ratio: stack.GetXaxis().SetLabelColor(0)
+
+def setStyleTH2F(h):
+	h.Draw()
+	gPad.SetTopMargin(0.07)
+	h.GetYaxis().SetLabelSize(h.GetYaxis().GetLabelSize()*1.5)
+	h.GetYaxis().SetLabelOffset(h.GetYaxis().GetLabelOffset()*1.2)
+	h.GetYaxis().SetTitleSize(h.GetYaxis().GetTitleSize()*1.5)
+	h.GetYaxis().SetTitleOffset(h.GetYaxis().GetTitleOffset()*1.1)
+	h.GetXaxis().SetLabelSize(h.GetXaxis().GetLabelSize()*1.5)
+	h.GetXaxis().SetLabelOffset(h.GetXaxis().GetLabelOffset()*1.2)
+	h.GetXaxis().SetTitleSize(h.GetXaxis().GetTitleSize()*1.5)
+	h.GetXaxis().SetTitleOffset(h.GetXaxis().GetTitleOffset()*1.1)
+	h.GetZaxis().SetLabelSize(h.GetZaxis().GetLabelSize()*1.5)
+	h.GetYaxis().SetTickLength(0.02)
+
 def getRangeTH1F(h,ymin,ymax):
 	if h.GetMaximum() > ymax: ymax = h.GetMaximum()
 	if h.GetMinimum() < ymin: ymin = h.GetMinimum()
@@ -133,18 +167,19 @@ def getRangeTH1F(h,ymin,ymax):
 
 def setRangeTH1F(h,ymin,ymax,log=True):
 	if log:
-		h.SetMinimum(float("1e%i"%log10(ymin+0.1)))
-		h.SetMaximum(float("1e%i"%(log10(ymax)+3)))
+		h.SetMinimum(float("1e%i"%log10(ymin+0.5)))
+		h.SetMaximum(float("1e%i"%(log10(ymax)+1))) # +3
 	else:
 		h.SetMinimum(0)
 		h.SetMaximum(round(ymax*1.3,2))
 
 def getRatioPlotCanvas(canvas):
 	c1 = TPad('c1','c1',0,0.2,1,1)
-	c2 = TPad('c2','c2',0,0,1,0.2)
+	c2 = TPad('c2','c2',0,0,1,0.221)
 	c1.SetBottomMargin(0.0)
-	c2.SetTopMargin(0.0)
+	c2.SetTopMargin(0.10)
 	c2.SetBottomMargin(c2.GetBottomMargin()+0.25)
+	c2.SetFillStyle(0)
 	c1.Draw()
 	c2.Draw()
 	canvas.Update()
@@ -156,16 +191,21 @@ def setStyleTH1Fratio(h):
 	h.GetYaxis().SetTitle('Data / MC')
 	#h.GetYaxis().SetRangeUser(0.5,1.5)
 	#h.GetYaxis().SetRangeUser(0.0,2.0)
-	h.GetYaxis().SetRangeUser(0.25,1.25)
+	gPad.SetGridy(1)
+	h.GetYaxis().SetRangeUser(0.0,2.0)
 	h.GetYaxis().SetNdivisions(505)
+	h.GetXaxis().SetTickLength(0.08)
+	h.GetYaxis().SetTickLength(0.015)
 	# fonts & offsets
-	h.SetTitleOffset(4.75,'X')
+	h.SetTitleOffset(3.8,'X')
+	h.GetYaxis().SetTitleSize(h.GetYaxis().GetTitleSize()*0.8)
+	h.SetTitleOffset(h.GetYaxis().GetTitleOffset()/0.8,'Y')
 	# filling
 #	h.SetFillColor(kGray)
 #	h.SetFillStyle(1)
 	h.SetMarkerStyle(20)
 	h.SetMarkerColor(kBlack)
-	h.SetMarkerSize(2)
+	h.SetMarkerSize(0.8)
 
 # PRINTOUT FUNCTIONS ###############################################################################
 def write_bMapWght(bMapWghtFile='%s/bMapWght.root'%basepath):
@@ -198,7 +238,7 @@ def closeBrackets(text):
 def getNames(opts,sample,var,sel,trg,ref,extra=""):
 	names = {}
 # selection and trigger
-	names['sel'] = 's'+'-'.join(sel)
+	names['sel'] = 's'+'-'.join(sorted(sel))
 	names['trg'] = 't'+'-'.join(trg)
 	names['trg-data'] = 'd'+'-'.join(trg) if (opts.datatrigger==[] or trg==['None']) else 'd'+'-'.join(opts.datatrigger[opts.trigger.index(trg)])
 	names['ref'] = 'r'+'-'.join(ref)

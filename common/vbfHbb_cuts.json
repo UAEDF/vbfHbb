@@ -2,6 +2,8 @@
 "sel": {
 "None": {},
 
+"run194270": {"runNo":[">=","194270"]},
+
 "NOM": {"dEtaqq":[">","2.5"],"mqq":[">","250."],"jetPt[0]":[">","80."],"jetPt[1]":[">","65."],"jetPt[2]":[">","50."],"jetPt[3]":[">","35."]},
 "NOMplusPhi": {"dEtaqq":[">","2.5"],"mqq":[">","250."],"jetPt[0]":[">","80."],"jetPt[1]":[">","65."],"jetPt[2]":[">","50."],"jetPt[3]":[">","35."],"dPhibb":["<","2.0"]},
 "NOMplusPhi0": {"dEtaqq[0]":[">","2.5"],"mqq[0]":[">","300."],"jetPt[0]":[">","80."],"jetPt[1]":[">","65."],"jetPt[2]":[">","50."],"jetPt[3]":[">","35."],"dPhibb[0]":["<","2.0"]},
@@ -17,16 +19,35 @@
 "mqq1850": {"mqq[0]":[">","850."]},
 "mqq2850": {"mqq[1]":[">","850."]},
 "mqq3850": {"mqq[2]":[">","850."]},
+"mqq3600": {"mqq[2]":[">","600."]},
+"mjjTrig": {"mjjTrig":[">","850."]},
+"mjjTrig600": {"mjjTrig":[">","600."]},
+"mjjTriglt2000": {"mjjTrig":["<","2000."]},
+"mbbReg2gt50": {"mbbReg[2]":[">","50."]},
+
+"dEtaqq2": {"dEtaqq[2]":[">","3.5"]},
+"dEtaTrig": {"dEtaTrig":[">","3.5"]},
+"dEtaTrig5p5": {"dEtaTrig":[">","5.5"]},
+"dEtaTriglt5p5": {"dEtaTrig":["<","5.5"]},
 
 "dEta": {"dEtaqq[3]":[">","3.5"]},
 "jetPt1": {"jetPt[1]":[">","35."]},
+"HT100": {"ht":[">","100."]},
+"HT150": {"ht":[">","150."]},
 "HT250": {"ht":[">","250."]},
 "HT300": {"ht":[">","300."]},
 "HT350": {"ht":[">","350."]},
 "mjjMax850": {"mjjMax":[">","850."]},
-"BtagLM" : {"jetBtag[b1[2]]":[">","0.679"],"jetBtag[b2[2]]":[">","0.244"]},
+"BtagML2" : {"jetBtag[b1[2]]":[">","0.679"],"jetBtag[b2[2]]":[">","0.244"]},
 "HTlt400": {"ht":["<","400."]},
 "HTgt400": {"ht":[">","400."]},
+"NOMveto": {"trigger":["!=","NOM"],"selection":["!=","NOMplusPhi2"]},
+
+"BtagMM0" : {"jetBtag[b1[0]]":[">","0.679"],"jetBtag[b2[0]]":[">","0.679"]},
+"BtagMM" : {"jetBtag[btagIdx[0]]":[">","0.679"],"jetBtag[btagIdx[1]]":[">","0.679"]},
+"BtagTT" : {"jetBtag[btagIdx[0]]":[">","0.898"],"jetBtag[btagIdx[1]]":[">","0.898"]},
+"BtagTM" : {"jetBtag[btagIdx[0]]":[">","0.898"],"jetBtag[btagIdx[1]]":[">","0.679"]},
+"BtagT" : {"jetBtag[btagIdx[0]]":[">","0.898"]},
 
 "QJT": {"jetBtag[btagIdx[0]]":[">","0.679"],"jetBtag[btagIdx[1]]":[">","0.244"],"jetPt[3]":[">","50"]},
 
@@ -48,13 +69,23 @@
 
 "puId": {"puId[0]": ["==","1"]},
 "softHt": {"softHt": ["<","200."]},
+"softHt20": {"softHt": ["<","20."]},
+
+"QGL3": {"jetQGLnew[btagIdx[3]]": ["<","0.7"]},
+"QGL2": {"jetQGLnew[btagIdx[2]]": ["<","0.4"]},
+
+"check1CSV0": {"jetBtag[btagIdx[0]]":[">","0.679"]},
+"check2CSV1": {"jetBtag[btagIdx[1]]":[">","0.5"]},
+"check3QGL2": {"jetQGLnew[btagIdx[2]]": ["<","0.7"]},
+"check4QGL3": {"jetQGLnew[btagIdx[3]]": ["<","0.4"]},
 
 "CAT0":{"MLP":["<","0.52"] },
 "CAT1":{"MLP":[">=","0.52","<","0.76"] },
 "CAT2":{"MLP":[">=","0.76","<","0.90"] },
 "CAT3":{"MLP":[">=","0.90","<","0.96"] },
 "CAT4":{"MLP":[">=","0.96"] },
-"MBBPart":{"mbbParton":[">","75.","<","255."] }
+"MBBPart":{"mbbParton":[">","75.","<","255."] },
+"MBB":{"mbb":[">","110.","<","140."] }
 },
 
 	

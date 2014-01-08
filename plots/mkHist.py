@@ -57,7 +57,7 @@ def do_fill(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	wpars  = weightInfo(opts.weight,KFWght)
 
 	# containers
-	canvas = TCanvas("cfill","cfill",2400,1800)
+	canvas = TCanvas("cfill","cfill",1200,800)
 	fout.Delete(names['hist'])
 	h      = TH1F(names['hist'],names['hist-title'],int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
 	h.Sumw2()
@@ -101,7 +101,7 @@ def do_draw(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	if opts.debug: l3("%sLoaded: %30s(N=%9d, Int=%9d)%s"%(yellow,hload.GetName(),hload.GetEntries(),hload.Integral(),plain))
 	
 	# containers
-	canvas = TCanvas("cdraw","cdraw",2400,1800)
+	canvas = TCanvas("cdraw","cdraw",1200,800)
 
 	# draw
 	hload.Draw()	
@@ -114,7 +114,7 @@ def do_draw(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	legend.Draw()
 	
 	# info text
-	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']])]) # counting lines about weights + 1 for vbfHbb tag 
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']]+[x[0:3]=='MAP' or x[0:3]=='FUN' for x in opts.weight[1]])]) # counting lines about weights + 1 for vbfHbb tag 
 	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
 	right  = 1-gPad.GetRightMargin()-0.02
 	top    = 1-gPad.GetTopMargin()
@@ -125,7 +125,8 @@ def do_draw(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
-	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2D MAP reweighted (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[0],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1]))
+	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2D MAP reweighted (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
+	if not opts.weight==[[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DFun reweighted")
 	text.Draw()
 
 	# write
@@ -135,7 +136,7 @@ def do_draw(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	canvas.SetTitle(canvas.GetName())
 	canvas.SaveAs('%s/%s.png'%(path, canvas.GetName()))
 	canvas.SaveAs('%s/%s.pdf'%(path, canvas.GetName()))
-	if opts.debug: l3("%sWritten plots to: %s%s"%(yellow,'%s/%s.{png,pdf}'%(path, canvas.GetName()),plain))
+	if opts.debug: l3("%sWritten plots to: eog %s%s"%(yellow,'%s/%s.png'%(path, canvas.GetName()),plain))
 	gDirectory.cd('%s:/'%fout.GetName())
 	# clean
 	canvas.Close()
@@ -151,7 +152,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	jsoncuts = json.loads(filecontent(opts.jsoncuts))
 
 	# containers
-	canvas = TCanvas('cdrawstack','cdrawstack',2400,1800)
+	canvas = TCanvas('cdrawstack','cdrawstack',1200,800)
 	canvas.cd()
 	sigStack = THStack(namesGlobal['stack-sig'],namesGlobal['stack-sig-title'])
 	datStack = THStack(namesGlobal['stack-dat'],namesGlobal['stack-dat-title'])
@@ -160,28 +161,44 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	datHistos = []
 	bkgHistos = []	
 
+	groups = list(set([jsoninfo['groups'][s['tag']] for s in samples]))
+	groupsInLegend = []
+
 	# legend
-	columns = ceil(len(samples)/5.)
-	rows    = ceil(len(samples)/columns)
-	left    = gPad.GetLeftMargin()+0.02
-	bottom  = 1-gPad.GetTopMargin()-0.02 - (0.035*rows) # n rows sized 0.035
-	right   = gPad.GetLeftMargin()+0.02 + (0.12*columns) # n columns width 0.12
+#	columns = ceil(len(samples)/6.)
+#	rows    = ceil(len(samples)/columns)
+#	left    = gPad.GetLeftMargin()+0.02
+#	bottom  = 1-gPad.GetTopMargin()-0.02 - (0.03*rows) # n rows sized 0.035
+#	right   = gPad.GetLeftMargin()+0.02 + (0.15*columns) # n columns width 0.12
+#	top     = 1-gPad.GetTopMargin()-0.02
+#	legend  = getTLegend(left,bottom,right,top,columns,None,3001,1,0.035)
+	columns = 1
+	rows 	= len(groups)+1
+	left    = 1-gPad.GetRightMargin()+0.01
+	right   = 1-0.02
+	bottom  = 1-gPad.GetTopMargin()-0.02 - (0.045*rows) # n rows sized 0.035
 	top     = 1-gPad.GetTopMargin()-0.02
-	legend  = getTLegend(left,bottom,right,top,columns)
+	legend  = getTLegendRight(left,bottom,right,top,columns,"Presel. & Trigger",3001,1,0.035)
 
 	# info text
-	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']])]) # counting lines about weights + 1 for vbfHbb tag 
-	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
-	right  = 1-gPad.GetRightMargin()-0.02
-	top    = 1-gPad.GetTopMargin()
-	bottom = 1-gPad.GetTopMargin() - (0.04*rows) # n rows size 0.04
-	text = getTPave(left,bottom,right,top)
-	text.AddText("VBF H #rightarrow b#bar{b}: #sqrt{s} = 8 TeV (2012)")
-	if not opts.weight==[[''],['']] and 'LUMI' in opts.weight[1]: text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
-	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['PU','BMAP']]+[x[0:3]=='MAP' or x[0:3]=='FUN' for x in opts.weight[1]])])+2 # counting lines about weights + 2 for vbfHbb tag #(LUMI,KFAC in array)
+#old#	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
+#old#	right  = 1-gPad.GetRightMargin()-0.02
+#old#	top    = 1-gPad.GetTopMargin()
+#old#	bottom = 1-gPad.GetTopMargin() - (0.04*rows) # n rows size 0.04
+	left    = 1-gPad.GetRightMargin()+0.01
+	right   = 1-0.02
+	bottom  = 1-gPad.GetTopMargin()-0.02 -0.5 - (0.045*rows) # n rows sized 0.035
+	top     = 1-gPad.GetTopMargin()-0.02 -0.5
+	text = getTPave(left,bottom,right,top,None,0,0,1,0.035)
+	text.AddText("VBF H #rightarrow b#bar{b}:")
+	text.AddText("#sqrt{s} = 8 TeV (2012)")
+	#if not opts.weight==[[''],['']] and 'LUMI' in opts.weight[1]: text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
+	#if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
-	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2D MAP reweighted (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[0],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1]))
+	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2D MAP reweighted (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
+	if not opts.weight==[[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DFun reweighted")
 	# layout scaling
 	ymin=0
 	ymax=0
@@ -208,27 +225,39 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 ### DATA
 		if names['group']=='Data' or names['group']=='DataV':
 			datHistos += [hload]
-			setStyleTH1F(datHistos[-1],jsoninfo['colours'][names['tag']],1,jsoninfo['colours'][names['tag']],0,1,20,0,2)
+			setStyleTH1F(datHistos[-1],jsoninfo['colours'][names['tag']],1,jsoninfo['colours'][names['tag']],0,1,20,0,1)
 			datStack.Add(datHistos[-1])
-			legend.AddEntry(datHistos[-1],names['tag'],'P')
+			#legend.AddEntry(datHistos[-1],names['tag'],'P')
+			if not jsoninfo['groups'][s['tag']] in [x for (x,y) in groupsInLegend]: 
+				groupsInLegend += [(jsoninfo['groups'][s['tag']],datHistos[-1])]
 			ymin, ymax = getRangeTH1F(datHistos[-1],ymin,ymax)
 ### SIGNAL
-		elif names['group']=='VBF' or names['group']=='GluGlu':
+		elif names['group']=='VBF' or names['group']=='GF':
 			sigHistos += [hload]
-			setStyleTH1F(sigHistos[-1],jsoninfo['colours'][names['tag']],1,jsoninfo['colours'][names['tag']],0,0,0,5,0)
+			setStyleTH1F(sigHistos[-1],jsoninfo['colours'][names['tag']],1,jsoninfo['colours'][names['tag']],0,0,0,3,0)
 			sigStack.Add(sigHistos[-1])
-			legend.AddEntry(sigHistos[-1],names['tag'],'L')
+			#legend.AddEntry(sigHistos[-1],names['tag'],'L')
+			if not jsoninfo['groups'][s['tag']] in [x for (x,y) in groupsInLegend]: 
+				groupsInLegend += [(jsoninfo['groups'][s['tag']],sigHistos[-1])]
 			ymin, ymax = getRangeTH1F(sigHistos[-1],ymin,ymax)
 ### QCD
 		else:
 			bkgHistos += [hload]
-			setStyleTH1F(bkgHistos[-1],1,1,jsoninfo['colours'][names['tag']],1,0,0,1,0)
+			setStyleTH1F(bkgHistos[-1],1,1,jsoninfo['colours'][names['tag']],1001,0,0,1,0)
 			bkgStack.Add(bkgHistos[-1])
-			legend.AddEntry(bkgHistos[-1],names['tag'],'F')
+			#legend.AddEntry(bkgHistos[-1],names['tag'],'F')
+			if not jsoninfo['groups'][s['tag']] in [x for (x,y) in groupsInLegend]: 
+				groupsInLegend += [(jsoninfo['groups'][s['tag']],bkgHistos[-1])]
 			ymin, ymax = getRangeTH1F(bkgHistos[-1],ymin,ymax)
 
 		# clean
 		trg = dc(trg_orig)
+	
+	for g,h in sorted(groupsInLegend,key=lambda (x,y):('Data' in x, 'QCD' in x, 'Z' in x, 'TT' in x, 'T' in x, 'W' in x,'VBF' in x, 'G' in x),reverse=True):
+		if 'Data' in g: legend.AddEntry(h,g + ' (%.1f fb^{-1})'%(float(opts.weight[0][0])/1000.) if opts.weight[0] and opts.weight[0][0] else 0.0,'P')
+		elif 'VBF' in g or 'G' in g: legend.AddEntry(h,g + ' H(125) #rightarrow b#bar{b}','L')
+		elif 'QCD' in g: legend.AddEntry(h,g + ' (x %.2f)'%(KFWght) if KFWght else '','F')
+		else: legend.AddEntry(h,g,'F')
 
 ### RATIO plot if Data is plotted
 	if not (datHistos == [] or bkgHistos == []):
@@ -245,29 +274,32 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	if bkgStack.GetStack(): setRangeTH1F(bkgStack,ymin,ymax)
 	if sigStack.GetStack(): setRangeTH1F(sigStack,ymin,ymax)
 	if datStack.GetStack(): setRangeTH1F(datStack,ymin,ymax)
-	if bkgStack.GetStack(): bkgStack.SetTitle(namesGlobal['hist-title'])#"stack_%s;%s;%s"%(bkgStack.GetName()[5:],bkgStack.GetStack().Last().GetXaxis().GetTitle(),bkgStack.GetStack().Last().GetYaxis().GetTitle()))
+	if bkgStack.GetStack(): 
+		bkgStack.SetTitle('%s;%s;%s'%('','',bkgHistos[0].GetYaxis().GetTitle())) #bkgStack.SetTitle(namesGlobal['hist-title'])#"stack_%s;%s;%s"%(bkgStack.GetName()[5:],bkgStack.GetStack().Last().GetXaxis().GetTitle(),bkgStack.GetStack().Last().GetYaxis().GetTitle()))
 
 	if not ratio==None:
 		# containers
 		c1,c2 = getRatioPlotCanvas(canvas)
-		c1.SetLogy()
+		c1.SetLogy(1)
 		# draw (top)
 		c1.cd()
-		if not bkgHistos == []: bkgStack.Draw("hist")
+		if not bkgHistos == []: 
+			setStyleTHStack(bkgStack)
+			bkgStack.Draw("hist")
 		if not sigHistos == []: sigStack.Draw("nostack,hist"+(",same" if not bkgHistos == [] else ""))
-		if not datHistos == []: 
-			datStack.GetStack().Last().Draw("same" if not (bkgHistos == [] and sigHistos == []) else "")
+		if not datHistos == []: datStack.GetStack().Last().Draw("same" if not (bkgHistos == [] and sigHistos == []) else "")
 		# draw (bottom)
 		c2.cd()
 		setStyleTH1Fratio(ratio)
-		ratio.GetYaxis().SetRangeUser(0.5,1.5)
-		ratio.Draw('e0')
+		#ratio.GetYaxis().SetRangeUser(0.5,1.5)
+		ratio.Draw('e')
 		# line through y=1
 		gPad.Update()
 		line = TLine(gPad.GetUxmin(),1.0,gPad.GetUxmax(),1.0)
 		line.SetLineWidth(2)
 		line.SetLineColor(kBlack)
 		line.Draw("same")
+		c2.RedrawAxis()
 		c1.cd()
 	else:
 		canvas.cd()
@@ -299,7 +331,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	canvas.SaveAs('%s/%s.png'%(path, canvas.GetName()))
 	canvas.SaveAs('%s/%s.pdf'%(path, canvas.GetName()))
 	print
-	if opts.debug: l3("%sWritten plots to: %s%s"%(yellow,'%s/%s.{png,pdf}'%(path, canvas.GetName()),plain))
+	if opts.debug: l3("%sWritten plots to: eog %s%s"%(yellow,'%s/%s.png'%(path, canvas.GetName()),plain))
 	gDirectory.cd('%s:/'%fout.GetName())
 	canvas.Close()
 
@@ -314,7 +346,7 @@ def do_drawnormalized(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	jsoncuts = json.loads(filecontent(opts.jsoncuts))
 
 	# containers
-	canvas = TCanvas('cdrawnormalized','cdrawnormalized',2400,1800)
+	canvas = TCanvas('cdrawnormalized','cdrawnormalized',1200,800)
 	canvas.cd()
 	sigStack = THStack(namesGlobal['stack-sig'],namesGlobal['stack-sig-title'])
 	datStack = THStack(namesGlobal['stack-dat'],namesGlobal['stack-dat-title'])
@@ -345,7 +377,7 @@ def do_drawnormalized(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
-	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2D MAP reweighted (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[0],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1]))
+	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2D MAP reweighted (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
 	# layout scaling
 	ymin=0
 	ymax=0
@@ -464,7 +496,7 @@ def do_drawnormalized(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	canvas.SaveAs('%s/%s.png'%(path, canvas.GetName()))
 	canvas.SaveAs('%s/%s.pdf'%(path, canvas.GetName()))
 	print
-	if opts.debug: l3("%sWritten plots to: %s%s"%(yellow,'%s/%s.{png,pdf}'%(path, canvas.GetName()),plain))
+	if opts.debug: l3("%sWritten plots to: eog %s%s"%(yellow,'%s/%s.png'%(path, canvas.GetName()),plain))
 	gDirectory.cd('%s:/'%fout.GetName())
 	canvas.Close()
 
@@ -485,7 +517,7 @@ def mkHist():
 	for trg in opts.trigger:
 		for sel in opts.selection:
 			for ref in opts.reftrig:
-				KFWght = KFWghts[('-'.join(sel),'-'.join(trg))] 
+				KFWght = KFWghts[('-'.join(sorted(sel)),'-'.join(trg))] 
 				for v in variables.itervalues():
 					if not v['var'] in opts.variable: continue
 					if v['var'] in opts.novariable: continue

@@ -29,6 +29,8 @@ def parser(mp=None):
 	mgtc.add_option('--drawstack',help='Draw histogram (stacked) from root file (fill if not present).',action='store_true',default=False)
 	mgtc.add_option('--redrawstack',help='Draw histogram (stacked) from root file (refill in all cases).',action='store_true',default=False)
 	mgtc.add_option('--closure',help='Run also without reference trigger and add curve to plots.',action='store_true',default=False)
+	mgtc.add_option('--overlay',help='Draw both corrected and uncorrected curves.',action='store_true',default=False)
+	mgtc.add_option('--shade',help='Shade selected areas.',action='store_true',default=False)
 
 	mp.add_option_group(mgtc)
 	return mp
@@ -54,10 +56,11 @@ class TEffiType():
 	def fillstack(self,sample,tag,names):
 		if not self.s[tag]: self.s[tag] = THStack(names['stack'],names['stack-title'])
 		self.s[tag].Add(self.h[tag][sample])
+		self.s[tag].GetStack()
 
 	def get(self,sample,tag,fullpath,names):
-		if not gDirectory.Get(fullpath): return
-		self.h[tag][sample] = TH1F(gDirectory.Get(fullpath).GetStack().Last())
+		if not gDirectory.Get(fullpath): return 
+		self.h[tag][sample] = TH1F(gDirectory.Get(fullpath))
 		self.fillstack(sample,tag,names)
 
 	def effi(self,names,mColor,mStyle):
@@ -66,7 +69,7 @@ class TEffiType():
 		self.e.SetTotalHistogram(self.s['Den'].GetStack().Last(),'f')
 		self.e.SetMarkerStyle(mStyle)
 		self.e.SetMarkerColor(mColor)
-		self.e.SetMarkerSize(2.75 if not any([x in names['hist'] for x in ['Data','JetMon']]) else 2)
+		self.e.SetMarkerSize(1.5 if not any([x in names['hist'] for x in ['Data','JetMon']]) else 1) #1.75
 		self.e.Paint("")
 		self.e.GetPaintedGraph().GetXaxis().SetTitle(names['stack-title'].split(';')[1])
 		self.e.GetPaintedGraph().GetYaxis().SetTitle(names['stack-title'].split(';')[2])
@@ -74,11 +77,12 @@ class TEffiType():
 	def write(self,fout,path):
 		gDirectory.cd('%s:/'%fout.GetName())
 		makeDirsRoot(fout,path)
-		for js in self.s.itervalues():
-			if js==None: continue
-			gDirectory.cd(path)
-			js.Write(js.GetName(),TH1.kOverwrite)
-			gDirectory.cd('%s:/'%fout.GetName())
+		for js in self.h.itervalues():
+			for ks in js.itervalues():
+				if ks==None: continue
+				gDirectory.cd(path)
+				ks.Write(ks.GetName(),TH1.kOverwrite)
+				gDirectory.cd('%s:/'%fout.GetName())
 		gDirectory.cd(path)
 		self.e.Write(self.e.GetName(),TH1.kOverwrite)
 		gDirectory.cd('%s:/'%fout.GetName())
@@ -121,28 +125,34 @@ def ratio(eff1,eff2):
 	g.SetTitle("")
 	g.GetXaxis().SetTitle(eff1.GetPaintedGraph().GetXaxis().GetTitle())
 	g.GetYaxis().SetTitle("Data / MC")
-	g.GetYaxis().SetRangeUser(0.25,1.25)
+	g.GetYaxis().SetRangeUser(0.5,1.5) #0.6,1.4 #0.0,2.0
 	g.GetYaxis().SetNdivisions(505)
-	g.SetMarkerStyle(20)
-	g.SetMarkerColor(kBlack)
-	g.SetMarkerSize(1.8)
+	g.GetXaxis().SetTickLength(0.08)
+	g.GetYaxis().SetTickLength(0.015)
+#	g.SetMarkerStyle(20)
+#	g.SetMarkerColor(kBlack)
+	g.SetMarkerSize(1.5)
 	return g
 
 
 # FUNCTIONS FOR FILLING AND DRAWING HISTOGRAMS #####################################################
-def do_fill(opts,fout,s,v,sel,trg,ref,KFWght=None):
+def do_fill(opts,fout,s,v,sel,trg,ref,KFWght=None,skipWght=None):
 	# info
 	l2("Filling for %s"%v['var'])
 	# containers
 	cuts = {}
 	cutlabels = {}
 	names = {}
-	canvas = TCanvas("cfill","cfill",2400,1800)
+	canvas = TCanvas("cfill","cfill",1200,1000)
 	# trg
 	trg, trg_orig = trigData(opts,s,trg)
 	# names
 	jsoninfo = json.loads(filecontent(opts.jsoninfo))
 	names['global'] = getNames(opts,s,v,sel,trg_orig,ref)
+	keepMapInfo = None
+	if skipWght==True:
+		keepMapInfo = [x for x in opts.weight[1] if (x[0:3]=='MAP' or x[0:3]=='FUN')]
+		opts.weight[1] = [dc(x) for x in opts.weight[1] if not (x[0:3]=='MAP' or x[0:3] == 'FUN')]
 	wpars = weightInfo(opts.weight,KFWght)
 
 	# TEffi object
@@ -164,7 +174,7 @@ def do_fill(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	# consider ratio
 	tag = 'Rat'
 	names[tag]  = getNames(opts,s,v,sel,trg_orig,ref,tag)
-	TEffi.effi(names[tag],jsoninfo['colours'][s['tag']],20 if any([x in s['tag'] for x in ['Data','JetMon']]) else (22 if not 'NoRef' in names[tag]['hist'] else 26))
+	TEffi.effi(names[tag],jsoninfo['colours'][s['tag']],jsoninfo['markers'][s['tag']] if (not 'NoRef' in names[tag]['hist']) else (25 if not ('NoCor' in names[tag]['hist']) else (26 if 'QCD' in names[tag]['hist'] else 27)))
 
 	# write histogram to file			
 	path = "%s/%s/%s"%('turnonCurves',wpars,names['global']['path-turnon'])
@@ -174,41 +184,50 @@ def do_fill(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	TEffi.delete()
 	canvas.Close()
 	trg = dc(trg_orig)
+	if skipWght==True:
+		opts.weight[1] += keepMapInfo
 
 
 def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	# names
 	namesGlobal = getNames(opts,None,v,sel,trg,ref)
 	wpars = weightInfo(opts.weight,KFWght)
+	wparsover = None
+	if any([('MAP'==x[0:3] or 'FUN'==x[0:3]) for x in opts.weight[1]]):
+		weightsover = dc(opts.weight)
+		weightsover[1] = [dc(x) for x in opts.weight[1] if not (x[0:3]=='MAP' or x[0:3]=='FUN')]
+		wparsover = weightInfo(weightsover,KFWght)
 	# info
 	jsoninfo = json.loads(filecontent(opts.jsoninfo))
 	jsoncuts = json.loads(filecontent(opts.jsoncuts))
 
 	# containers
-	canvas = TCanvas('cdrawstack','cdrawstack',2400,1800)
+	canvas = TCanvas('cdrawstack','cdrawstack',1200,1000)
 	canvas.cd()
 
 	# legend
 	columns = 1 #ceil(len(samples)/4.)
-	rows    = 2 #ceil(len(samples)/columns)
+	rows    = sum([1 for x in [any(['JetMon' in y['tag'] for y in samples]),any(['QCD' in y['tag'] for y in samples]),any(['VBF' in y['tag'] for y in samples]),any(['QCD' in y['tag'] for y in samples]) and opts.overlay,any(['VBF' in y['tag'] for y in samples]) and opts.overlay,any(['QCD' in y['tag'] for y in samples]) and opts.closure,any(['VBF' in y['tag'] for y in samples]) and opts.closure] if x==True])#ceil(len(samples)/columns)
 	left    = gPad.GetLeftMargin()+0.02
-	bottom  = 1-gPad.GetTopMargin()-0.02 - (0.05*rows) # n rows sized 0.05
-	right   = gPad.GetLeftMargin()+0.02 + (0.12*columns) # n columns width 0.12
+	bottom  = 1-gPad.GetTopMargin()-0.02 - (0.05*rows) # n rows sized 0.04
+	right   = gPad.GetLeftMargin()+0.02 + (0.20*columns) # n columns width 0.12
 	top     = 1-gPad.GetTopMargin()-0.02
-	legend  = getTLegend(left,bottom,right,top,columns,None,0,1,0.035)
+	legend  = getTLegend(left,bottom,right,top,columns,None,3001,1,0.040)
 
 	# info text
-	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI','MAP']])]) # counting lines about weights + 1 for vbfHbb tag 
-	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']]+[x[0:3]=='MAP' for x in opts.weight[1]]+[x[0:3]=='FUN' for x in opts.weight[1]])]) # counting lines about weights + 1 for vbfHbb tag 
+	left   = 1-gPad.GetRightMargin()-0.02 - (0.25) # width 0.3
 	right  = 1-gPad.GetRightMargin()-0.02
 	top    = 1-gPad.GetTopMargin()
-	bottom = 1-gPad.GetTopMargin() - (0.05*rows) # n rows size 0.05
-	text = getTPave(left,bottom,right,top,None,0,0,1,0.035)
+	bottom = 1-gPad.GetTopMargin() - (0.05*rows) # n rows size 0.04
+	text = getTPave(left,bottom,right,top,None,0,0,1,0.040)
 	text.AddText("VBF H #rightarrow b#bar{b}: #sqrt{s} = 8 TeV (2012)")
 	if not opts.weight==[[''],['']] and 'LUMI' in opts.weight[1]: text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")
+	if not opts.weight==[[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DFun reweighted")
 	# layout scaling
 	ymin=0
 	ymax=0
@@ -235,24 +254,26 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			stacks[group]['effis']    = TEffiType(v) 
 			stacks[group]['names']    = names
 			stacks[group]['colours']  = jsoninfo['colours'][s['tag']]
+			stacks[group]['markers']  = jsoninfo['markers'][s['tag']]
 
 		# load histograms from file
 		gDirectory.cd('%s:/'%fout.GetName())
 		path = '/%s/%s/%s/'%('turnonCurves',wpars,names['global']['path-turnon'])
 		# fill if needed/wanted 
 		for tag in ['Num','Den']:
-			fullpath = path+names[tag]['stack']+';1'
-			stacks[group]['effis'].get(s['tag'],tag,fullpath,stacks[group]['names'][tag])
+			fullpath = path+names[tag]['hist']+';1'
+			if not (opts.redraw or opts.redrawstack): stacks[group]['effis'].get(s['tag'],tag,fullpath,names[tag])
 			if (not s['tag'] in stacks[group]['effis'].h[tag]) or opts.redrawstack:
 				if not (opts.redraw or opts.redrawstack): l3("%s%s doesn\'t exist. Filling first.%s"%(red,fullpath,plain))
 				elif (opts.redraw or opts.redrawstack) and tag=='Den': l3("%sLoading %s since it was redrawn with 'Num'.%s"%(red,fullpath,plain))
 				else: l3("%sRedrawing %s first.%s"%(red,fullpath,plain))
 				if not ((opts.redraw or opts.redrawstack) and tag=='Den'): do_fill(opts,fout,s,v,sel,trg_orig,ref,KFWght)
-				stacks[group]['effis'].get(s['tag'],tag,fullpath,stacks[group]['names'][tag])
+				stacks[group]['effis'].get(s['tag'],tag,fullpath,names[tag])
 			if opts.debug: l3("%sLoaded: %40s(N=%9d, Int=%9d)%s"%(yellow,stacks[group]['effis'].h[tag][s['tag']].GetName(),stacks[group]['effis'].h[tag][s['tag']].GetEntries(),stacks[group]['effis'].h[tag][s['tag']].Integral(),plain))
-			setStyleTH1F(stacks[group]['effis'].h[tag][s['tag']],stacks[group]['colours'],1,stacks[group]['colours'],0,1,20)
+			setStyleTH1F(stacks[group]['effis'].h[tag][s['tag']],stacks[group]['colours'],1,stacks[group]['colours'],0,1,20,0,1)
 		print
 		trg = dc(trg_orig)
+
 
 	if opts.closure:
 		### LOOP over all samples (again, without reference trigger)
@@ -267,98 +288,193 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			for tag in ['Num','Den','Rat']:
 				names[tag] = getNames(opts,s,v,sel,trg_orig if not tag=='Den' else ['None'],['None'],tag)
 			# info	
-			l3("%sStack group: %s (sample: %s)%s"%(blue,names['global']['group'],s['tag'],plain))
-	
 			group = names['global']['group'] + '_NoRef'
+			l3("%sStack group: %s (sample: %s)%s"%(blue,group,s['tag'],plain))
+	
 			if not group in stacks:
 				stacks[group] = {}
 				stacks[group]['effis']    = TEffiType(v) 
 				stacks[group]['names']    = names
 				stacks[group]['colours']  = jsoninfo['colours'][s['tag']]
+				stacks[group]['markers']  = jsoninfo['markers'][s['tag']]
 	
 			# load histograms from file
 			gDirectory.cd('%s:/'%fout.GetName())
 			path = '/%s/%s/%s/'%('turnonCurves',wpars,names['global']['path-turnon'])
 			# fill if needed/wanted 
 			for tag in ['Num','Den']:
-				fullpath  = path+names[tag]['stack']+';1'
-				stacks[group]['effis'].get(s['tag'],tag,fullpath,stacks[group]['names'][tag])
+				fullpath = path+names[tag]['hist']+';1'
+				if not (opts.redraw or opts.redrawstack): stacks[group]['effis'].get(s['tag'],tag,fullpath,names[tag])
 				if (not s['tag'] in stacks[group]['effis'].h[tag]) or opts.redrawstack:
 					if not (opts.redraw or opts.redrawstack): l3("%s%s doesn\'t exist. Filling first.%s"%(red,fullpath,plain))
 					elif (opts.redraw or opts.redrawstack) and tag=='Den': l3("%sLoading %s since it was redrawn with 'Num'.%s"%(red,fullpath,plain))
 					else: l3("%sRedrawing %s first.%s"%(red,fullpath,plain))
 					if not ((opts.redraw or opts.redrawstack) and tag=='Den'): do_fill(opts,fout,s,v,sel,trg_orig,['None'],KFWght)
-					stacks[group]['effis'].get(s['tag'],tag,fullpath,stacks[group]['names'][tag])
+					stacks[group]['effis'].get(s['tag'],tag,fullpath,names[tag])
 				if opts.debug: l3("%sLoaded: %40s(N=%9d, Int=%9d)%s"%(yellow,stacks[group]['effis'].h[tag][s['tag']].GetName(),stacks[group]['effis'].h[tag][s['tag']].GetEntries(),stacks[group]['effis'].h[tag][s['tag']].Integral(),plain))
-				setStyleTH1F(stacks[group]['effis'].h[tag][s['tag']],stacks[group]['colours'],1,stacks[group]['colours'],0,1,26)
+				setStyleTH1F(stacks[group]['effis'].h[tag][s['tag']],stacks[group]['colours'],1,stacks[group]['colours'],0,1,26,0,1)
+			print
+			trg = dc(trg_orig)
+
+	
+	if opts.overlay and any([('MAP'==x[0:3] or 'FUN'==x[0:3]) for x in opts.weight[1]]):
+		### LOOP over all samples (again, without map correction)
+		for s in sorted(samples,key=lambda x:('QCD' in x['tag'],-jsoninfo['crosssections'][x['tag']])):
+			if any([x in s['tag'] for x in ['Data','JetMon']]): continue
+			# trg
+			trg,trg_orig = trigData(opts,s,trg)
+			# names
+			sample = s['pointer']
+			names = {}
+			names['global'] = getNames(opts,s,v,sel,trg_orig,ref)
+			for tag in ['Num','Den','Rat']:
+				names[tag] = getNames(opts,s,v,sel,trg_orig if not tag=='Den' else ['None'],ref,tag)
+			# info	
+			group = names['global']['group'] + '_NoCor'
+			l3("%sStack group: %s (sample: %s)%s"%(blue,group,s['tag'],plain))
+	
+			if not group in stacks:
+				stacks[group] = {}
+				stacks[group]['effis']    = TEffiType(v) 
+				stacks[group]['names']    = names
+				stacks[group]['colours']  = jsoninfo['colours'][s['tag']]
+				stacks[group]['markers']  = jsoninfo['markers'][s['tag']]
+	
+			# load histograms from file
+			gDirectory.cd('%s:/'%fout.GetName())
+			path = '/%s/%s/%s/'%('turnonCurves',wparsover,names['global']['path-turnon'])
+			# fill if needed/wanted 
+			for tag in ['Num','Den']:
+				fullpath = path+names[tag]['hist']+';1'
+				if not (opts.redraw or opts.redrawstack): stacks[group]['effis'].get(s['tag'],tag,fullpath,names[tag])
+				if (not s['tag'] in stacks[group]['effis'].h[tag]) or opts.redrawstack:
+					if not (opts.redraw or opts.redrawstack): l3("%s%s doesn\'t exist. Filling first.%s"%(red,fullpath,plain))
+					elif (opts.redraw or opts.redrawstack) and tag=='Den': l3("%sLoading %s since it was redrawn with 'Num'.%s"%(red,fullpath,plain))
+					else: l3("%sRedrawing %s first.%s"%(red,fullpath,plain))
+					if not ((opts.redraw or opts.redrawstack) and tag=='Den'): do_fill(opts,fout,s,v,sel,trg_orig,ref,KFWght,True)
+					stacks[group]['effis'].get(s['tag'],tag,fullpath,names[tag])
+				if opts.debug: l3("%sLoaded: %40s(N=%9d, Int=%9d)%s"%(yellow,stacks[group]['effis'].h[tag][s['tag']].GetName(),stacks[group]['effis'].h[tag][s['tag']].GetEntries(),stacks[group]['effis'].h[tag][s['tag']].Integral(),plain))
+				setStyleTH1F(stacks[group]['effis'].h[tag][s['tag']],stacks[group]['colours'],1,stacks[group]['colours'],0,1,26,0,1)
 			print
 			trg = dc(trg_orig)
 
 	istack=0
-	for group,g in stacks.iteritems():
+	for group,g in sorted(stacks.iteritems()):
 		# get ratio
 		tag = 'Rat'
-		g['effis'].effi(g['names'][tag],g['colours'],20 if any([x in group for x in ['Data','JetMon']]) else (22 if not 'NoRef' in group else 26))
-		print 
-#		ymin, ymax = getRangeTH1F(g['teffis'].h[tag],ymin,ymax)
-#		setRangeTH1F(g['teffis'].h[tag],0.0,1.2,False)
+		g['effis'].effi(g['names'][tag],TColor.GetColorDark(g['colours']) if not 'NoRef' in group else kOrange+1,g['markers'] if (not 'NoRef' in group and not 'NoCor' in group) else (21 if not ('NoCor' in group) else (26 if 'QCD' in group else 27)))#25 26 27 #if not 'NoRef' in group else kOrange+1 ## 22 an 33
 		legend.AddEntry(g['effis'].e,group,'LP')
 
-		# write histogram to file
-		gDirectory.cd('%s:/'%fout.GetName())
-		path = "%s/%s/%s"%('turnonCurves',wpars,g['names']['global']['path-turnon'])
-		makeDirsRoot(fout,path)
-		g['effis'].write(fout,path)
-	
 	# Data / MC ratio
-	if 'JetMon' in stacks.keys() and 'QCD' in stacks.keys():
-		ratioplot = ratio(stacks['JetMon']['effis'].e,stacks['QCD']['effis'].e)
-#		ratioplot = stacks['JetMon']['effis'].h['Rat']['JetMonA'].Clone('Data / MC')
-#		ratioplot.SetTitle('Data / MC')
-#		ratioplot.Divide(stacks['JetMon']['teffis'].h['Rat'].GetStack().Last(),stacks['QCD']['teffis'].h['Rat'].GetStack().Last())
-	else: ratioplot=None
-
+	ratioplots = {}
+	if 'JetMon' in stacks.keys():
+		for group,g in sorted(stacks.iteritems()):
+			if group=='JetMon': continue
+			if 'NoCor' in group or 'NoRef' in group: continue
+			ratioplots[group] = ratio(stacks['JetMon']['effis'].e,stacks[group]['effis'].e)
+			ratioplots[group].SetMarkerStyle(stacks[group]['markers'])
+			ratioplots[group].SetMarkerColor(TColor.GetColorDark(stacks[group]['colours']))
+			
 	cutsjson = json.loads(filecontent(opts.jsoncuts))
-	if not ratioplot==None:
+	if not ratioplots=={}:
 		# containers
 		c1,c2 = getRatioPlotCanvas(canvas)
 		# draw (top)
 		c1.cd()
+		gPad.SetLeftMargin(0.08)
+		gPad.SetRightMargin(0.03)
 		plotcut = None
 		for istack,stack in enumerate([stacks[g]['effis'] for g in stacks.keys()]):
 			if istack==0: 
-				stack.e.SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
+				ymax = 0
+				for st in [stacks[g]['effis'] for g in stacks.keys()]:
+					for i in range(st.e.GetPaintedGraph().GetN()):
+						x = ROOT.Double(0.0)
+						y = ROOT.Double(0.0)
+						st.e.GetPaintedGraph().GetPoint(i,x,y)
+						if y>ymax: 
+							ymax = dc(y)
+				ymax = max(ymax,0.7/1.4)
+				#stack.e.SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
+				stack.e.SetTitle(";;N-1 efficiency curves")
+				stack.e.GetPaintedGraph().SetTitle(";;N-1 efficiency curves")
 				stack.e.GetPaintedGraph().GetXaxis().SetLimits(float(v['xmin']),float(v['xmax']))
-				stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,1.3)
-				stack.e.GetPaintedGraph().GetYaxis().SetTitleOffset(1.4)
+				stack.e.GetPaintedGraph().GetXaxis().SetLabelColor(0);
+				stack.e.GetPaintedGraph().GetXaxis().SetTitleColor(0);
+				stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,round(ymax*1.4,1))
+				#stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,1.4)#5*stack.e.GetPaintedGraph().GetHistogram().GetMaximum())
+				stack.e.GetPaintedGraph().GetYaxis().SetTitleOffset(1.1)
+				stack.e.GetPaintedGraph().GetXaxis().SetTickLength(0.025)
+				stack.e.GetPaintedGraph().GetYaxis().SetTickLength(0.015)
+				stack.e.GetPaintedGraph().GetYaxis().SetLabelSize(stack.e.GetPaintedGraph().GetYaxis().GetLabelSize()*1.2)
+				stack.e.GetPaintedGraph().GetYaxis().SetLabelOffset(stack.e.GetPaintedGraph().GetYaxis().GetLabelOffset()/1.4)
 				stack.e.GetPaintedGraph().Draw("ap")
+				stack.e.GetPaintedGraph().Draw("e,same")
+				c1.Update()
+				c1.Modified()
 				vlines = []
+				vboxes = []
 				plotcuts = []
+				plotcutdirections = []
 				for isel in sel:
 					if v['root'] in cutsjson['sel'][isel]: 
 						gPad.Update()
 						gPad.Modified()
 						for i in range(len(cutsjson['sel'][isel][v['root']])/2):
 							plotcuts += [float(cutsjson['sel'][isel][v['root']][2*i+1])]
+							plotcutdirections += [1 if cutsjson['sel'][isel][v['root']][2*i]=='>' else -1]
 							vlines += [getTLine(plotcuts[-1],gPad.GetUymin(),plotcuts[-1],gPad.GetUymax(),kMagenta,5,9)]
 							vlines[-1].Draw("same")
+						for i in range(len(plotcuts)):
+							if opts.shade:
+								vboxes += [TBox(gPad.GetUxmin() if plotcutdirections[i]==1 else plotcuts[i],gPad.GetUymin(),plotcuts[i] if plotcutdirections[i]==1 else gPad.GetUxmax(),gPad.GetUymax())]
+								vboxes[-1].SetFillColor(kGray)
+								vboxes[-1].SetFillStyle(3001)
+								vboxes[-1].Draw("same")
+						gPad.Update()
+						gPad.Modified()
+			stack.e.Paint("")
 			stack.e.Draw("same")
 		# draw (bottom)
 		c2.cd()
-		#setStyleTH1Fratio(ratioplot)
-		ratioplot.Draw()
-		ratioplot.GetYaxis().SetNdivisions(505)
-		ratioplot.GetXaxis().SetLimits(float(v['xmin']),float(v['xmax']))
-		ratioplot.GetXaxis().SetTitleOffset(4.7)
-		ratioplot.Draw('e0')
-		ratioplot.Draw('apsame')
+		gPad.SetLeftMargin(0.08)
+		gPad.SetRightMargin(0.03)
+		gPad.SetBottomMargin(0.32)
+		for iratioplot,ratioplot in enumerate(ratioplots.itervalues()):
+			ratioplot.GetYaxis().SetNdivisions(505)
+			ratioplot.GetXaxis().SetLimits(float(v['xmin']),float(v['xmax']))
+			ratioplot.GetXaxis().SetTitleOffset(4.4)
+			ratioplot.GetYaxis().SetTitleOffset(1.2)
+			ratioplot.GetYaxis().SetTitleSize(ratioplot.GetYaxis().GetTitleSize()*0.9)
+			gPad.SetGridy(1)
+			if iratioplot==0: 
+				ratioplot.Draw('e')
+				ratioplot.Draw('a,p,same')
+			else: 
+				ratioplot.Draw('p,e,same')
+			
+			gStyle.SetOptFit(0)
+			fit = TF1("fitline","[0]",max([float(v['xmin'])]+[x for (ix,x) in enumerate(plotcuts) if plotcutdirections[ix]==1]),min([float(v['xmax'])]+[x for (ix,x) in enumerate(plotcuts) if plotcutdirections[ix]==-1]))
+			ratioplot.Fit("fitline","QR")
+			av = fit.GetParameter(0)
+			avtext = getTPave(0.85,0.75,0.99,0.85,None,0,0,1,0.08)
+			avtext.AddText("average: %.2f"%av)
+			avtext.Draw()
+
 		# line at cut
 		if len(plotcuts)>0:
 			gPad.Update()
 			vlines2 = []
+			rvboxes = []
 			for plotcut in plotcuts: 
+				plotcutdirection = plotcutdirections[plotcuts.index(plotcut)]
 				vlines2 += [getTLine(plotcut,gPad.GetUymin(),plotcut,gPad.GetUymax(),kMagenta,5,9)]
 				vlines2[-1].Draw("same")
+				if opts.shade:
+					rvboxes += [TBox(gPad.GetUxmin() if plotcutdirection==1 else plotcut,gPad.GetUymin(),plotcut if plotcutdirection==1 else gPad.GetUxmax(),gPad.GetUymax())]
+					rvboxes[-1].SetFillColor(kGray)
+					rvboxes[-1].SetFillStyle(3001)
+					rvboxes[-1].Draw("same")
 		# line through y=1
 		gPad.Modified()
 		gPad.Update()
@@ -403,7 +519,7 @@ def mkTurnonCurves():
 	for trg in opts.trigger:
 		for sel in opts.selection:
 			for ref in opts.reftrig:
-				KFWght = KFWghts[('-'.join(sel),'-'.join(trg))]
+				KFWght = KFWghts[('-'.join(sorted(sel)),'-'.join(trg))]
 				for v in variables.itervalues():
 					if not v['var'] in opts.variable: continue
 					if v['var'] in opts.novariable: continue
