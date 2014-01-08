@@ -30,6 +30,8 @@
 "dEtaTrig5p5": {"dEtaTrig":[">","5.5"]},
 "dEtaTriglt5p5": {"dEtaTrig":["<","5.5"]},
 
+"dPhi": {"dPhibb[2]":["<","2.0"]},
+
 "dEta": {"dEtaqq[3]":[">","3.5"]},
 "jetPt1": {"jetPt[1]":[">","35."]},
 "HT100": {"ht":[">","100."]},
