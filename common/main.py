@@ -209,35 +209,41 @@ def getYields(opts,loadedSamples,KFWghts):
 			allkeys += [str(x) for x in y[tag].keys()]
 	allkeys = list(set(allkeys))
 
-	printYieldTable(opts,yieldarchive,['Data','QCD','ZJets','TTJets','singleT','WJets','VBF125','GluGlu-Powheg125'])
-	printYieldTable(opts,yieldarchive,sorted(list(set(allkeys)-set(['Data','QCD','ZJets','TTJets','singleT','WJets','VBF125','GluGlu-Powheg125'])),key=lambda x:(x[0:3],len(x),x)))
+	#print allkeys
+
+	printYieldTable(opts,yieldarchive,sorted(['Data','DataV','QCD','ZJets','TTJets','singleT','WJets','VBF125','GluGlu-Powheg125'],key=lambda x:(x[0:3],len(x),x)))
+	printYieldTable(opts,yieldarchive,sorted(list(set(allkeys)-set(['Data','DataV','QCD','ZJets','TTJets','singleT','WJets','VBF125','GluGlu-Powheg125'])),key=lambda x:(x[0:3],len(x),x)))
 	
-	if opts.latex: printYieldTableLatex(opts,yieldarchive,['Data','QCD','ZJets','TTJets','singleT','WJets','VBF125','GluGlu-Powheg125'])
-	if opts.latex: printYieldTableLatex(opts,yieldarchive,sorted(list(set(allkeys)-set(['Data','QCD','ZJets','TTJets','singleT','WJets','VBF125','GluGlu-Powheg125'])),key=lambda x:(x[0:3],len(x),x)))
+	if opts.latex: printYieldTableLatex(opts,yieldarchive,['Data','DataV','QCD','ZJets','TTJets','singleT','WJets','VBF125','GluGlu-Powheg125'])
+	if opts.latex: printYieldTableLatex(opts,yieldarchive,sorted(list(set(allkeys)-set(['Data','DataV','QCD','ZJets','TTJets','singleT','WJets','VBF125','GluGlu-Powheg125'])),key=lambda x:(x[0:3],len(x),x)))
 
 # HELPER FUNCTIONS #################################################################################
 def printKFWghtsTable(KFWghts):
-	print "%45s | %30s | %10s |"%('sel','trg','K-factor')
+	print "%65s | %30s | %12s |"%('sel','trg','K-factor')
 	tprev=""
 	for s,t in sorted(KFWghts.iterkeys(),key=lambda (x,y):(y,x)):
 		if not tprev==t: 
-			print '-'*(3*3 + 10 + 60 + 15)
-		print "%45s | %30s |"%(s,t),
-		print "%10s |"%("%.4f"%KFWghts[(s,t)] if KFWghts[(s,t)] else "-")
+			print '-'*(3*3 + 107)
+		print "%65s | %30s |"%(s,t),
+		print "%12s |"%("%.6f"%KFWghts[(s,t)] if KFWghts[(s,t)] else "-")
 		tprev=t
 	print
 
 def printYieldTable(opts,yieldarchive,keys):
-	print "%30s | %45s | %30s | %10s | %10s | %10s | %10s | %10s | %10s |"%('sample','sel','trg','ALL','CAT0','CAT1','CAT2','CAT3','CAT4')
+	print "%30s | %65s | %30s | %10s | %10s | %10s | %10s | %10s | %10s |"%('sample','sel','trg','ALL','CAT0','CAT1','CAT2','CAT3','CAT4')
 	tprev=""
 	sprev=""
 	for s,t in sorted(yieldarchive.iterkeys(),key=lambda (x,y):(y,x)):
 		for sample in keys:
+			#print s,t
+			#print [x for x in yieldarchive[(s,t)].itervalues()]
+			if not any(sample in x for x in yieldarchive[(s,t)].itervalues()): 
+				#print "\033[1;31m%s not in archive.\033[m"%sample
+				continue	
 			if (not tprev==t) or (not sprev==s): 
-				print '-'*(3*9 + 90 + 60 + 15)
-			if not any(sample in x for x in yieldarchive[(s,t)].itervalues()): break
+				print '-'*(3*9 + 90 + 60 + 15 + 10 + 10)
 			tcorr = '-'.join(opts.datatrigger[opts.trigger.index(t.split('-'))]) if any([x in sample for x in ['Data','DataV','JetMon']]) and not opts.datatrigger==[] else t
-			print "%30s | %45s | %30s |"%(sample,s,tcorr),
+			print "%30s | %65s | %30s |"%(sample,s,tcorr),
 			for cat in sorted(yieldarchive[(s,t)].iterkeys()):
 				if yieldarchive[(s,t)][cat]=={}: print "%10s |"%("-"),
 				else: print "%10s |"%("%.f"%(yieldarchive[(s,t)][cat][sample])),
@@ -284,14 +290,22 @@ def main(mp=None):
 	# suppress blabla messages (... has been created)
 	ROOT.gErrorIgnoreLevel = kWarning # or 1001 
 	# load C++ modules
-	inroot('.L %s'%(os.path.join(basepath,'../common/sample.C+')))
-	if not opts.usebool: inroot('.L %s'%(os.path.join(basepath,'../common/reformat.C+')))
-	if not opts.treepreselection == []: inroot('.L %s'%(os.path.join(basepath,'../common/preselect.C+')))
-	inroot('.L %s'%(os.path.join(basepath,'../common/bMapWght.C+')))
-	inroot('.L %s'%(os.path.join(basepath,'../common/twoDWght.C+')))
-	inroot('.L %s'%(os.path.join(basepath,'../common/twoDWghtFun.C+')))
+	###inroot('.L %s'%(os.path.join(basepath,'../common/sample.C+')))
+	###if not opts.usebool: inroot('.L %s'%(os.path.join(basepath,'../common/reformat.C+')))
+	###if not opts.treepreselection == []: inroot('.L %s'%(os.path.join(basepath,'../common/preselect.C+')))
+	###inroot('.L %s'%(os.path.join(basepath,'../common/bMapWght.C+')))
+	###inroot('.L %s'%(os.path.join(basepath,'../common/twoDWght.C+')))
+	###inroot('.L %s'%(os.path.join(basepath,'../common/twoDWghtFun.C+')))
+	#### load style
+	###inroot('.x %s'%(os.path.join(basepath,'../common/styleCMS.C++')))
+	inroot('.L %s'%(os.path.join(basepath,'../common/sample.C')))
+	if not opts.usebool: inroot('.L %s'%(os.path.join(basepath,'../common/reformat.C')))
+	if not opts.treepreselection == []: inroot('.L %s'%(os.path.join(basepath,'../common/preselect.C')))
+	inroot('.L %s'%(os.path.join(basepath,'../common/bMapWght.C')))
+	inroot('.L %s'%(os.path.join(basepath,'../common/twoDWght.C')))
+	inroot('.L %s'%(os.path.join(basepath,'../common/twoDWghtFun.C')))
 	# load style
-	inroot('.x %s'%(os.path.join(basepath,'../common/styleCMS.C++')))
+	inroot('.x %s'%(os.path.join(basepath,'../common/styleCMS.C')))
 	inroot('gROOT->ForceStyle();')
 
 

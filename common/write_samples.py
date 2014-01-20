@@ -23,7 +23,7 @@ class info:
 		self.content = {}
 		self.content['files'] = {}
 		self.content['other'] = []
-		self.content['fields'] = {'fname':60,'npassed':12,'xsec':12,'scale':15,'tag':18,'trigger':35,'colour':8} # field lengths
+		self.content['fields'] = {'fname':35,'npassed':12,'xsec':12,'scale':15,'tag':18,'trigger':35,'colour':8} # field lengths
 		self.content['trigger'] = ['HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v* OR HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v* OR HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v* OR HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v* OR HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_QuadPFJet75_55_35_20_BTagCSV_VBF_v*','HLT_QuadPFJet75_55_38_20_BTagCSV_VBF_v*','HLT_QuadPFJet78_61_44_31_BTagCSV_VBF_v*','HLT_QuadPFJet82_65_48_35_BTagCSV_VBF_v*','HLT_QuadJet75_55_35_20_BTagIP_VBF_v*','HLT_QuadJet75_55_38_20_BTagIP_VBF_v*','HLT_DiJet35_MJJ650_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ700_AllJets_DEta3p5_VBF_v*','HLT_DiJet35_MJJ750_AllJets_DEta3p5_VBF_v*','HLT_QuadJet50_v*','HLT_PFJet80_v*','HLT_DiPFJetAve40_v*','HLT_DiPFJetAve80_v*']
 		self.basefields = dc(self.content['fields'])
 		self.basetrigger = dc(self.content['trigger'])
@@ -49,11 +49,14 @@ class info:
 				template="%s%%%is | %s"%(cyan,vfield,plain)
 				print (template)%kfield,
 			print
-			print '-'*(170+6*4)
+			print '-'*(135+6*4)
 		for k,v in sorted(self.content['files'].iteritems(), key=lambda (x,y):(len(y['tag']),y['tag'],len(y['fname']),y['fname'])):
 			for kfield,vfield in sorted(self.content['fields'].iteritems()):
 				template="%%%is | "%vfield
-				print (template)%self.content['files'][k][kfield], 
+				if not kfield == 'fname':
+					print (template)%self.content['files'][k][kfield], 
+				else:
+					print (template)%self.content['files'][k][kfield][0:vfield-2], 
 			print
 		print
 		l2("trigger indices for:")

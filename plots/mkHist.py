@@ -125,9 +125,22 @@ def do_draw(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
-	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2D MAP reweighted (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
+	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")#\n (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
 	if not opts.weight==[[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DFun reweighted")
+	
+	# selection legend
+	rows = 2+sum([1 for x in sel])
+	left   = 1-gPad.GetRightMargin()+0.01
+	right  = 1-0.02
+	top    = 1-gPad.GetTopMargin()-0.80
+	bottom = 1-gPad.GetTopMargin()-0.80 - (0.03*rows) # n rows size 0.03
+	selleg = getSelLegend(left,bottom,right,top)
+	for iline,line in enumerate(sorted([x.strip() for x in sel])): selleg.AddText('%s %s'%('sel:' if iline==0 else ' '*4,line))
+	selleg.AddText('trg: %s (MC)'%(','.join(trg)))
+	selleg.AddText('     %s (data)'%(','.join(opts.datatrigger[opts.trigger.index(trg)])))
+
 	text.Draw()
+	selleg.Draw()
 
 	# write
 	path = "%s/%s/%s/%s"%('plots',os.path.split(fout.GetName())[1][:-5],wpars,names['path-hist'])
@@ -197,11 +210,22 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	#if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
-	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2D MAP reweighted (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
+	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")#\n (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
 	if not opts.weight==[[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DFun reweighted")
 	# layout scaling
 	ymin=0
 	ymax=0
+
+	# selection legend
+	rows = 2+sum([1 for x in sel])
+	left   = 1-gPad.GetRightMargin()+0.01
+	right  = 1-0.02
+	top    = 1-gPad.GetTopMargin()-0.80
+	bottom = 1-gPad.GetTopMargin()-0.80 - (0.03*rows) # n rows size 0.03
+	selleg = getSelLegend(left,bottom,right,top)
+	for iline,line in enumerate(sorted([x.strip() for x in sel])): selleg.AddText('%s %s'%('sel:' if iline==0 else ' '*4,line))
+	selleg.AddText('trg: %s (MC)'%(','.join(trg)))
+	selleg.AddText('     %s (data)'%(','.join(opts.datatrigger[opts.trigger.index(trg)])))
 
 	### LOOP over all samples
 	for s in sorted(samples,key=lambda x:('QCD' in x['tag'],not 'WJets' in x['tag'],jsoninfo['crosssections'][x['tag']])):
@@ -311,6 +335,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	# draw legend/textinfo
 	legend.Draw()
 	text.Draw()
+	selleg.Draw()
 
 #	# save
 #	gDirectory.cd('%s:/'%fout.GetName())
@@ -377,10 +402,22 @@ def do_drawnormalized(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
-	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2D MAP reweighted (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
+	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")#\n (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
+	if not opts.weight==[[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DFun reweighted")
 	# layout scaling
 	ymin=0
 	ymax=0
+	
+	# selection legend
+	rows = 2+sum([1 for x in sel])
+	left   = 1-gPad.GetRightMargin()+0.01
+	right  = 1-0.02
+	top    = 1-gPad.GetTopMargin()-0.80
+	bottom = 1-gPad.GetTopMargin()-0.80 - (0.03*rows) # n rows size 0.03
+	selleg = getSelLegend(left,bottom,right,top)
+	for iline,line in enumerate(sorted([x.strip() for x in sel])): selleg.AddText('%s %s'%('sel:' if iline==0 else ' '*4,line))
+	selleg.AddText('trg: %s (MC)'%(','.join(trg)))
+	selleg.AddText('     %s (data)'%(','.join(opts.datatrigger[opts.trigger.index(trg)])))
 
 	### LOOP over all samples
 	for s in sorted(samples,key=lambda x:('QCD' in x['tag'],not 'WJets' in x['tag'],jsoninfo['crosssections'][x['tag']])):
@@ -479,6 +516,7 @@ def do_drawnormalized(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	# draw legend/textinfo
 	legend.Draw()
 	text.Draw()
+	selleg.Draw()
 
 #	# save
 #	gDirectory.cd('%s:/'%fout.GetName())

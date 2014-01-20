@@ -1,0 +1,144 @@
+#!/usr/bin/env python
+
+from string import Template
+from glob import glob
+import subprocess 
+import threading
+import time
+import Queue
+import os,sys,shutil
+
+nthreads = 4
+exitFlag = 0
+colours = ["\033[0;31m","\033[0;32m","\033[0;33m","\033[0;34m","\033[0;35m","\033[0;36m","\033[m"]
+for i in range(nthreads):
+	open('1Dcurve_log%i.log'%(i+1),'w').close()
+
+selbase = "run194270;jetPt1"
+selextra = {}
+selextra["AV40"] = ["dEtaqq2","mqq3600","HT100","HTlt400"]
+selextra["AV80"] = ["dEtaqq2","mqq3600","HT100","HTgt400"]
+weight='19012.,PU;XSEC;LUMI;FUN#mqq[2]#ht,,,rootfiles/vbfHbb_2DMaps_corrections_mqq2-ht.root;2DFits/2DFun_JetMon-QCD-Rat_sdEtaqq2-jetPt1-run194270-tVBF-rAV40-dVBFOR_mqq2-ht_HT400AV40AV80'
+samples="JetMon,QCD"
+drawopts=["--redrawstack --shade","--drawstack --shade --overlay"]
+
+baseline='''./mkTurnonCurves.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -G "/data/UAData/autumn2013" -t "VBF" --datatrigger "VBFOR" --binning "mqq2;50;500;3000,mbb2;30;0;300,ht;75;0;1500,dEtaqq2;60;2;8,mbbReg2;30;0;300,jetPt0;40;0;400,jetPt1;30;0;300,mvaVBF;20;-1;1" -w "%s" -s "%s"'''%(weight,samples)
+selection=Template('''-p "$SEL"''')
+variables=Template('''-v "$VARS"''')
+reference=Template('''-r "$REF"''')
+#-
+outputfile="vbfHbb_2013_2DFunCorrected_mqq2-ht_triggercurves"
+output=Template('''-o "rootfiles/%s$SUFFIX.root"'''%outputfile)
+redirect=Template('''>> 1Dcurve_log$REDI.log''')
+
+def makeCmd(sel,vars,ref):
+	cmd = ' '.join([ \
+		baseline,\
+		selection.safe_substitute(SEL=sel),\
+		variables.safe_substitute(VARS=vars),\
+		reference.safe_substitute(REF=ref),\
+		])
+	return cmd
+
+def execCmd(id,cmd):
+	out = output.safe_substitute(SUFFIX=str(id))
+	redi = redirect.safe_substitute(REDI=id)
+	fullcmd = ' '.join([cmd,out,redi])
+	print colours[id],fullcmd,colours[-1]
+	print
+	p = subprocess.Popen(fullcmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+	lstdout, lstderr = p.communicate()
+	time.sleep(2)
+	return lstdout,lstderr
+
+class myThread (threading.Thread):
+    def __init__(self, threadID, name, q):
+		threading.Thread.__init__(self)
+		self.threadID = threadID
+		self.name = name
+		self.q = q
+		self.stdout = None 
+		self.stderr = None
+    def run(self):
+		print "\033[1;31mStarting " + self.name + "\033[m"
+		self.stdout,self.stderr = processData(self.threadID,self.name,self.q)
+		print self.stdout
+		print self.stderr
+		print "\033[1;31mExiting " + self.name + "\033[m"
+
+def processData(threadID, threadName, q):
+	stdout = ""
+	stderr = ""
+	while not exitFlag:
+		queueLock.acquire()
+		if not workQueue.empty():
+			data = q.get()
+			queueLock.release()
+			print "\033[1;31m%s processing\033[m: %s" % (threadName, data)
+			for drawopt in drawopts: 
+				lstdout,lstderr = execCmd(threadID,' '.join([data,drawopt]))
+				stdout += lstdout
+				stderr += lstderr
+		else:
+		    queueLock.release()
+		time.sleep(2)
+	return stdout,stderr	
+
+if os.path.exists("rootfiles/%s.root"%outputfile): sys.exit("rootfiles/%s.root exists. Stopping."%outputfile)
+for i in range(nthreads): 
+	if os.path.exists("rootfiles/%s%i.root"%(outputfile,i+1)): sys.exit("rootfiles/%s%i.root exists. Stopping."%(outputfile,i+1))
+
+
+threadList = []
+for i in range(nthreads): threadList += ["Thread-%i"%(i+1)]
+queueLock = threading.Lock()
+workQueue = Queue.Queue(100)
+threads = []
+threadID = 1
+
+# Create new threads
+for tName in threadList:
+    thread = myThread(threadID, tName, workQueue)
+    thread.start()
+    threads.append(thread)
+    threadID += 1
+
+# Fill the queue
+queueLock.acquire()
+# all for 2 references
+vars = "ht,dEtaqq2,mvaVBF"
+for ref in ['AV40','AV80']:
+	sel = ';'.join([selbase]+selextra[ref])
+	cmd = makeCmd(sel,vars,ref) 
+	workQueue.put(cmd)
+	time.sleep(2)
+
+# all for 2 references
+vars = "mqq2,mbbReg2"
+for ref in ['AV40','AV80']:
+	sel = ';'.join([selbase]+selextra[ref])
+	cmd = makeCmd(sel,vars,ref) 
+	workQueue.put(cmd)
+	time.sleep(2)
+
+queueLock.release()
+
+# Wait for queue to empty
+while not workQueue.empty():
+    pass
+
+# Notify threads it's time to exit
+exitFlag = 1
+
+# Wait for all threads to complete
+for t in threads:
+    t.join()
+print "Exiting Main Thread"
+
+allroot = []
+for i in range(nthreads): allroot += ["rootfiles/%s%i.root"%(outputfile,(i+1))]
+os.system("hadd rootfiles/%s.root "%outputfile + " ".join(allroot))
+for i in range(nthreads): 
+	os.system("cp -RT plots/%s%i/ plots/%s/"%(outputfile,(i+1),outputfile))
+	shutil.rmtree("plots/%s%i"%(outputfile,i+1))
+	os.remove("rootfiles/%s%i.root"%(outputfile,i+1))

@@ -75,7 +75,7 @@ def getKFWght(opts,loadedSamples,sel,trg):
 		### Bkg
 		else:
 			inroot('%s.draw("%s","%s","%s")'%(s['pointer'],ROOT.hBkg.GetName(),"0.5",cut))
-	#	print "Data: %8.2f  | Bkg: %8.2f  | QCD: %8.2f"%(ROOT.hDat.Integral(),ROOT.hBkg.Integral(),ROOT.hQCD.Integral())
+		print "Data: %8.2f  | Bkg: %8.2f  | QCD: %8.2f"%(ROOT.hDat.Integral(),ROOT.hBkg.Integral(),ROOT.hQCD.Integral())
 	### finish
 	KFWght = (ROOT.hDat.Integral()-ROOT.hBkg.Integral())/ROOT.hQCD.Integral()
 	inroot('delete hDat; delete hQCD; delete hBkg;')
@@ -158,13 +158,13 @@ def get2DMapCombo(opts,fout,inputs):
 				if binUpLim > cuty:  
 					mc.SetBinContent(xi,yi,m2.GetBinContent(xi2,yi2))
 					mc.SetBinError(xi,yi,m2.GetBinError(xi2,yi2))
-	# correct empty
-	for xi in range(mc.GetXaxis().GetNbins()+1):
-		for yi in range(mc.GetYaxis().GetNbins()+1):
-			if mc.GetBinContent(xi,yi) == 0:
-				if sum([int(not mc.GetBinContent(xj,yj)==0) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]])>=3:
-					mc.SetBinContent(xi,yi,sum([mc.GetBinContent(xj,yj) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]])/4.)
-					mc.SetBinError(xi,yi,sqrt(sum([mc.GetBinError(xj,yj)*mc.GetBinError(xj,yj) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]]))/4.)
+#temp-out#	# correct empty
+#temp-out#	for xi in range(mc.GetXaxis().GetNbins()+1):
+#temp-out#		for yi in range(mc.GetYaxis().GetNbins()+1):
+#temp-out#			if mc.GetBinContent(xi,yi) == 0:
+#temp-out#				if sum([int(not mc.GetBinContent(xj,yj)==0) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]])>=3:
+#temp-out#					mc.SetBinContent(xi,yi,sum([mc.GetBinContent(xj,yj) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]])/4.)
+#temp-out#					mc.SetBinError(xi,yi,sqrt(sum([mc.GetBinError(xj,yj)*mc.GetBinError(xj,yj) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]]))/4.)
 
 	# save		
 	makeDirsRoot(fout,path)
@@ -285,6 +285,29 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		maps[ratio]['Rat'].Sumw2()
 #$		maps[ratio]['Rat'].Divide(maps[ratio.split('-')[0]]['Rat'].GetPaintedHistogram(),maps[ratio.split('-')[1]]['Rat'].GetPaintedHistogram())
 		maps[ratio]['Rat'].Divide(maps[ratio.split('-')[0]]['Rat'],maps[ratio.split('-')[1]]['Rat'])
+
+		# plot
+		canvas.cd()
+		maps[ratio]['Rat'].SetTitleOffset(1.0,"Y")
+		maps[ratio]['Rat'].SetMarkerSize(maps[ratio]['Rat'].GetMarkerSize()*0.75)
+		maps[ratio]['Rat'].Draw('colz,error,text')
+		print '\033[1;31mRatio drawn\033[m'
+		canvas.WaitPrimitive()
+		mapExtra = getBins(maps[ratio]['Rat'])
+		maps[ratio]['Rat'] = putBins(maps[ratio]['Rat'],mapExtra)
+		maps[ratio]['Rat'].Draw('colz,error,text')
+		canvas.WaitPrimitive()
+		canvas.Update()
+		mapExtra = getBins(maps[ratio]['Rat'])
+		maps[ratio]['Rat'] = putBins(maps[ratio]['Rat'],mapExtra)
+		maps[ratio]['Rat'].Draw('colz,error,text')
+		canvas.WaitPrimitive()
+		canvas.Update()
+		maps[ratio]['Rat'].Draw('lego2z')
+		canvas.WaitPrimitive()
+		canvas.Update()
+		canvas.WaitPrimitive()
+		
 		# save		
 		gDirectory.cd('%s:/2DMaps/%s'%(fout.GetName(),ratio))
 #		oldint = maps[ratio]['Rat'].Integral()
@@ -294,27 +317,24 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 ##		print newint
 #		maps[ratio]['Rat'].Scale(oldint/newint)
 		maps[ratio]['Rat'].Write(maps[ratio]['Rat'].GetName(),TH1.kOverwrite)
-		# plot
-		canvas.cd()
-		maps[ratio]['Rat'].SetTitleOffset(1.0,"Y")
-		maps[ratio]['Rat'].SetMarkerSize(maps[ratio]['Rat'].GetMarkerSize()*0.75)
-		maps[ratio]['Rat'].Draw('colz,error,text')
-#/		# empty bins 
+
+		# empty bins 
 #/		if not any('jetBtag' in x for x in [variables[vx[0]]['var'],variables[vy[0]]['var']]):
 #/			for xi in range(1,maps[ratio]['Rat'].GetXaxis().GetNbins()):
 #/				for yi in range(1,maps[ratio]['Rat'].GetYaxis().GetNbins()):
 #/					if maps[ratio]['Rat'].GetBinContent(xi,yi) < 0.00001: 
 #/						maps[ratio]['Rat'].SetBinContent(xi,yi,float(maps[ratio]['Rat'].GetBinContent(xi+1,yi)+maps[ratio]['Rat'].GetBinContent(xi,yi+1))/2.) 
 #/						maps[ratio]['Rat'].SetBinError(xi,yi,sqrt((float(maps[ratio]['Rat'].GetBinError(xi+1,yi))*float(maps[ratio]['Rat'].GetBinError(xi+1,yi)))+(float(maps[ratio]['Rat'].GetBinError(xi,yi+1))*float(maps[ratio]['Rat'].GetBinError(xi,yi+1)))))
-		# correct empty
-		mr = maps[ratio]['Rat']
-		for xi in range(mr.GetXaxis().GetNbins()+1):
-			for yi in range(mr.GetYaxis().GetNbins()+1):
-				if mr.GetBinContent(xi,yi) == 0:
-					nonzero = sum([int(not mr.GetBinContent(xj,yj)==0) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]])
-					if nonzero>=2:
-						mr.SetBinContent(xi,yi,sum([mr.GetBinContent(xj,yj) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]])/float(nonzero))
-						mr.SetBinError(xi,yi,sqrt(sum([mr.GetBinError(xj,yj)*mr.GetBinError(xj,yj) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]]))/float(nonzero))
+#temp-out#		# correct empty
+#temp-out#		mr = maps[ratio]['Rat']
+#temp-out#		for xi in range(mr.GetXaxis().GetNbins()+1):
+#temp-out#			for yi in range(mr.GetYaxis().GetNbins()+1):
+#temp-out#				if mr.GetBinContent(xi,yi) == 0:
+#temp-out#					nonzero = sum([int(not mr.GetBinContent(xj,yj)==0) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]])
+#temp-out#					if nonzero>=2:
+#temp-out#						mr.SetBinContent(xi,yi,sum([mr.GetBinContent(xj,yj) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]])/float(nonzero))
+#temp-out#						mr.SetBinError(xi,yi,sqrt(sum([mr.GetBinError(xj,yj)*mr.GetBinError(xj,yj) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]]))/float(nonzero))
+
 	
 		path = "plots/%s/2DMaps/%s"%(fout.GetName().split('/')[-1][:-5],ratio)
 		makeDirs(path)
@@ -327,6 +347,162 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 
 	# clean
 	canvas.Close()
+
+def getBins(h):
+	extra = h.Clone('extraBins')
+	extra.Reset()
+	nx = h.GetNbinsX()
+	ny = h.GetNbinsY()
+	stencil1 = [(+2,0),(+1,0),(-1,0),(-2,0),(0,-2),(0,-1),(0,+1),(0,+2)] # 5p stencil
+	stencil0 = [(+1,0),(-1,0),(0,-1),(0,+1)] # 5p stencil
+	stencil2a = [(+2,0),(+1,0),(0,+1),(0,+2)] # NE
+	stencil2b = [(+2,0),(+1,0),(0,-1),(0,-2)] # NW
+	stencil2c = [(-2,0),(-1,0),(0,+1),(0,+2)] # SE
+	stencil2d = [(-2,0),(-1,0),(0,-1),(0,-2)] # SW
+	stencil3a = [(+3,0),(+2,0),(+1,0),(+2,0),(+1,0)] # S 
+	stencil3b = [(-3,0),(-2,0),(-1,0),(-2,0),(-1,0)] # N 
+	stencil3c = [(0,+3),(0,+2),(0,+1),(0,+2),(0,+1)] # W 
+	stencil3d = [(0,-3),(0,-2),(0,-1),(0,-2),(0,-1)] # E 
+	coeff1 = [-1./12,4./12,4./12,-1./12,-1./12,4./12,4./12,-1./12]
+	coeff0 = [1./4,1./4,1./4,1./4]
+	coeff2 = [-1./2,1.,1.,-1./2]
+	coeff3 = [1./2,-3./2,3./2,-1./2,1.]
+
+	print "\033[1;31mSizes: %i,%i\033[m"%(nx,ny)
+	print 
+
+	for ix in range(nx+1):
+		for iy in range(ny+1):
+			if not h.GetBinContent(ix,iy)==0: continue
+			print '\033[1;34m',ix,iy,h.GetBinContent(ix,iy),'\033[m',
+			print '\n5p\t',
+			for i in range(len(stencil1)): print h.GetBinContent(ix + stencil1[i][0],iy + stencil1[i][1]),
+			print '\nNE\t',
+			for i in range(len(stencil2a)): print h.GetBinContent(ix + stencil2a[i][0],iy + stencil2a[i][1]),
+			print '\nNW\t',
+			for i in range(len(stencil2b)): print h.GetBinContent(ix + stencil2b[i][0],iy + stencil2b[i][1]),
+			print '\nSE\t',
+			for i in range(len(stencil2c)): print h.GetBinContent(ix + stencil2c[i][0],iy + stencil2c[i][1]),
+			print '\nSW\t',
+			for i in range(len(stencil2d)): print h.GetBinContent(ix + stencil2d[i][0],iy + stencil2d[i][1]),
+			print
+			print '\nW\t',
+			for i in range(len(stencil3a)): print h.GetBinContent(ix + stencil3a[i][0],iy + stencil3a[i][1]),
+			print '\nE\t',
+			for i in range(len(stencil3b)): print h.GetBinContent(ix + stencil3b[i][0],iy + stencil3b[i][1]),
+			print '\nS\t',
+			for i in range(len(stencil3c)): print h.GetBinContent(ix + stencil3c[i][0],iy + stencil3c[i][1]),
+			print '\nN\t',
+			for i in range(len(stencil3d)): print h.GetBinContent(ix + stencil3d[i][0],iy + stencil3d[i][1]),
+			print
+			print ix
+			print iy
+			print nx
+			print ny
+			if all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil1]):
+				val = 0
+				for i in range(len(stencil1)): val += coeff1[i] * h.GetBinContent(ix + stencil1[i][0],iy + stencil1[i][1])
+				print val
+				print
+				if not val<0.: extra.SetBinContent(ix,iy,val)
+				#raw_input("[CONTINUE]")
+			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil0]):
+				val = 0
+				for i in range(len(stencil0)): val += coeff0[i] * h.GetBinContent(ix + stencil0[i][0],iy + stencil0[i][1])
+				print val
+				print
+				if not val<0.: extra.SetBinContent(ix,iy,val)
+				#raw_input("[CONTINUE]")
+			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil2a]) and (not ix >= nx and not iy >= ny):
+				val = 0
+				for i in range(len(stencil2a)): 
+					val += coeff2[i] * h.GetBinContent(ix + stencil2a[i][0],iy + stencil2a[i][1])
+					print '\t\tNE',coeff2[i], h.GetBinContent(ix + stencil2a[i][0],iy + stencil2a[i][1]),
+				print
+				print val
+				print
+				if not val<0.: extra.SetBinContent(ix,iy,val)
+				#raw_input("[CONTINUE]")
+			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil2b]) and (not ix <= 1) and (not iy >= ny):
+				val = 0
+				for i in range(len(stencil2b)): 
+					val += coeff2[i] * h.GetBinContent(ix + stencil2b[i][0],iy + stencil2b[i][1])
+					print '\t\tNW',coeff2[i], h.GetBinContent(ix + stencil2b[i][0],iy + stencil2b[i][1]),
+				print
+				print val
+				print
+				if not val<0.: extra.SetBinContent(ix,iy,val)
+				#raw_input("[CONTINUE]")
+			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil2c]) and (not ix >= nx and not iy <= 1):
+				val = 0
+				for i in range(len(stencil2c)): 
+					val += coeff2[i] * h.GetBinContent(ix + stencil2c[i][0],iy + stencil2c[i][1])
+					print '\t\tSE',coeff2[i], h.GetBinContent(ix + stencil2c[i][0],iy + stencil2c[i][1]),
+				print
+				print val
+				print
+				if not val<0.: extra.SetBinContent(ix,iy,val)
+				#raw_input("[CONTINUE]")
+			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil2d]) and (not ix <= 1 and not iy <= 1):
+				val = 0
+				for i in range(len(stencil2d)): 
+					val += coeff2[i] * h.GetBinContent(ix + stencil2d[i][0],iy + stencil2d[i][1])
+					print '\t\tSW',coeff2[i], h.GetBinContent(ix + stencil2d[i][0],iy + stencil2d[i][1]),
+				print
+				print val
+				print
+				if not val<0.: extra.SetBinContent(ix,iy,val)
+				#raw_input("[CONTINUE]")
+			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil3c]) and (not iy<1) and (not ix<1) and not (ix>nx):
+				val = 0
+				for i in range(len(stencil3c)): 
+					val += coeff3[i] * h.GetBinContent(ix + stencil3c[i][0],iy + stencil3c[i][1])
+					print '\t\tS',coeff3[i], h.GetBinContent(ix + stencil3c[i][0],iy + stencil3c[i][1]),
+				print
+				print val
+				print
+				if not val<0.: extra.SetBinContent(ix,iy,val)
+				#raw_input("[CONTINUE]")
+			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil3d]) and (not iy>ny) and (not ix<1) and not (ix>nx):
+				val = 0
+				for i in range(len(stencil3d)): 
+					val += coeff3[i] * h.GetBinContent(ix + stencil3d[i][0],iy + stencil3d[i][1])
+					print '\t\tN',coeff3[i], h.GetBinContent(ix + stencil3d[i][0],iy + stencil3d[i][1]),
+				print
+				print val
+				print
+				if not val<0.: extra.SetBinContent(ix,iy,val)
+				#raw_input("[CONTINUE]")
+			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil3a]) and (not ix<1) and (not iy<1) and not (iy>ny):
+				val = 0
+				for i in range(len(stencil3a)): 
+					val += coeff3[i] * h.GetBinContent(ix + stencil3a[i][0],iy + stencil3a[i][1])
+					print '\t\tW',coeff3[i], h.GetBinContent(ix + stencil3a[i][0],iy + stencil3a[i][1]),
+				print
+				print val
+				print
+				if not val<0.: extra.SetBinContent(ix,iy,val)
+				#raw_input("[CONTINUE]")
+			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil3b]) and (not ix>nx) and (not iy<1) and not (iy>ny):
+				val = 0
+				for i in range(len(stencil3b)): 
+					val += coeff3[i] * h.GetBinContent(ix + stencil3b[i][0],iy + stencil3b[i][1])
+					print '\t\tE',coeff3[i], h.GetBinContent(ix + stencil3b[i][0],iy + stencil3b[i][1]),
+				print
+				print val
+				print
+				if not val<0.: extra.SetBinContent(ix,iy,val)
+				#raw_input("[CONTINUE]")
+	return extra
+
+def putBins(h,extra):
+	nx = h.GetNbinsX()
+	ny = h.GetNbinsY()
+	for ix in range(nx+1):
+		for iy in range(ny+1):
+			if not extra.GetBinContent(ix,iy)==0: 
+				if h.GetBinContent(ix,iy)==0: h.SetBinContent(ix,iy,extra.GetBinContent(ix,iy))
+	return h
 
 ####################################################################################################
 def getBMapWght(opts,fout,samples,sel,trg,reftrig):

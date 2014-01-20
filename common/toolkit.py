@@ -90,6 +90,17 @@ def makeDirs(ndir):
 
 
 # PLOTTING/LAYOUT HELPER FUNCTIONS #################################################################
+def getSelLegend(left,bottom,right,top,rows=None,fillColor=0,fillStyle=0,textColor=1,textSize=0.025):
+	selleg = TPaveText(left,bottom,right,top,"NDC")
+	selleg.SetFillColor(fillColor)
+	selleg.SetFillStyle(fillStyle)
+	selleg.SetTextColor(textColor)
+	selleg.SetTextSize(textSize)
+	selleg.SetTextAlign(13)
+	selleg.SetTextFont(82)
+	selleg.SetBorderSize(0)
+	return selleg
+
 def getTLegend(left,bottom,right,top,columns=None,header=None,fillStyle=0,textColor=1,textSize=0.025):
 	legend = TLegend(left,bottom,right,top)
 	if not header==None: legend.SetHeader(header)

@@ -162,8 +162,10 @@ class efficiency_fit():
 		##print oldscale,newscale
 		#self.hbkg.Scale(oldscale/newscale)
 		
+		#self.fit_setLims(self.fsig,0,0,1)
 		self.fit_setLims(self.fsig,5,0,1)
 		self.fit_setLims(self.fsig,6,0,1)
+		#self.fit_setLims(self.fbkg,0,0,1)
 		self.fit_setLims(self.fbkg,5,0,1)
 		self.fit_setLims(self.fbkg,6,0,1)
 		if opts.lin:
@@ -174,15 +176,21 @@ class efficiency_fit():
 		#	for iv,v in enumerate([1.0,700,50,0.1,1500]):
 		#		self.fsig.FixParameter(iv,v)
 		#		self.fbkg.FixParameter(iv,v*(1.+random()/10.))
+
+		self.fsig.SetRange(self.xmin,self.ymin,self.xmax,self.ymax)
+		self.fbkg.SetRange(self.xmin,self.ymin,self.xmax,self.ymax)
+		
 		self.hsig.Fit(self.fsig,"RNBM") #WL")
 		self.hbkg.Fit(self.fbkg,"RNBM") #WL")
-
+		
 		self.fsig.SetMinimum(0.0)
 		self.fsig.SetMaximum(1.0)
-		self.fsig.SetRange(self.xmin,self.ymin,self.xmax,self.ymax)
 		self.fbkg.SetMinimum(0.0)
 		self.fbkg.SetMaximum(1.0)
-		self.fbkg.SetRange(self.xmin,self.ymin,self.xmax,self.ymax)
+#		self.hsig.GetXaxis().SetRangeUser(self.xmin,self.xmax)
+#		self.hsig.GetYaxis().SetRangeUser(self.ymin,self.ymax)
+#		self.hbkg.GetXaxis().SetRangeUser(self.xmin,self.xmax)
+#		self.hbkg.GetYaxis().SetRangeUser(self.ymin,self.ymax)
 
 		self.hsig.GetZaxis().SetRangeUser(0.0,1.0)
 		self.hbkg.GetZaxis().SetRangeUser(0.0,1.0)
@@ -348,12 +356,32 @@ class efficiency_fit():
 		fopen.cd("/")
 		makeDirsRoot(fopen,"2DFits")
 		gDirectory.cd("2DFits")
-		self.fsig.SetName(self.hsigs[0].GetName().replace("2DMap","2DFun")+("_%s"%opts.mergetag if opts.mergetag else ""))
-		self.fbkg.SetName(self.hbkgs[0].GetName().replace("2DMap","2DFun")+("_%s"%opts.mergetag if opts.mergetag else ""))
-		self.fsob.SetName(self.hrats[0].GetName().replace("2DMap","2DFun")+("_%s"%opts.mergetag if opts.mergetag else ""))
-		self.fsig.Write(self.fsig.GetName(),TH1.kOverwrite)
-		self.fbkg.Write(self.fbkg.GetName(),TH1.kOverwrite)
-		self.fsob.Write(self.fsob.GetName(),TH1.kOverwrite)
+		self.fsig2 = TF2("fsig2","[0] / (1 + TMath::Exp(-(x - [3])/[1])) / (1 + TMath::Exp(-(y - [4])/[2]))")
+		pars = self.fsig.GetParameters()
+		self.fsig2.SetParameters(pars)
+		self.fbkg2 = TF2("fbkg2","[0] / (1 + TMath::Exp(-(x - [3])/[1])) / (1 + TMath::Exp(-(y - [4])/[2]))")
+		pars = self.fbkg.GetParameters()
+		self.fbkg2.SetParameters(pars)
+		self.fsob2 = TF2("fsob2","([0] / (1 + TMath::Exp(-(x - [3])/[1])) / (1 + TMath::Exp(-(y - [4])/[2]))) / ([5] / (1 + TMath::Exp(-(x - [8])/[6])) / (1 + TMath::Exp(-(y - [9])/[7])))")
+		pars = self.fsob.GetParameters()
+		self.fsob2.SetParameters(pars)
+		print
+		print self.fsig.Eval(1500,500)
+		print self.fsig.Eval(2500,1500)
+		print
+		print self.fsig2.Eval(1500,500)
+		print self.fsig2.Eval(2500,1500)
+		print
+		self.fsig2.SetName(self.hsigs[0].GetName().replace("2DMap","2DFun")+("_%s"%opts.mergetag if opts.mergetag else ""))
+		self.fbkg2.SetName(self.hbkgs[0].GetName().replace("2DMap","2DFun")+("_%s"%opts.mergetag if opts.mergetag else ""))
+		self.fsob2.SetName(self.hrats[0].GetName().replace("2DMap","2DFun")+("_%s"%opts.mergetag if opts.mergetag else ""))
+		self.fsig2.Write(self.fsig2.GetName(),TH1.kOverwrite)
+		self.fbkg2.Write(self.fbkg2.GetName(),TH1.kOverwrite)
+		self.fsob2.Write(self.fsob2.GetName(),TH1.kOverwrite)
+		self.fsig2.GetHistogram().Write("H"+self.fsig2.GetName(),TH1.kOverwrite)
+		self.fbkg2.GetHistogram().Write("H"+self.fbkg2.GetName(),TH1.kOverwrite)
+		self.fsob2.GetHistogram().Write("H"+self.fsob2.GetName(),TH1.kOverwrite)
+
 		gDirectory.cd("/")
 		
 ##################################################
@@ -439,6 +467,7 @@ def efficiencyFit():
 		nbkgs += ["2DMaps/QCD/2DMap_QCD-Rat_s%s-t%s-r%s-d%s%s"%('-'.join(sorted(opts.selection[ir])),'-'.join(opts.trigger[0]),r,'-'.join(opts.datatrigger[0]),"_"+opts.correctiontag if not opts.correctiontag=="" else "")]
 		nrats += ["2DMaps/JetMon-QCD/2DMap_JetMon-QCD-Rat_s%s-t%s-r%s-d%s%s"%('-'.join(sorted(opts.selection[ir])),'-'.join(opts.trigger[0]),r,'-'.join(opts.datatrigger[0]),"_"+opts.correctiontag if not opts.correctiontag=="" else "")]
 
+	for n in nsigs: print n
 	hsigs = []
 	hbkgs = []
 	hrats = []
