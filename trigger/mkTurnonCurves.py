@@ -54,6 +54,7 @@ class TEffiType():
 		self.fillstack(sample,tag,names)
 	
 	def fillstack(self,sample,tag,names):
+		print red+"Filling %s %s %s"%(sample,tag,names['stack'])+plain
 		if not self.s[tag]: self.s[tag] = THStack(names['stack'],names['stack-title'])
 		self.s[tag].Add(self.h[tag][sample])
 		self.s[tag].GetStack()
@@ -64,7 +65,10 @@ class TEffiType():
 		self.fillstack(sample,tag,names)
 
 	def effi(self,names,mColor,mStyle):
-		self.e  = TEfficiency(names['stack'],names['stack-title'],int(self.v['nbins_x']),float(self.v['xmin']),float(self.v['xmax']))
+		self.e = TEfficiency(names['stack'],names['stack-title'],int(self.v['nbins_x']),float(self.v['xmin']),float(self.v['xmax']))
+		#print Blue+names['stack']+plain
+		#print blue+"Num: ",self.s['Num'].GetStack().Last().GetEntries(),plain
+		#print blue+"Den: ",self.s['Den'].GetStack().Last().GetEntries(),plain
 		self.e.SetPassedHistogram(self.s['Num'].GetStack().Last(),'f')
 		self.e.SetTotalHistogram(self.s['Den'].GetStack().Last(),'f')
 		self.e.SetMarkerStyle(mStyle)
@@ -131,9 +135,21 @@ def ratio(eff1,eff2):
 	g.GetYaxis().SetTickLength(0.015)
 #	g.SetMarkerStyle(20)
 #	g.SetMarkerColor(kBlack)
-	g.SetMarkerSize(1.5)
+	g.SetMarkerSize(1.25)
 	return g
 
+def markerStyle(tag,smarker):
+	if 'NoRef' in tag: return 21
+	elif 'QCD' in tag and 'NoCor' in tag: return 26
+	elif 'QCD' in tag: return 22
+	elif 'VBF' in tag and 'NoCor' in tag: return 27
+	elif 'VBF' in tag: return 33
+	else: return smarker
+
+def markerColour(tag,scolour):
+	if 'NoRef' in tag: return kOrange+1
+	elif 'NoCor' in tag: return kGreen-3
+	else: return TColor.GetColorDark(scolour)
 
 # FUNCTIONS FOR FILLING AND DRAWING HISTOGRAMS #####################################################
 def do_fill(opts,fout,s,v,sel,trg,ref,KFWght=None,skipWght=None):
@@ -174,14 +190,14 @@ def do_fill(opts,fout,s,v,sel,trg,ref,KFWght=None,skipWght=None):
 	# consider ratio
 	tag = 'Rat'
 	names[tag]  = getNames(opts,s,v,sel,trg_orig,ref,tag)
-	TEffi.effi(names[tag],jsoninfo['colours'][s['tag']],jsoninfo['markers'][s['tag']] if (not 'NoRef' in names[tag]['hist']) else (25 if not ('NoCor' in names[tag]['hist']) else (26 if 'QCD' in names[tag]['hist'] else 27)))
+	TEffi.effi(names[tag],jsoninfo['colours'][s['tag']],markerStyle(s['tag'],jsoninfo['markers'][s['tag']]))
 
 	# write histogram to file			
 	path = "%s/%s/%s"%('turnonCurves',wpars,names['global']['path-turnon'])
 	TEffi.write(fout,path)
 
 	# clean
-	TEffi.delete()
+	#TEffi.delete()
 	canvas.Close()
 	trg = dc(trg_orig)
 	if skipWght==True:
@@ -207,21 +223,36 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 
 	# legend
 	columns = 1 #ceil(len(samples)/4.)
-	rows    = sum([1 for x in [any(['JetMon' in y['tag'] for y in samples]),any(['QCD' in y['tag'] for y in samples]),any(['VBF' in y['tag'] for y in samples]),any(['QCD' in y['tag'] for y in samples]) and opts.overlay,any(['VBF' in y['tag'] for y in samples]) and opts.overlay,any(['QCD' in y['tag'] for y in samples]) and opts.closure,any(['VBF' in y['tag'] for y in samples]) and opts.closure] if x==True])#ceil(len(samples)/columns)
-	left    = gPad.GetLeftMargin()+0.02
-	bottom  = 1-gPad.GetTopMargin()-0.02 - (0.05*rows) # n rows sized 0.04
-	right   = gPad.GetLeftMargin()+0.02 + (0.20*columns) # n columns width 0.12
-	top     = 1-gPad.GetTopMargin()-0.02
-	legend  = getTLegend(left,bottom,right,top,columns,None,3001,1,0.040)
+	rows = 0
+	for y in samples:
+		ytag = y['tag']
+		for x in ['Jetmon','QCD','VBF']:
+			if x in ytag and opts.overlay: rows += 1
+			elif x in ytag and opts.closure: rows += 1
+			elif x in ytag: rows += 1
+	#left    = gPad.GetLeftMargin()+0.02
+	#bottom  = 1-gPad.GetTopMargin()-0.02 - (0.05*rows) # n rows sized 0.04
+	#right   = gPad.GetLeftMargin()+0.02 + (0.20*columns) # n columns width 0.12
+	#top     = 1-gPad.GetTopMargin()-0.02
+	left    = 1 + 0.01 - gPad.GetRightMargin()
+	right   = 1 - 0.02
+	bottom  = 1 - gPad.GetTopMargin() - 0.3 - 0.02 - (0.045*rows) 
+	top     = 1 - gPad.GetTopMargin() - 0.3 - 0.02 
+	legend  = getTLegend(left,bottom,right,top,columns,"(N-1) cut trg effi.",3001,1,0.035)
 
 	# info text
-	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']]+[x[0:3]=='MAP' for x in opts.weight[1]]+[x[0:3]=='FUN' for x in opts.weight[1]])]) # counting lines about weights + 1 for vbfHbb tag 
-	left   = 1-gPad.GetRightMargin()-0.02 - (0.25) # width 0.3
-	right  = 1-gPad.GetRightMargin()-0.02
-	top    = 1-gPad.GetTopMargin()
-	bottom = 1-gPad.GetTopMargin() - (0.05*rows) # n rows size 0.04
-	text = getTPave(left,bottom,right,top,None,0,0,1,0.040)
-	text.AddText("VBF H #rightarrow b#bar{b}: #sqrt{s} = 8 TeV (2012)")
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']]),sum([(x[0:3]=='MAP' or x[0:3]=='FUN') for x in opts.weight[1]]),1]) # counting lines about weights + 1 for vbfHbb tag 
+	#left   = 1-gPad.GetRightMargin()-0.02 - (0.25) # width 0.3
+	#right  = 1-gPad.GetRightMargin()-0.02
+	#top    = 1-gPad.GetTopMargin()
+	#bottom = 1-gPad.GetTopMargin() - (0.05*rows) # n rows size 0.04
+	left   = 1 - gPad.GetRightMargin() + 0.01 
+	right  = 1 - 0.02
+	bottom = 1 - gPad.GetTopMargin() - 0.02 - (0.05*rows) 
+	top = 1 - gPad.GetTopMargin() - 0.02 
+	text = getTPave(left,bottom,right,top,None,0,0,1,0.035)
+	text.AddText("VBF H #rightarrow b#bar{b}:") 
+	text.AddText("#sqrt{s} = 8 TeV (2012)")
 	if not opts.weight==[[''],['']] and 'LUMI' in opts.weight[1]: text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
@@ -231,6 +262,17 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	# layout scaling
 	ymin=0
 	ymax=0
+
+	# selection legend
+	rows = 2+sum([1 for x in sel])
+	left   = 1 - gPad.GetRightMargin() + 0.01
+	right  = 1 - 0.02
+	top    = 1 - gPad.GetTopMargin() -0.02 - 0.80
+	bottom = 1 - gPad.GetTopMargin() -0.02 - 0.80 - (0.03*rows) # n rows size 0.03
+	selleg = getSelLegend(left,bottom,right,top)
+	for iline,line in enumerate(sorted([x.strip() for x in sel],key=lambda x:x.lower())): selleg.AddText('%s %s'%('sel:' if iline==0 else ' '*4,line))
+	selleg.AddText('trg: %s (MC)'%(','.join(trg)))
+	selleg.AddText('     %s (data)'%(','.join(opts.datatrigger[opts.trigger.index(trg)])))
 
 	# containers
 	stacks = {}
@@ -292,6 +334,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			l3("%sStack group: %s (sample: %s)%s"%(blue,group,s['tag'],plain))
 	
 			if not group in stacks:
+				print group
 				stacks[group] = {}
 				stacks[group]['effis']    = TEffiType(v) 
 				stacks[group]['names']    = names
@@ -338,7 +381,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 				stacks[group]['effis']    = TEffiType(v) 
 				stacks[group]['names']    = names
 				stacks[group]['colours']  = jsoninfo['colours'][s['tag']]
-				stacks[group]['markers']  = jsoninfo['markers'][s['tag']]
+				stacks[group]['markers']  = jsoninfo['markers'][s['tag']] if not 'NoRef' in group else 21 
 	
 			# load histograms from file
 			gDirectory.cd('%s:/'%fout.GetName())
@@ -362,7 +405,8 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	for group,g in sorted(stacks.iteritems()):
 		# get ratio
 		tag = 'Rat'
-		g['effis'].effi(g['names'][tag],TColor.GetColorDark(g['colours']) if not 'NoRef' in group else kOrange+1,g['markers'] if (not 'NoRef' in group and not 'NoCor' in group) else (21 if not ('NoCor' in group) else (26 if 'QCD' in group else 27)))#25 26 27 #if not 'NoRef' in group else kOrange+1 ## 22 an 33
+		g['effis'].effi(g['names'][tag],markerColour(group,g['colours']),markerStyle(group,g['markers']))
+#g['markers'] if (not 'NoRef' in group and not 'NoCor' in group) else (21 if not ('NoCor' in group) else (26 if 'QCD' in group else 27)))#25 26 27 #if not 'NoRef' in group else kOrange+1 ## 22 an 33
 		legend.AddEntry(g['effis'].e,group,'LP')
 
 	# Data / MC ratio
@@ -370,10 +414,10 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	if 'JetMon' in stacks.keys():
 		for group,g in sorted(stacks.iteritems()):
 			if group=='JetMon': continue
-			if 'NoCor' in group or 'NoRef' in group: continue
+			#if 'NoCor' in group or 'NoRef' in group: continue
 			ratioplots[group] = ratio(stacks['JetMon']['effis'].e,stacks[group]['effis'].e)
-			ratioplots[group].SetMarkerStyle(stacks[group]['markers'])
-			ratioplots[group].SetMarkerColor(TColor.GetColorDark(stacks[group]['colours']))
+			ratioplots[group].SetMarkerStyle(markerStyle(group,stacks[group]['markers']))
+			ratioplots[group].SetMarkerColor(markerColour(group,stacks[group]['colours']))
 			
 	cutsjson = json.loads(filecontent(opts.jsoncuts))
 	if not ratioplots=={}:
@@ -381,37 +425,40 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		c1,c2 = getRatioPlotCanvas(canvas)
 		# draw (top)
 		c1.cd()
-		gPad.SetLeftMargin(0.08)
-		gPad.SetRightMargin(0.03)
+		#gPad.SetLeftMargin(0.08)
+		#gPad.SetRightMargin(0.03)
 		plotcut = None
-		for istack,stack in enumerate([stacks[g]['effis'] for g in stacks.keys()]):
+		for istack,tagNstack in enumerate([(g,stacks[g]['effis']) for g in stacks.keys()]):
+			tag = tagNstack[0]
+			stack = tagNstack[1]
+			ymax = 1.0
+			#stack.e.SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
+			stack.e.SetTitle(";;N-1 efficiency curves")
+			stack.e.GetPaintedGraph().SetTitle(";;N-1 efficiency curves")
+			stack.e.GetPaintedGraph().GetXaxis().SetLimits(float(v['xmin']),float(v['xmax']))
+			stack.e.GetPaintedGraph().GetXaxis().SetLabelColor(0);
+			stack.e.GetPaintedGraph().GetXaxis().SetTitleColor(0);
+			stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,round(ymax*1.4,1))
+			#stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,1.4)#5*stack.e.GetPaintedGraph().GetHistogram().GetMaximum())
+			stack.e.GetPaintedGraph().GetYaxis().SetTitleOffset(1.1)
+			stack.e.GetPaintedGraph().GetXaxis().SetTickLength(0.025)
+			stack.e.GetPaintedGraph().GetYaxis().SetTickLength(0.015)
+			stack.e.GetPaintedGraph().GetYaxis().SetLabelSize(stack.e.GetPaintedGraph().GetYaxis().GetLabelSize()*1.2)
+			stack.e.GetPaintedGraph().GetYaxis().SetLabelOffset(stack.e.GetPaintedGraph().GetYaxis().GetLabelOffset()/1.4)
+			if istack==0: stack.e.GetPaintedGraph().Draw("ap")
+			stack.e.GetPaintedGraph().Draw("e,p,same")
+			c1.Update()
+			c1.Modified()
 			if istack==0: 
-				ymax = 0
-				for st in [stacks[g]['effis'] for g in stacks.keys()]:
-					for i in range(st.e.GetPaintedGraph().GetN()):
-						x = ROOT.Double(0.0)
-						y = ROOT.Double(0.0)
-						st.e.GetPaintedGraph().GetPoint(i,x,y)
-						if y>ymax: 
-							ymax = dc(y)
-				ymax = max(ymax,0.7/1.4)
-				#stack.e.SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
-				stack.e.SetTitle(";;N-1 efficiency curves")
-				stack.e.GetPaintedGraph().SetTitle(";;N-1 efficiency curves")
-				stack.e.GetPaintedGraph().GetXaxis().SetLimits(float(v['xmin']),float(v['xmax']))
-				stack.e.GetPaintedGraph().GetXaxis().SetLabelColor(0);
-				stack.e.GetPaintedGraph().GetXaxis().SetTitleColor(0);
-				stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,round(ymax*1.4,1))
-				#stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,1.4)#5*stack.e.GetPaintedGraph().GetHistogram().GetMaximum())
-				stack.e.GetPaintedGraph().GetYaxis().SetTitleOffset(1.1)
-				stack.e.GetPaintedGraph().GetXaxis().SetTickLength(0.025)
-				stack.e.GetPaintedGraph().GetYaxis().SetTickLength(0.015)
-				stack.e.GetPaintedGraph().GetYaxis().SetLabelSize(stack.e.GetPaintedGraph().GetYaxis().GetLabelSize()*1.2)
-				stack.e.GetPaintedGraph().GetYaxis().SetLabelOffset(stack.e.GetPaintedGraph().GetYaxis().GetLabelOffset()/1.4)
-				stack.e.GetPaintedGraph().Draw("ap")
-				stack.e.GetPaintedGraph().Draw("e,same")
-				c1.Update()
-				c1.Modified()
+		#		ymax = 0
+		#		for st in [stacks[g]['effis'] for g in stacks.keys()]:
+		#			for i in range(st.e.GetPaintedGraph().GetN()):
+		#				x = ROOT.Double(0.0)
+		#				y = ROOT.Double(0.0)
+		#				st.e.GetPaintedGraph().GetPoint(i,x,y)
+		#				if y>ymax: 
+		#					ymax = dc(y)
+		#		ymax = 1.0#max(ymax,0.7/1.4)
 				vlines = []
 				vboxes = []
 				plotcuts = []
@@ -433,13 +480,23 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 								vboxes[-1].Draw("same")
 						gPad.Update()
 						gPad.Modified()
-			stack.e.Paint("")
-			stack.e.Draw("same")
+						
+#			stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,round(ymax*1.4,1))
+#			stack.e.GetPaintedGraph().GetYaxis().SetLabelSize(stack.e.GetPaintedGraph().GetYaxis().GetLabelSize()*1.2)
+#			stack.e.GetPaintedGraph().GetYaxis().SetLabelOffset(stack.e.GetPaintedGraph().GetYaxis().GetLabelOffset()/1.4)
+#			gPad.Update()
+#			gPad.Modified()
+#			stack.e.Paint("")
+#			gPad.Update()
+#			gPad.Modified()
+#			stack.e.GetPaintedGraph().Draw("epsame")
+#			gPad.Update()
+#			gPad.Modified()
 		# draw (bottom)
 		c2.cd()
-		gPad.SetLeftMargin(0.08)
-		gPad.SetRightMargin(0.03)
-		gPad.SetBottomMargin(0.32)
+#		gPad.SetLeftMargin(0.08)
+#		gPad.SetRightMargin(0.03)
+#		gPad.SetBottomMargin(0.32)
 		for iratioplot,ratioplot in enumerate(ratioplots.itervalues()):
 			ratioplot.GetYaxis().SetNdivisions(505)
 			ratioplot.GetXaxis().SetLimits(float(v['xmin']),float(v['xmax']))
@@ -453,13 +510,13 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			else: 
 				ratioplot.Draw('p,e,same')
 			
-			gStyle.SetOptFit(0)
-			fit = TF1("fitline","[0]",max([float(v['xmin'])]+[x for (ix,x) in enumerate(plotcuts) if plotcutdirections[ix]==1]),min([float(v['xmax'])]+[x for (ix,x) in enumerate(plotcuts) if plotcutdirections[ix]==-1]))
-			ratioplot.Fit("fitline","QR")
-			av = fit.GetParameter(0)
-			avtext = getTPave(0.85,0.75,0.99,0.85,None,0,0,1,0.08)
-			avtext.AddText("average: %.2f"%av)
-			avtext.Draw()
+#			gStyle.SetOptFit(0)
+#			fit = TF1("fitline","[0]",max([float(v['xmin'])]+[x for (ix,x) in enumerate(plotcuts) if plotcutdirections[ix]==1]),min([float(v['xmax'])]+[x for (ix,x) in enumerate(plotcuts) if plotcutdirections[ix]==-1]))
+#			ratioplot.Fit("fitline","QR")
+#			av = fit.GetParameter(0)
+#			avtext = getTPave(0.85,0.75,0.99,0.85,None,0,0,1,0.08)
+#			avtext.AddText("average: %.2f"%av)
+#			avtext.Draw()
 
 		# line at cut
 		if len(plotcuts)>0:
@@ -484,11 +541,12 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	else:
 		canvas.cd()
 		for istack,stack in enumerate([stacks[g]['effis'] for g in stacks.keys()]):
-			stack.e.Draw("" if istack==0 else "same")
+			stack.e.GetPaintedGraph().Draw("" if istack==0 else "same")
 
 	# write plot to file
 	legend.Draw()
 	text.Draw()
+	selleg.Draw()
 	path = '%s/%s/%s/%s/%s'%('plots',os.path.split(fout.GetName())[1][:-5],wpars,'turnonCurves',namesGlobal['path-turnon'])
 	makeDirs(path)
 	canvas.SetName(namesGlobal['turnon'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon'])
@@ -540,7 +598,7 @@ def mkTurnonCurves():
 	### END LOOP over triggers
 
 	# try to clean up 
-	main.dumpSamples(loadedSamples)	
+	#main.dumpSamples(loadedSamples)	
 		
 	
 	

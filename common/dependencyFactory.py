@@ -58,9 +58,9 @@ def getKFWght(opts,loadedSamples,sel,trg):
 		if any([x in s['tag'] for x in ['JetMon','VBF','GluGlu']]): continue
 		if opts.debug: l3("%sSample: %s%s"%(purple,s['tag'],plain))
 		### Clean some
-		if opts.debug and 'KFAC' in opts.weight[1]: l3("Option specified k-factor ignored in k-factor calculation.")
+		if opts.debug and 'KFAC' in opts.weight[1]: l3("Option specified k-factor and puWt ignored in k-factor calculation.")
 		opts.weightlocal = dc(opts.weight)
-		opts.weightlocal[1] = list(set(opts.weight[1])-set(['KFAC']))
+		opts.weightlocal[1] = list(set(opts.weight[1])-set(['KFAC','PU']))
 		### Get cut and weight
 		trg,trg_orig = trigData(opts,s,trg)
 		cut = write_cuts(sel,trg,sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weightlocal,trigequal=trigTruth(opts.usebool))[0]
@@ -293,20 +293,20 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		maps[ratio]['Rat'].Draw('colz,error,text')
 		print '\033[1;31mRatio drawn\033[m'
 		canvas.WaitPrimitive()
-		mapExtra = getBins(maps[ratio]['Rat'])
-		maps[ratio]['Rat'] = putBins(maps[ratio]['Rat'],mapExtra)
-		maps[ratio]['Rat'].Draw('colz,error,text')
-		canvas.WaitPrimitive()
-		canvas.Update()
-		mapExtra = getBins(maps[ratio]['Rat'])
-		maps[ratio]['Rat'] = putBins(maps[ratio]['Rat'],mapExtra)
-		maps[ratio]['Rat'].Draw('colz,error,text')
-		canvas.WaitPrimitive()
-		canvas.Update()
-		maps[ratio]['Rat'].Draw('lego2z')
-		canvas.WaitPrimitive()
-		canvas.Update()
-		canvas.WaitPrimitive()
+#nointerpolation#		mapExtra = getBins(maps[ratio]['Rat'])
+#nointerpolation#		maps[ratio]['Rat'] = putBins(maps[ratio]['Rat'],mapExtra)
+#nointerpolation#		maps[ratio]['Rat'].Draw('colz,error,text')
+#nointerpolation#		canvas.WaitPrimitive()
+#nointerpolation#		canvas.Update()
+#nointerpolation#		mapExtra = getBins(maps[ratio]['Rat'])
+#nointerpolation#		maps[ratio]['Rat'] = putBins(maps[ratio]['Rat'],mapExtra)
+#nointerpolation#		maps[ratio]['Rat'].Draw('colz,error,text')
+#nointerpolation#		canvas.WaitPrimitive()
+#nointerpolation#		canvas.Update()
+#nointerpolation#		maps[ratio]['Rat'].Draw('lego2z')
+#nointerpolation#		canvas.WaitPrimitive()
+#nointerpolation#		canvas.Update()
+#nointerpolation#		canvas.WaitPrimitive()
 		
 		# save		
 		gDirectory.cd('%s:/2DMaps/%s'%(fout.GetName(),ratio))

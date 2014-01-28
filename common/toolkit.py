@@ -128,7 +128,7 @@ def getTPave(left,bottom,right,top,rows=None,fillColor=0,fillStyle=0,textColor=1
 	text.SetFillStyle(fillStyle)
 	text.SetTextColor(textColor)
 	text.SetTextSize(textSize)
-	text.SetTextAlign(13)
+	text.SetTextAlign(11)
 	text.SetTextFont(42)
 	text.SetBorderSize(0)
 	return text
