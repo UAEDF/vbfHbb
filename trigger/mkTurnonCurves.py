@@ -431,7 +431,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		for istack,tagNstack in enumerate([(g,stacks[g]['effis']) for g in stacks.keys()]):
 			tag = tagNstack[0]
 			stack = tagNstack[1]
-			ymax = 0.12 # 1.0
+			ymax = 0.3 # 1.0
 			#stack.e.SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
 			stack.e.SetTitle(";;N-1 efficiency curves")
 			stack.e.GetPaintedGraph().SetTitle(";;N-1 efficiency curves")
