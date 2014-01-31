@@ -2,10 +2,12 @@
 #include <TLorentzVector.h>
 #include <TObjString.h>
 
-preselect::preselect(TString _nold, vector<TString> _variables, TString selection) :
-	nold(_nold)
+preselect::preselect(TString _nglobal, TString _nname, vector<TString> _variables, TString selection, TString _nsource)
 {
-	nnew = TString(nold(0,nold.Length()-5)) + "_preselected.root";
+	nold = (_nsource == "") ? TString::Format("%s/%s",_nglobal.Data(),_nname.Data()) : TString::Format("%s/%s",_nsource.Data(),_nname.Data());
+
+	TString base = _nname(0,_nname.Length()-5);
+	nnew = TString::Format("%s/%s_preselected.root",_nglobal.Data(),base.Data());
 	printf("\tWriting to: %s\n",nnew.Data());
 	
 	fold = TFile::Open(nold);

@@ -45,6 +45,7 @@ def parser(mp=None):
 	mgj.add_option('-I','--jsoninfo',help="File name for json with general info.",dest='jsoninfo',default="%s/vbfHbb_info.json"%(basepath),type='str')
 	mgj.add_option('-G','--globalpath',help="Global prefix for samples.",dest='globalpath',default="",type='str')
 	mgj.add_option('-F','--fileformat',help="File format for samples (1: 2012, 2: 2013).",dest='fileformat',default=1,type='int')
+	mgj.add_option('--source',help="Filepath for original flatTrees.",dest='source',default="",type='str')
 
 	mgr = OptionGroup(mp,cyan+"root settings"+plain)
 	mgr.add_option('-o','--fout',help="File name for output file.",dest='fout',default='rootfiles/vbfHbb.root',type='str')
@@ -136,13 +137,13 @@ def convertSamples(opts,samples):
 		if opts.treepreselection == []:
 			sname = opts.globalpath+'/'+sample['fname'][:-5]+'_reformatted.root'
 			if (not os.path.exists(sname)): 
-				inroot('reformat("%s/%s",variables,%s)'%(opts.globalpath,sample['fname'],str(opts.fileformat)))
+				inroot('reformat("%s","%s",variables,%s,"%s")'%(opts.globalpath,sample['fname'],str(opts.fileformat),opts.source))
 				sys.exit(red+"Sample reformat function was needed first. Rerun for actual plotting (or more converting)."+plain)
 		else:
 			sname = opts.globalpath+'/'+sample['fname'][:-5]+'_preselected.root'
 			if (not os.path.exists(sname)): 
 				cut,label = write_cuts(opts.treepreselection,[],[],[],sample=sample['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,trigequal=trigTruth(opts.usebool),varskip=opts.skip)
-				inroot('preselect("%s/%s",variables,"%s")'%(opts.globalpath,sample['fname'],cut))
+				inroot('preselect("%s","%s",variables,"%s","%s")'%(opts.globalpath,sample['fname'],cut,opts.source))
 				sys.exit(red+"Sample preselect function was needed first. Rerun for actual plotting (or more converting)."+plain)
 
 
@@ -299,8 +300,8 @@ def main(mp=None):
 	#### load style
 	###inroot('.x %s'%(os.path.join(basepath,'../common/styleCMS.C++')))
 	inroot('.L %s'%(os.path.join(basepath,'../common/sample.C')))
-	if not opts.usebool: inroot('.L %s'%(os.path.join(basepath,'../common/reformat.C')))
-	if not opts.treepreselection == []: inroot('.L %s'%(os.path.join(basepath,'../common/preselect.C')))
+	if not opts.usebool: inroot('.L %s'%(os.path.join(basepath,'../common/reformat.C++')))
+	if not opts.treepreselection == []: inroot('.L %s'%(os.path.join(basepath,'../common/preselect.C++')))
 	inroot('.L %s'%(os.path.join(basepath,'../common/bMapWght.C')))
 	inroot('.L %s'%(os.path.join(basepath,'../common/twoDWght.C')))
 	inroot('.L %s'%(os.path.join(basepath,'../common/twoDWghtFun.C')))

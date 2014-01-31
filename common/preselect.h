@@ -8,7 +8,7 @@
 
 class preselect {
 	public:
-		preselect(TString, vector<TString>, TString);
+		preselect(TString, TString, vector<TString>, TString, TString);
 		~preselect();
 
 	private:
