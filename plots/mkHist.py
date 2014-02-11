@@ -114,7 +114,7 @@ def do_draw(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	legend.Draw()
 	
 	# info text
-	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']]+[x[0:3]=='MAP' or x[0:3]=='FUN' for x in opts.weight[1]])]) # counting lines about weights + 1 for vbfHbb tag 
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']]+[x[0:3]=='MAP' or x[0:3]=='FUN' or x[0:3]=='COR' for x in opts.weight[1]])]) # counting lines about weights + 1 for vbfHbb tag 
 	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
 	right  = 1-gPad.GetRightMargin()-0.02
 	top    = 1-gPad.GetTopMargin()
@@ -125,6 +125,7 @@ def do_draw(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	if not opts.weight==[[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: text.AddText("1DMap reweighted")#\n (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
 	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")#\n (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
 	if not opts.weight==[[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DFun reweighted")
 	
@@ -194,7 +195,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	legend  = getTLegendRight(left,bottom,right,top,columns,"Presel. & Trigger",3001,1,0.035)
 
 	# info text
-	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['PU','BMAP']]+[x[0:3]=='MAP' or x[0:3]=='FUN' for x in opts.weight[1]])])+2 # counting lines about weights + 2 for vbfHbb tag #(LUMI,KFAC in array)
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['PU','BMAP']]+[x[0:3]=='MAP' or x[0:3]=='FUN' or x[0:3]=='COR' for x in opts.weight[1]])])+2 # counting lines about weights + 2 for vbfHbb tag #(LUMI,KFAC in array)
 #old#	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
 #old#	right  = 1-gPad.GetRightMargin()-0.02
 #old#	top    = 1-gPad.GetTopMargin()
@@ -210,6 +211,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	#if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	if not opts.weight==[[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: text.AddText("1DMap reweighted")#\n (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
 	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")#\n (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
 	if not opts.weight==[[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DFun reweighted")
 	# layout scaling

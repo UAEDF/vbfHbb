@@ -61,6 +61,7 @@ def parser(mp=None):
 	mgd.add_option('-y','--yields',help='Print yields for each sample for specified sel+trg+cuts',action='store_true',default=False)
 	mgd.add_option('-l','--latex',help='Print latex output.',action='store_true',default=False)
 	mgd.add_option('-m','--map',help='Create 2D map ("var1;binlim1#binlim2#...,var2;binlim1#binlim2#...").',type='str',action='callback',callback=optsplitlist)
+	mgd.add_option('-c','--cor',help='Create 1D map ("var1;binlim1#binlim2#...").',type='str',action='callback',callback=optsplitlist)
 	mgd.add_option('--significance',help='Do significance map calculations; give: var1,var2.',type='str',action='callback',callback=optsplit)
 
 	mgst = OptionGroup(mp,cyan+"Run for subselection determined by variable, sample and/or selection/trigger"+plain)
@@ -302,7 +303,8 @@ def main(mp=None):
 	if not opts.usebool: inroot('.L %s'%(os.path.join(basepath,'../common/reformat.C')))
 	if not opts.treepreselection == []: inroot('.L %s'%(os.path.join(basepath,'../common/preselect.C')))
 	inroot('.L %s'%(os.path.join(basepath,'../common/bMapWght.C')))
-	inroot('.L %s'%(os.path.join(basepath,'../common/twoDWght.C')))
+	inroot('.L %s'%(os.path.join(basepath,'../common/oneDWght.C++')))
+	inroot('.L %s'%(os.path.join(basepath,'../common/twoDWght.C++')))
 	inroot('.L %s'%(os.path.join(basepath,'../common/twoDWghtFun.C')))
 	# load style
 	inroot('.x %s'%(os.path.join(basepath,'../common/styleCMS.C')))
@@ -379,6 +381,15 @@ def main(mp=None):
 		if not os.path.exists(opts.weight[2][0]): sys.exit(red+"Check bMapWght file path. Exiting."+plain)
 		loadBMapWght(fout,opts.weight[2][0],opts.weight[2][1])
 
+# load oneDWght (if needed)
+	if not opts.weight == [[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: 
+		l1("Loaded oneDWght() and map.")
+		# checks
+		if not len(opts.weight)>4: sys.exit(red+"Check oneDWght weight settings. Exiting."+plain)
+		if not len(opts.weight[4])>1: sys.exit(red+"Please provide filename;keyname for the oneDMap. Exiting."+plain)
+		if not os.path.exists(opts.weight[4][0]): sys.exit(red+"Check oneDWght file path. Exiting."+plain)
+		loadOneDWght(fout,opts.weight[4][0],opts.weight[4][1])
+
 # load twoDWght (if needed)
 	if not opts.weight == [[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: 
 		l1("Loaded twoDWght() and map.")
@@ -416,6 +427,13 @@ def main(mp=None):
 # print yields
 	if opts.yields:
 		getYields(opts,loadedSamples,KFWghts)
+
+# 1D map creation
+	if opts.cor:
+		for s in opts.selection:
+			for t in opts.trigger:
+				for r in opts.reftrig:
+					get1DMap(opts,fout,loadedSamples,variables,s,t,r,opts.cor[0])
 
 # 2D map creation
 	if opts.map:

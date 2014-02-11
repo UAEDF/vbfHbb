@@ -179,6 +179,142 @@ def get2DMapCombo(opts,fout,inputs):
 	# clean
 	canvas.Close()
 
+####################################################################################################
+def get1DMap(opts,fout,samples,variables,sel,trg,ref,vx):
+	# info 
+	l1("Creating 1D cors for (%s):"%(vx[0]))
+	print "+ (sel,trg,ref): (%s,%s,%s)"%(sel,trg,ref)
+	jsoninfo = json.loads(filecontent(opts.jsoninfo))
+	groups = list(set([jsoninfo['groups'][x['tag']] for x in samples]))
+	samplesbygroup = {}
+	for group in groups:
+		samplesbygroup[group] = [sample for sample in samples if jsoninfo['groups'][sample['tag']]==group]
+	ratios = []
+	if 'JetMon' in groups and 'QCD' in groups:
+		ratios += ['JetMon-QCD']
+# storage
+	gDirectory.cd("%s:/"%fout.GetName())
+	for group in groups:
+		makeDirsRoot(fout,'1DMaps/%s'%group)
+# calculate
+	xvals = array('f',[float(x) for x in vx[1].split("#")])
+	maps = {}
+	cuts = {}
+	inroot('TTree *t = 0;')
+# To Save
+	canvas = TCanvas("cmap","cmap",1800,1200)
+	canvas.cd()
+	gPad.SetGrid(0,0)
+	gPad.SetRightMargin(0.14)
+	gStyle.SetPaintTextFormat("6.2f")
+# LOOP over ALL GROUPS
+	for group in groups:
+		l2("Filling for group: %s%s%s"%(purple,group,plain))
+		maps[group] = {}
+		cuts[group] = {}
+		for tag in ['Num','Den','Rat']:
+			trg,trg_orig = trigData(opts,'',trg)
+			mapname = "1DMap_%s-%s_s%s-t%s-r%s-d%s_%s"%(group,tag,'-'.join(sorted(sel)),'-'.join(trg_orig),'-'.join(ref),'-'.join(trg),vx[0])
+			maptitle = "%s;%s;Scale factor"%(mapname,variables[vx[0]]['title_x'])
+			trg = dc(trg_orig)
+			maps[group][tag] = fout.FindObjectAny(mapname)
+			if (not maps[group][tag]) or (not len(xvals)-1==maps[group][tag].GetXaxis().GetNbins()):
+				maps[group][tag] = TH1F(mapname,maptitle,len(xvals)-1,xvals)
+				maps[group][tag].Sumw2()
+## LOOP over ALL SAMPLES
+				for s in sorted(samplesbygroup[group],key=lambda x:('QCD' in x['tag'],not 'WJets' in x['tag'],jsoninfo['crosssections'][x['tag']])):
+					if tag=='Rat': continue
+					l3("Filling for sample: %s%s (%s)%s"%(cyan,s['tag'],tag,plain))
+					trg,trg_orig = trigData(opts,s,trg)
+					inroot('t = (TTree*)%s.gett();'%s['pointer'])	
+					cuts[group][tag] = write_cuts(sel,trg if tag=='Num' else [],sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,reftrig=ref,trigequal=trigTruth(opts.usebool),weight=opts.weight)[0] #,varskip=[variables[vx[0]]['root'],variables[vy[0]]['root']]
+					if opts.debug: print yellow,cuts[group][tag],plain
+					inroot('t->Draw("%s>>+%s",TCut("%s"));'%(variables[vx[0]]['root'],maps[group][tag].GetName(),cuts[group][tag]))
+					trg = dc(trg_orig)
+			else:
+				l3("Loaded from file for group: %s%s%s"%(cyan,group,plain))
+## END LOOP over ALL SAMPLES
+		# to save
+		path = 'plots/%s/1DMaps/%s'%(fout.GetName().split('/')[-1][:-5],group)
+		makeDirs(path)
+		# ratio
+		maps[group]['Rat'].Divide(maps[group]['Num'],maps[group]['Den'],1.0,1.0,'B')
+#$		maps[group]['Rat'] = TEfficiency(maps[group]['Num'],maps[group]['Den'])
+		maps[group]['Rat'].SetName(mapname)
+		maps[group]['Rat'].SetTitle(maptitle)
+		# save		
+		gDirectory.cd('%s:/1DMaps/%s'%(fout.GetName(),group))
+##
+		for tag in ['Num','Den','Rat']:
+			if not tag in maps[group]: continue
+			maps[group][tag].Write(maps[group][tag].GetName(),TH1.kOverwrite)
+			gPad.SetRightMargin(0.14)
+			maps[group][tag].SetTitleOffset(1.0,"Y")
+			maps[group][tag].SetMarkerSize(maps[group][tag].GetMarkerSize()*0.75)
+			maps[group][tag].Draw("text45,error")
+			canvas.SaveAs('%s/%s.png'%(path,maps[group][tag].GetName()))
+			canvas.SaveAs('%s/%s.pdf'%(path,maps[group][tag].GetName()))
+			l3("Written %s map to (eog %s/%s.png)"%(tag,path,maps[group][tag].GetName()))
+# END LOOP over ALL GROUPS
+
+# FOCUS ON RATIO MAPS JetMon / QCD
+	gDirectory.cd("%s:/"%fout.GetName())
+	for ratio in ratios:
+		# store
+		makeDirsRoot(fout,'1DMaps/%s'%ratio)
+		maps[ratio] = {}
+		l2("Getting ratio for: %s%s%s"%(purple,ratio,plain))
+		# create
+		trg,trg_orig = trigData(opts,'',trg)
+		mapname = "1DMap_%s-%s_s%s-t%s-r%s-d%s_%s"%(ratio,'Rat','-'.join(sorted(sel)),'-'.join(trg_orig),'-'.join(ref),'-'.join(trg),vx[0])
+		maptitle = "%s;%s;Scale factor"%(mapname,variables[vx[0]]['title_x'])
+		trg = dc(trg_orig)
+		maps[ratio]['Rat'] = TH1F(mapname,maptitle,len(xvals)-1,xvals)
+		maps[ratio]['Rat'].Sumw2()
+#$		maps[ratio]['Rat'].Divide(maps[ratio.split('-')[0]]['Rat'].GetPaintedHistogram(),maps[ratio.split('-')[1]]['Rat'].GetPaintedHistogram())
+		maps[ratio]['Rat'].Divide(maps[ratio.split('-')[0]]['Rat'],maps[ratio.split('-')[1]]['Rat'])
+
+		# plot
+		canvas.cd()
+		maps[ratio]['Rat'].SetTitleOffset(1.0,"Y")
+		maps[ratio]['Rat'].SetMarkerSize(maps[ratio]['Rat'].GetMarkerSize()*0.75)
+		maps[ratio]['Rat'].Draw('text45,error')
+		print '\033[1;31mRatio drawn\033[m'
+		
+		# save		
+		gDirectory.cd('%s:/1DMaps/%s'%(fout.GetName(),ratio))
+		maps[ratio]['Rat'].Write(maps[ratio]['Rat'].GetName(),TH1.kOverwrite)
+
+		path = "plots/%s/1DMaps/%s"%(fout.GetName().split('/')[-1][:-5],ratio)
+		makeDirs(path)
+		for tag in ['Num','Den','Rat']:
+			if not tag in maps[ratio]: continue
+			canvas.SaveAs("%s/%s.png"%(path,maps[ratio][tag].GetName()))
+			canvas.SaveAs("%s/%s.pdf"%(path,maps[ratio][tag].GetName()))
+		l2("Written map to (eog %s/%s.png)"%(path,maps[ratio]['Rat'].GetName()))
+
+		# 2d copy
+		binsx = []
+		for i in range(1,maps[ratio]['Rat'].GetNbinsX()+2): binsx += [maps[ratio]['Rat'].GetXaxis().GetBinLowEdge(i)]
+		#print binsx
+		binsx_array = array('f',binsx)
+		binsy_array = array('f',[0.0,1.0])
+		ratio2d = TH2F('ratio2D','ratio2D',len(binsx_array)-1,binsx_array,len(binsy_array)-1,binsy_array)
+		for i in range(maps[ratio]['Rat'].GetNbinsX()+2):
+			#print maps[ratio]['Rat'].GetXaxis().GetBinLowEdge(i)
+			#print maps[ratio]['Rat'].GetBinContent(i)
+			ratio2D.SetBinContent(i,1,maps[ratio]['Rat'].GetBinContent(i))
+			ratio2D.SetBinError(i,1,maps[ratio]['Rat'].GetBinError(i))
+		#plot 
+		canvas.cd()
+		ratio2D.SetTitle('%s;%s;%s'%('',maps[ratio]['Rat'].GetXaxis().GetTitle(),'Scale factor'))
+		ratio2D.Draw('colz,error,text45')
+		canvas.SaveAs("%s/2D%s.png"%(path,maps[ratio][tag].GetName()))
+		canvas.SaveAs("%s/2D%s.pdf"%(path,maps[ratio][tag].GetName()))
+		l2("Written map to (eog %s/2D%s.png)"%(path,maps[ratio]['Rat'].GetName()))
+
+	# clean
+	canvas.Close()
 
 ####################################################################################################
 def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
@@ -577,6 +713,19 @@ def loadTwoDWghtFun(fout,mapfile,mapname):
 	if not fout.GetName()==mapfile: inroot('fmap->Close();')
 
 ####################################################################################################
+def loadOneDWght(fout,mapfile,mapname):
+	# clean
+	try: ROOT.wghtHist.Delete()
+	except: pass
+	# correct file
+	if not fout.GetName()==mapfile: inroot('TFile *fmap = TFile::Open("%s");'%mapfile)
+	inroot('gDirectory->cd("%s:/");'%fout.GetName())
+	# load & clone
+	if not fout.GetName()==mapfile: inroot('TH1F *wghtOneHist = (TH1F*)fmap->Get("%s;1").Clone();'%mapname)
+	else: inroot('TH1F *wghtOneHist = (TH1F*)gDirectory->Get("%s;1").Clone();'%mapname)
+	# close if unneeded
+	if not fout.GetName()==mapfile: inroot('fmap->Close();')
+
 def loadTwoDWght(fout,mapfile,mapname):
 	# clean
 	try: ROOT.wghtHist.Delete()
@@ -585,8 +734,8 @@ def loadTwoDWght(fout,mapfile,mapname):
 	if not fout.GetName()==mapfile: inroot('TFile *fmap = TFile::Open("%s");'%mapfile)
 	inroot('gDirectory->cd("%s:/");'%fout.GetName())
 	# load & clone
-	if not fout.GetName()==mapfile: inroot('TH2F *wghtHist = (TH2F*)fmap->Get("%s;1").Clone();'%mapname)
-	else: inroot('TH2F *wghtHist = (TH2F*)gDirectory->Get("%s;1").Clone();'%mapname)
+	if not fout.GetName()==mapfile: inroot('TH2F *wghtTwoHist = (TH2F*)fmap->Get("%s;1").Clone();'%mapname)
+	else: inroot('TH2F *wghtTwoHist = (TH2F*)gDirectory->Get("%s;1").Clone();'%mapname)
 	# close if unneeded
 	if not fout.GetName()==mapfile: inroot('fmap->Close();')
 

@@ -24,6 +24,7 @@ class weightFactory:
 			if iWght == 'KFAC' : self.addKFWght(sample_tag)
 			if iWght == 'BMAP' : self.addBMWght(sample_tag)
 			if iWght == 'TRSF' : self.addTRWght(sample_tag)
+			if iWght[0:3] == 'COR'  : self.add1DWght(sample_tag,iWght.split('#')[1:])
 			if iWght[0:3] == 'MAP'  : self.add2DWght(sample_tag,iWght.split('#')[1:])
 			if iWght[0:3] == 'FUN'  : self.add2DWghtFun(sample_tag,iWght.split('#')[1:])
 		return self.wOut
@@ -52,6 +53,9 @@ class weightFactory:
 		for iFile in self.samples["files"]:
 			if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 : self.wOut += '*0.85'
 
+	def add1DWght(self,tag,variables):
+		for iFile in self.samples["files"]:
+		   if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 :  self.wOut += '*oneDWght(%s)'%(variables[0])
 	def add2DWght(self,tag,variables):
 		for iFile in self.samples["files"]:
 		   if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 :  self.wOut += '*twoDWght(%s,%s)'%(variables[0],variables[1])

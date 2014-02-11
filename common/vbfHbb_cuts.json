@@ -78,6 +78,8 @@
 "Btag0_TM" : {"jetBtag[b1[0]]":[">","0.898"],"jetBtag[b2[0]]":[">","0.679"]},
 "Btag2_ML" : {"jetBtag[b1[2]]":[">","0.679"],"jetBtag[b2[2]]":[">","0.244"]},
 "Btag0_T" : {"jetBtag[b1[0]]":[">","0.898"]},
+"Btag0_00" : {"jetBtag[b1[0]]":[">","0.0"],"jetBtag[b2[0]]":[">","0.0"]},
+"Btag0_11" : {"jetBtag[b1[0]]":["<","1.0"],"jetBtag[b2[0]]":["<","1.0"]},
 
 "NOMveto": {"trigger":["!=","NOM"],"selection":["!=","NOMplusPhi2"]},
 "NOMtrgveto": {"trigger":["!=","NOM"]},

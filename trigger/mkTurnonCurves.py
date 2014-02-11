@@ -101,7 +101,7 @@ class TEffiType():
 
 
 def ratio(eff1,eff2):
-	N = eff1.GetTotalHistogram().GetNbinsX()
+	N = eff1.GetTotalHistogram().GetNbinsX()+1
 	vx = array('f',N*[0])
 	vy = array('f',N*[0])
 	vexl = array('f',N*[0])
@@ -148,7 +148,7 @@ def markerStyle(tag,smarker):
 
 def markerColour(tag,scolour):
 	if 'NoRef' in tag: return kOrange+1
-	elif 'NoCor' in tag: return kGreen-3
+	elif 'NoCor' in tag: return kRed+1#kGreen-3
 	else: return TColor.GetColorDark(scolour)
 
 # FUNCTIONS FOR FILLING AND DRAWING HISTOGRAMS #####################################################
@@ -167,8 +167,8 @@ def do_fill(opts,fout,s,v,sel,trg,ref,KFWght=None,skipWght=None):
 	names['global'] = getNames(opts,s,v,sel,trg_orig,ref)
 	keepMapInfo = None
 	if skipWght==True:
-		keepMapInfo = [x for x in opts.weight[1] if (x[0:3]=='MAP' or x[0:3]=='FUN')]
-		opts.weight[1] = [dc(x) for x in opts.weight[1] if not (x[0:3]=='MAP' or x[0:3] == 'FUN')]
+		keepMapInfo = [x for x in opts.weight[1] if (x[0:3]=='MAP' or x[0:3]=='FUN' or x[0:3]=='COR')]
+		opts.weight[1] = [dc(x) for x in opts.weight[1] if not (x[0:3]=='MAP' or x[0:3] == 'FUN' or x[0:3]=='COR')]
 	wpars = weightInfo(opts.weight,KFWght)
 
 	# TEffi object
@@ -209,9 +209,9 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	namesGlobal = getNames(opts,None,v,sel,trg,ref)
 	wpars = weightInfo(opts.weight,KFWght)
 	wparsover = None
-	if any([('MAP'==x[0:3] or 'FUN'==x[0:3]) for x in opts.weight[1]]):
+	if any([('MAP'==x[0:3] or 'FUN'==x[0:3] or x[0:3]=='COR') for x in opts.weight[1]]):
 		weightsover = dc(opts.weight)
-		weightsover[1] = [dc(x) for x in opts.weight[1] if not (x[0:3]=='MAP' or x[0:3]=='FUN')]
+		weightsover[1] = [dc(x) for x in opts.weight[1] if not (x[0:3]=='MAP' or x[0:3]=='FUN' or x[0:3]=='COR')]
 		wparsover = weightInfo(weightsover,KFWght)
 	# info
 	jsoninfo = json.loads(filecontent(opts.jsoninfo))
@@ -241,7 +241,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	legend  = getTLegend(left,bottom,right,top,columns,"(N-1) cut trg effi.",3001,1,0.035)
 
 	# info text
-	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']]),sum([(x[0:3]=='MAP' or x[0:3]=='FUN') for x in opts.weight[1]]),1]) # counting lines about weights + 1 for vbfHbb tag 
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']]),sum([(x[0:3]=='MAP' or x[0:3]=='FUN' or x[0:3]=='COR') for x in opts.weight[1]]),1]) # counting lines about weights + 1 for vbfHbb tag 
 	#left   = 1-gPad.GetRightMargin()-0.02 - (0.25) # width 0.3
 	#right  = 1-gPad.GetRightMargin()-0.02
 	#top    = 1-gPad.GetTopMargin()
@@ -257,6 +257,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
 	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
 	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	if not opts.weight==[[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: text.AddText("1DMap reweighted")
 	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")
 	if not opts.weight==[[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DFun reweighted")
 	# layout scaling
@@ -360,7 +361,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			trg = dc(trg_orig)
 
 	
-	if opts.overlay and any([('MAP'==x[0:3] or 'FUN'==x[0:3]) for x in opts.weight[1]]):
+	if opts.overlay and any([('MAP'==x[0:3] or 'FUN'==x[0:3] or x[0:3]=='COR') for x in opts.weight[1]]):
 		### LOOP over all samples (again, without map correction)
 		for s in sorted(samples,key=lambda x:('QCD' in x['tag'],-jsoninfo['crosssections'][x['tag']])):
 			if any([x in s['tag'] for x in ['Data','JetMon']]): continue
@@ -418,6 +419,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			ratioplots[group] = ratio(stacks['JetMon']['effis'].e,stacks[group]['effis'].e)
 			ratioplots[group].SetMarkerStyle(markerStyle(group,stacks[group]['markers']))
 			ratioplots[group].SetMarkerColor(markerColour(group,stacks[group]['colours']))
+			ratioplots[group].SetMarkerSize(1.5)
 			
 	cutsjson = json.loads(filecontent(opts.jsoncuts))
 	if not ratioplots=={}:
@@ -431,14 +433,14 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		for istack,tagNstack in enumerate([(g,stacks[g]['effis']) for g in stacks.keys()]):
 			tag = tagNstack[0]
 			stack = tagNstack[1]
-			ymax = 0.12 # 1.0
+			ymax = round(0.12*1.4,3) if not 'mva' in stack.e.GetPaintedGraph().GetXaxis().GetTitle() else 0.7
 			#stack.e.SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
 			stack.e.SetTitle(";;N-1 efficiency curves")
 			stack.e.GetPaintedGraph().SetTitle(";;N-1 efficiency curves")
 			stack.e.GetPaintedGraph().GetXaxis().SetLimits(float(v['xmin']),float(v['xmax']))
 			stack.e.GetPaintedGraph().GetXaxis().SetLabelColor(0);
 			stack.e.GetPaintedGraph().GetXaxis().SetTitleColor(0);
-			stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,round(ymax*1.4,1))
+			stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,ymax)
 			#stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,1.4)#5*stack.e.GetPaintedGraph().GetHistogram().GetMaximum())
 			stack.e.GetPaintedGraph().GetYaxis().SetTitleOffset(1.1)
 			stack.e.GetPaintedGraph().GetXaxis().SetTickLength(0.025)
