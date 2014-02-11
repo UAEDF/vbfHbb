@@ -1,10 +1,13 @@
 #include "reformat.h"
 #include <TLorentzVector.h>
 
-reformat::reformat(TString _nold, vector<TString> _variables, int _format) :
-	nold(_nold), format(_format)
+reformat::reformat(TString _nglobal, TString _nname, vector<TString> _variables, int _format, TString _nsource) :
+	format(_format)
 {
-	nnew = TString(nold(0,nold.Length()-5)) + "_reformatted.root";
+	nold = (_nsource == "") ? TString::Format("%s/%s",_nglobal.Data(),_nname.Data()) : TString::Format("%s/%s",_nsource.Data(),_nname.Data());
+
+	TString base = _nname(0,_nname.Length()-5);
+	nnew = TString::Format("%s/%s_reformatted.root",_nglobal.Data(),base.Data());
 	printf("\tWriting to: %s\n",nnew.Data());
 	
 	fold = TFile::Open(nold);

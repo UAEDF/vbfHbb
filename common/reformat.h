@@ -8,7 +8,7 @@
 
 class reformat {
 	public:
-		reformat(TString, vector<TString>, int);
+		reformat(TString, TString, vector<TString>, int, TString);
 		~reformat();
 
 	private:
