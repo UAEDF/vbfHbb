@@ -580,7 +580,7 @@ def mkHist():
 	### END LOOP over triggers
 
 	# try to clean up 
-	main.dumpSamples(loadedSamples)	
+	#main.dumpSamples(loadedSamples)	
 	fout.Close()
 
 
