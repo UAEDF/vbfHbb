@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 import sys
-sys.path.append('/home/salderwe/svncontrolled/2013/vbfHbb/turnons/include/')
-
 tempargv = sys.argv[:]
 sys.argv = []
 import ROOT

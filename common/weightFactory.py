@@ -22,11 +22,9 @@ class weightFactory:
 			if iWght == 'XSEC' : self.addXSWght(sample_tag)
 			if iWght == 'LUMI' : self.addLUWght(sample_tag)
 			if iWght == 'KFAC' : self.addKFWght(sample_tag)
-			if iWght == 'BMAP' : self.addBMWght(sample_tag)
 			if iWght == 'TRSF' : self.addTRWght(sample_tag)
 			if iWght[0:3] == 'COR'  : self.add1DWght(sample_tag,iWght.split('#')[1:])
 			if iWght[0:3] == 'MAP'  : self.add2DWght(sample_tag,iWght.split('#')[1:])
-			if iWght[0:3] == 'FUN'  : self.add2DWghtFun(sample_tag,iWght.split('#')[1:])
 		return self.wOut
 
 	def addPUWght(self,tag):
@@ -45,10 +43,6 @@ class weightFactory:
 		for iFile in self.samples["files"]:
 		   if self.samples["files"][iFile]["tag"] == tag and 'QCD' in self.samples["files"][iFile]["tag"] : self.wOut += '*%s'%(str(self.KFWght))
 
-	def addBMWght(self,tag):
-		for iFile in self.samples["files"]:
-		   if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 :  self.wOut += '*bMapWght(jetBtag[btagIdx[0]],jetBtag[btagIdx[1]])'
-
 	def addTRWght(self,tag):
 		for iFile in self.samples["files"]:
 			if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 : self.wOut += '*0.85'
@@ -59,9 +53,6 @@ class weightFactory:
 	def add2DWght(self,tag,variables):
 		for iFile in self.samples["files"]:
 		   if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 :  self.wOut += '*twoDWght(%s,%s)'%(variables[0],variables[1])
-	def add2DWghtFun(self,tag,variables):
-		for iFile in self.samples["files"]:
-		   if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 :  self.wOut += '*twoDWghtFun(%s,%s)'%(variables[0],variables[1])
 
 # Examples:
 if __name__=='__main__':

@@ -158,13 +158,6 @@ def get2DMapCombo(opts,fout,inputs):
 				if binUpLim > cuty:  
 					mc.SetBinContent(xi,yi,m2.GetBinContent(xi2,yi2))
 					mc.SetBinError(xi,yi,m2.GetBinError(xi2,yi2))
-#temp-out#	# correct empty
-#temp-out#	for xi in range(mc.GetXaxis().GetNbins()+1):
-#temp-out#		for yi in range(mc.GetYaxis().GetNbins()+1):
-#temp-out#			if mc.GetBinContent(xi,yi) == 0:
-#temp-out#				if sum([int(not mc.GetBinContent(xj,yj)==0) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]])>=3:
-#temp-out#					mc.SetBinContent(xi,yi,sum([mc.GetBinContent(xj,yj) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]])/4.)
-#temp-out#					mc.SetBinError(xi,yi,sqrt(sum([mc.GetBinError(xj,yj)*mc.GetBinError(xj,yj) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]]))/4.)
 
 	# save		
 	makeDirsRoot(fout,path)
@@ -382,13 +375,6 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		maps[group]['Rat'].SetTitle(maptitle)
 		# save		
 		gDirectory.cd('%s:/2DMaps/%s'%(fout.GetName(),group))
-		# empty bins 
-#/		if not any('jetBtag' in x for x in [variables[vx[0]]['var'],variables[vy[0]]['var']]):
-#/			for xi in range(1,maps[group]['Rat'].GetXaxis().GetNbins()):
-#/				for yi in range(1,maps[group]['Rat'].GetYaxis().GetNbins()):
-#/					if maps[group]['Rat'].GetBinContent(xi,yi) < 0.00001: 
-#/						maps[group]['Rat'].SetBinContent(xi,yi,float(maps[group]['Rat'].GetBinContent(xi+1,yi)+maps[group]['Rat'].GetBinContent(xi,yi+1))/2.) 
-#/						maps[group]['Rat'].SetBinError(xi,yi,sqrt((float(maps[group]['Rat'].GetBinError(xi+1,yi))*float(maps[group]['Rat'].GetBinError(xi+1,yi)))+(float(maps[group]['Rat'].GetBinError(xi,yi+1))*float(maps[group]['Rat'].GetBinError(xi,yi+1)))))
 		for tag in ['Num','Den','Rat']:
 			if not tag in maps[group]: continue
 			maps[group][tag].Write(maps[group][tag].GetName(),TH1.kOverwrite)
@@ -428,55 +414,16 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		maps[ratio]['Rat'].SetTitleOffset(1.2,"X")
 		if 'VBF' in trg:
 			gPad.SetLogx(1)
-			#maps[ratio]['Rat'].GetXaxis().SetNdivisions(102020)
 			maps[ratio]['Rat'].GetXaxis().SetMoreLogLabels()
 			maps[ratio]['Rat'].SetMarkerSize(maps[ratio]['Rat'].GetMarkerSize()*0.75)
 		maps[ratio]['Rat'].Draw('colz,error,text')
 		print '\033[1;31mRatio drawn\033[m'
 		canvas.WaitPrimitive()
-#nointerpolation#		mapExtra = getBins(maps[ratio]['Rat'])
-#nointerpolation#		maps[ratio]['Rat'] = putBins(maps[ratio]['Rat'],mapExtra)
-#nointerpolation#		maps[ratio]['Rat'].Draw('colz,error,text')
-#nointerpolation#		canvas.WaitPrimitive()
-#nointerpolation#		canvas.Update()
-#nointerpolation#		mapExtra = getBins(maps[ratio]['Rat'])
-#nointerpolation#		maps[ratio]['Rat'] = putBins(maps[ratio]['Rat'],mapExtra)
-#nointerpolation#		maps[ratio]['Rat'].Draw('colz,error,text')
-#nointerpolation#		canvas.WaitPrimitive()
-#nointerpolation#		canvas.Update()
-#nointerpolation#		maps[ratio]['Rat'].Draw('lego2z')
-#nointerpolation#		canvas.WaitPrimitive()
-#nointerpolation#		canvas.Update()
-#nointerpolation#		canvas.WaitPrimitive()
 		
 		# save		
 		gDirectory.cd('%s:/2DMaps/%s'%(fout.GetName(),ratio))
-#		oldint = maps[ratio]['Rat'].Integral()
-##		print oldint
-#		maps[ratio]['Rat'].Smooth()
-#		newint = maps[ratio]['Rat'].Integral()
-##		print newint
-#		maps[ratio]['Rat'].Scale(oldint/newint)
 		maps[ratio]['Rat'].Write(maps[ratio]['Rat'].GetName(),TH1.kOverwrite)
 
-		# empty bins 
-#/		if not any('jetBtag' in x for x in [variables[vx[0]]['var'],variables[vy[0]]['var']]):
-#/			for xi in range(1,maps[ratio]['Rat'].GetXaxis().GetNbins()):
-#/				for yi in range(1,maps[ratio]['Rat'].GetYaxis().GetNbins()):
-#/					if maps[ratio]['Rat'].GetBinContent(xi,yi) < 0.00001: 
-#/						maps[ratio]['Rat'].SetBinContent(xi,yi,float(maps[ratio]['Rat'].GetBinContent(xi+1,yi)+maps[ratio]['Rat'].GetBinContent(xi,yi+1))/2.) 
-#/						maps[ratio]['Rat'].SetBinError(xi,yi,sqrt((float(maps[ratio]['Rat'].GetBinError(xi+1,yi))*float(maps[ratio]['Rat'].GetBinError(xi+1,yi)))+(float(maps[ratio]['Rat'].GetBinError(xi,yi+1))*float(maps[ratio]['Rat'].GetBinError(xi,yi+1)))))
-#temp-out#		# correct empty
-#temp-out#		mr = maps[ratio]['Rat']
-#temp-out#		for xi in range(mr.GetXaxis().GetNbins()+1):
-#temp-out#			for yi in range(mr.GetYaxis().GetNbins()+1):
-#temp-out#				if mr.GetBinContent(xi,yi) == 0:
-#temp-out#					nonzero = sum([int(not mr.GetBinContent(xj,yj)==0) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]])
-#temp-out#					if nonzero>=2:
-#temp-out#						mr.SetBinContent(xi,yi,sum([mr.GetBinContent(xj,yj) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]])/float(nonzero))
-#temp-out#						mr.SetBinError(xi,yi,sqrt(sum([mr.GetBinError(xj,yj)*mr.GetBinError(xj,yj) for (xj,yj) in [[xi,yi+1],[xi,yi-1],[xi-1,yi],[xi+1,yi]]]))/float(nonzero))
-
-	
 		path = "plots/%s/2DMaps/%s"%(fout.GetName().split('/')[-1][:-5],ratio)
 		makeDirs(path)
 		for tag in ['Num','Den','Rat']:
@@ -488,234 +435,6 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 
 	# clean
 	canvas.Close()
-
-def getBins(h):
-	extra = h.Clone('extraBins')
-	extra.Reset()
-	nx = h.GetNbinsX()
-	ny = h.GetNbinsY()
-	stencil1 = [(+2,0),(+1,0),(-1,0),(-2,0),(0,-2),(0,-1),(0,+1),(0,+2)] # 5p stencil
-	stencil0 = [(+1,0),(-1,0),(0,-1),(0,+1)] # 5p stencil
-	stencil2a = [(+2,0),(+1,0),(0,+1),(0,+2)] # NE
-	stencil2b = [(+2,0),(+1,0),(0,-1),(0,-2)] # NW
-	stencil2c = [(-2,0),(-1,0),(0,+1),(0,+2)] # SE
-	stencil2d = [(-2,0),(-1,0),(0,-1),(0,-2)] # SW
-	stencil3a = [(+3,0),(+2,0),(+1,0),(+2,0),(+1,0)] # S 
-	stencil3b = [(-3,0),(-2,0),(-1,0),(-2,0),(-1,0)] # N 
-	stencil3c = [(0,+3),(0,+2),(0,+1),(0,+2),(0,+1)] # W 
-	stencil3d = [(0,-3),(0,-2),(0,-1),(0,-2),(0,-1)] # E 
-	coeff1 = [-1./12,4./12,4./12,-1./12,-1./12,4./12,4./12,-1./12]
-	coeff0 = [1./4,1./4,1./4,1./4]
-	coeff2 = [-1./2,1.,1.,-1./2]
-	coeff3 = [1./2,-3./2,3./2,-1./2,1.]
-
-	print "\033[1;31mSizes: %i,%i\033[m"%(nx,ny)
-	print 
-
-	for ix in range(nx+1):
-		for iy in range(ny+1):
-			if not h.GetBinContent(ix,iy)==0: continue
-			print '\033[1;34m',ix,iy,h.GetBinContent(ix,iy),'\033[m',
-			print '\n5p\t',
-			for i in range(len(stencil1)): print h.GetBinContent(ix + stencil1[i][0],iy + stencil1[i][1]),
-			print '\nNE\t',
-			for i in range(len(stencil2a)): print h.GetBinContent(ix + stencil2a[i][0],iy + stencil2a[i][1]),
-			print '\nNW\t',
-			for i in range(len(stencil2b)): print h.GetBinContent(ix + stencil2b[i][0],iy + stencil2b[i][1]),
-			print '\nSE\t',
-			for i in range(len(stencil2c)): print h.GetBinContent(ix + stencil2c[i][0],iy + stencil2c[i][1]),
-			print '\nSW\t',
-			for i in range(len(stencil2d)): print h.GetBinContent(ix + stencil2d[i][0],iy + stencil2d[i][1]),
-			print
-			print '\nW\t',
-			for i in range(len(stencil3a)): print h.GetBinContent(ix + stencil3a[i][0],iy + stencil3a[i][1]),
-			print '\nE\t',
-			for i in range(len(stencil3b)): print h.GetBinContent(ix + stencil3b[i][0],iy + stencil3b[i][1]),
-			print '\nS\t',
-			for i in range(len(stencil3c)): print h.GetBinContent(ix + stencil3c[i][0],iy + stencil3c[i][1]),
-			print '\nN\t',
-			for i in range(len(stencil3d)): print h.GetBinContent(ix + stencil3d[i][0],iy + stencil3d[i][1]),
-			print
-			print ix
-			print iy
-			print nx
-			print ny
-			if all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil1]):
-				val = 0
-				for i in range(len(stencil1)): val += coeff1[i] * h.GetBinContent(ix + stencil1[i][0],iy + stencil1[i][1])
-				print val
-				print
-				if not val<0.: extra.SetBinContent(ix,iy,val)
-				#raw_input("[CONTINUE]")
-			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil0]):
-				val = 0
-				for i in range(len(stencil0)): val += coeff0[i] * h.GetBinContent(ix + stencil0[i][0],iy + stencil0[i][1])
-				print val
-				print
-				if not val<0.: extra.SetBinContent(ix,iy,val)
-				#raw_input("[CONTINUE]")
-			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil2a]) and (not ix >= nx and not iy >= ny):
-				val = 0
-				for i in range(len(stencil2a)): 
-					val += coeff2[i] * h.GetBinContent(ix + stencil2a[i][0],iy + stencil2a[i][1])
-					print '\t\tNE',coeff2[i], h.GetBinContent(ix + stencil2a[i][0],iy + stencil2a[i][1]),
-				print
-				print val
-				print
-				if not val<0.: extra.SetBinContent(ix,iy,val)
-				#raw_input("[CONTINUE]")
-			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil2b]) and (not ix <= 1) and (not iy >= ny):
-				val = 0
-				for i in range(len(stencil2b)): 
-					val += coeff2[i] * h.GetBinContent(ix + stencil2b[i][0],iy + stencil2b[i][1])
-					print '\t\tNW',coeff2[i], h.GetBinContent(ix + stencil2b[i][0],iy + stencil2b[i][1]),
-				print
-				print val
-				print
-				if not val<0.: extra.SetBinContent(ix,iy,val)
-				#raw_input("[CONTINUE]")
-			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil2c]) and (not ix >= nx and not iy <= 1):
-				val = 0
-				for i in range(len(stencil2c)): 
-					val += coeff2[i] * h.GetBinContent(ix + stencil2c[i][0],iy + stencil2c[i][1])
-					print '\t\tSE',coeff2[i], h.GetBinContent(ix + stencil2c[i][0],iy + stencil2c[i][1]),
-				print
-				print val
-				print
-				if not val<0.: extra.SetBinContent(ix,iy,val)
-				#raw_input("[CONTINUE]")
-			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil2d]) and (not ix <= 1 and not iy <= 1):
-				val = 0
-				for i in range(len(stencil2d)): 
-					val += coeff2[i] * h.GetBinContent(ix + stencil2d[i][0],iy + stencil2d[i][1])
-					print '\t\tSW',coeff2[i], h.GetBinContent(ix + stencil2d[i][0],iy + stencil2d[i][1]),
-				print
-				print val
-				print
-				if not val<0.: extra.SetBinContent(ix,iy,val)
-				#raw_input("[CONTINUE]")
-			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil3c]) and (not iy<1) and (not ix<1) and not (ix>nx):
-				val = 0
-				for i in range(len(stencil3c)): 
-					val += coeff3[i] * h.GetBinContent(ix + stencil3c[i][0],iy + stencil3c[i][1])
-					print '\t\tS',coeff3[i], h.GetBinContent(ix + stencil3c[i][0],iy + stencil3c[i][1]),
-				print
-				print val
-				print
-				if not val<0.: extra.SetBinContent(ix,iy,val)
-				#raw_input("[CONTINUE]")
-			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil3d]) and (not iy>ny) and (not ix<1) and not (ix>nx):
-				val = 0
-				for i in range(len(stencil3d)): 
-					val += coeff3[i] * h.GetBinContent(ix + stencil3d[i][0],iy + stencil3d[i][1])
-					print '\t\tN',coeff3[i], h.GetBinContent(ix + stencil3d[i][0],iy + stencil3d[i][1]),
-				print
-				print val
-				print
-				if not val<0.: extra.SetBinContent(ix,iy,val)
-				#raw_input("[CONTINUE]")
-			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil3a]) and (not ix<1) and (not iy<1) and not (iy>ny):
-				val = 0
-				for i in range(len(stencil3a)): 
-					val += coeff3[i] * h.GetBinContent(ix + stencil3a[i][0],iy + stencil3a[i][1])
-					print '\t\tW',coeff3[i], h.GetBinContent(ix + stencil3a[i][0],iy + stencil3a[i][1]),
-				print
-				print val
-				print
-				if not val<0.: extra.SetBinContent(ix,iy,val)
-				#raw_input("[CONTINUE]")
-			elif all([not h.GetBinContent(ix+a,iy+b)==0 for (a,b) in stencil3b]) and (not ix>nx) and (not iy<1) and not (iy>ny):
-				val = 0
-				for i in range(len(stencil3b)): 
-					val += coeff3[i] * h.GetBinContent(ix + stencil3b[i][0],iy + stencil3b[i][1])
-					print '\t\tE',coeff3[i], h.GetBinContent(ix + stencil3b[i][0],iy + stencil3b[i][1]),
-				print
-				print val
-				print
-				if not val<0.: extra.SetBinContent(ix,iy,val)
-				#raw_input("[CONTINUE]")
-	return extra
-
-def putBins(h,extra):
-	nx = h.GetNbinsX()
-	ny = h.GetNbinsY()
-	for ix in range(nx+1):
-		for iy in range(ny+1):
-			if not extra.GetBinContent(ix,iy)==0: 
-				if h.GetBinContent(ix,iy)==0: h.SetBinContent(ix,iy,extra.GetBinContent(ix,iy))
-	return h
-
-####################################################################################################
-def getBMapWght(opts,fout,samples,sel,trg,reftrig):
-	# info
-	jsoninfo = json.loads(filecontent(opts.jsoninfo))
-	print jsoninfo['groups'].keys()
-	print samples[0]
-	group = jsoninfo['groups'][samples[0]['tag']]
-	l3("Map for %s"%group)
-	# store
-	gDirectory.cd("%s:/"%fout.GetName())
-	makeDirsRoot(fout,'bMapWghts/%s/'%group)
-	# calculate
-	xvals = array('f',[0.0,0.244,0.679,0.898,1.001])
-	maps = {}
-	cuts = {}
-	inroot('TTree *t = 0;')
-	for itag,tag in enumerate(['Num','Den','Rat']):
-		maps[tag] = TH2F("bMapWght%s%s"%(group,tag),"bMapWght%s%s;CSV_{0};CSV_{1}"%(group,tag),4,xvals,4,xvals)
-		maps[tag].Sumw2()
-		for s in sorted(samples,key=lambda x:(x['tag'],jsoninfo['crosssections'][x['tag']])):
-			if not tag=='Rat': 
-				inroot('t = (TTree*)%s.gett();'%s['pointer'])
-				cuts['Num'] = write_cuts(sel,trg if (opts.datatrigger==[] or not ('Data' in s['tag'] or 'JetMon' in s['tag'])) else opts.datatrigger[opts.trigger.index(trg)],sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,reftrig=reftrig,trigequal=('49' if not opts.usebool else '1'))[0]
-				cuts['Den'] = write_cuts(sel,['None'],sample=s['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,reftrig=reftrig,trigequal=('49' if not opts.usebool else '1'))[0]
-				wf = weightFactory(opts.jsonsamp,opts.weight[0][0] if not opts.weight[0][0]=='' else '19000')
-				weight = wf.getFormula(','.join(opts.weight[1] if not opts.weight[1]==[''] else ['XSEC','LUMI']),s['tag']) 
-				inroot('t->Draw("jetBtag[btagIdx[1]]:jetBtag[btagIdx[0]]>>+%s",TCut("%s*%s"));'%(maps[tag].GetName(),cuts[tag],weight))
-		if tag=='Rat': maps['Rat'].Divide(maps['Num'],maps['Den'],1.0,1.0,"B")
-	# save
-	gDirectory.cd('%s:/bMapWghts/%s/'%(fout.GetName(),group))
-	maps['Rat'].SetName("bMapWght_%s_s%s_t%s_r%s"%(group,sel[0],trg[0],reftrig[0]))
-	maps['Rat'].SetTitle("bMapWght_%s_s%s_t%s_r%s;CSV_{0};CSV_{1}"%(group,sel[0],trg[0],reftrig[0]))
-	maps['Rat'].Write(maps['Rat'].GetName(),TH1.kOverwrite)
-	# return
-	return maps['Rat']
-
-####################################################################################################
-def getBMapWghtRatio(opts,fout,samplesnum,samplesden,sel,trg,reftrig):
-	# info
-	jsoninfo = json.loads(filecontent(opts.jsoninfo))
-	print samplesnum
-	gnum = jsoninfo['groups'][samplesnum[0]['tag']]
-	gden = jsoninfo['groups'][samplesden[0]['tag']]
-	l2("Ratio map for %s / %s"%(gnum,gden))
-	# store
-	gDirectory.cd("%s:/"%fout.GetName())
-	makeDirsRoot(fout,'bMapWghtRatios/%s_%s/'%(gnum,gden))	
-	# calculate
-	maps = {}
-	maps['Num'] = getBMapWght(opts,fout,samplesnum,sel,trg,reftrig)
-	maps['Den'] = getBMapWght(opts,fout,samplesden,sel,trg,reftrig)
-	maps['Rat'] = maps['Num'].Clone("bMapWghtRatio_%s_%s_s%s_t%s_r%s"%(gnum,gden,sel[0],trg[0],reftrig[0]))
-	maps['Rat'].Divide(maps['Num'],maps['Den'],1.0,1.0,"B")
-	maps['Rat'].SetTitle("bMapWghtRatio_%s_%s;CSV_{0};CSV_{1}"%(gnum,gden))
-	# save
-	gDirectory.cd('%s:/bMapWghtRatios/%s_%s/'%(fout.GetName(),gnum,gden))
-	maps['Rat'].Write(maps['Rat'].GetName(),TH1.kOverwrite)
-
-####################################################################################################
-def loadTwoDWghtFun(fout,mapfile,mapname):
-	# clean
-	try: ROOT.wghtFun.Delete()
-	except: pass
-	# correct file
-	if not fout.GetName()==mapfile: inroot('TFile *fmap = TFile::Open("%s");'%mapfile)
-	inroot('gDirectory->cd("%s:/");'%fout.GetName())
-	# load & clone
-	if not fout.GetName()==mapfile: inroot('TF2 *wghtFun = (TF2*)fmap->Get("%s;1").Clone();'%mapname)
-	else: inroot('TF2 *wghtFun = (TF2*)gDirectory->Get("%s;1").Clone();'%mapname)
-	# close if unneeded
-	if not fout.GetName()==mapfile: inroot('fmap->Close();')
 
 ####################################################################################################
 def loadOneDWght(fout,mapfile,mapname):
@@ -731,6 +450,7 @@ def loadOneDWght(fout,mapfile,mapname):
 	# close if unneeded
 	if not fout.GetName()==mapfile: inroot('fmap->Close();')
 
+####################################################################################################
 def loadTwoDWght(fout,mapfile,mapname):
 	# clean
 	try: ROOT.wghtHist.Delete()
@@ -743,21 +463,6 @@ def loadTwoDWght(fout,mapfile,mapname):
 	else: inroot('TH2F *wghtTwoHist = (TH2F*)gDirectory->Get("%s;1").Clone();'%mapname)
 	# close if unneeded
 	if not fout.GetName()==mapfile: inroot('fmap->Close();')
-
-def loadBMapWght(fout,mapfile,mapname):
-	# clean
-	try: ROOT.bmap.Delete()
-	except: pass
-	# correct file
-	if not fout.GetName()==mapfile: inroot('TFile *fmap = TFile::Open("%s");'%mapfile)
-	inroot('gDirectory->cd("%s:/");'%fout.GetName())
-	# load & clone
-	if not fout.GetName()==mapfile: inroot('TH2F *bMap = (TH2F*)fmap->Get("%s;1").Clone();'%mapname)
-	else: inroot('TH2F *bMap = (TH2F*)gDirectory->Get("%s;1").Clone();'%mapname)
-	# close if unneeded
-	if not fout.GetName()==mapfile: inroot('fmap->Close();')
-	# check
-	if not ROOT.bMap: sys.exit('bMap histogram not loaded correctly. Check: %s. Exiting.'%ROOT.bMap)
 
 ####################################################################################################################################################################################
 def getSignificance(opts,fout,samples,variables,sel,trg,references,vx,vy):

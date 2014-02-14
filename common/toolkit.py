@@ -218,25 +218,6 @@ def setStyleTH1Fratio(h):
 	h.SetMarkerColor(kBlack)
 	h.SetMarkerSize(0.8)
 
-# PRINTOUT FUNCTIONS ###############################################################################
-def write_bMapWght(bMapWghtFile='%s/bMapWght.root'%basepath):
-	fmap = TFile.Open(bMapWghtFile)
-	bmap = fmap.Get("bMap;1")
-	bmaparray = []
-	bmaplabels = []
-	for iy in range(1,bmap.GetYaxis().GetNbins()+1):
-		bmaparray += [[]]
-		bmaplabels += [round(bmap.GetYaxis().GetBinLowEdge(iy),3)]
-		for ix in range(1,bmap.GetXaxis().GetNbins()+1):
-			bmaparray[iy-1] += [round(bmap.GetBinContent(ix,iy),4)]
-	bmaplabels += [round(bmap.GetYaxis().GetBinLowEdge(iy)+bmap.GetYaxis().GetBinWidth(iy),3)]
-
-	print "double csvBins[5] = {%s};"%(','.join([str(x) for x in bmaplabels]))
-	print "double trig_eff[4][4] = %s;"%json.dumps(bmaparray).replace('[','{').replace(']','}')
-
-
-
-
 # CLOSE BRACKETS OF STRING #########################################################################
 def closeBrackets(text):
 	nLeft = text.count('(')

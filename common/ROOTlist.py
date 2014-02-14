@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 import sys
-sys.path.append('/home/salderwe/svncontrolled/2013/vbfHbb/turnons/include/')
-
 tempargv = sys.argv[:]
 sys.argv = []
 import ROOT
@@ -31,7 +29,6 @@ def list(opts,args):
 
 if __name__=='__main__':
 	mp = OptionParser()
-#	mp.add_option('-i','--info',help='Print only, no actions.',action='store_true',default=False)
 	mp.add_option('-d','--depth',help='Maximum depth to print.',type='int',default=2)
 	opts,args = mp.parse_args()
 

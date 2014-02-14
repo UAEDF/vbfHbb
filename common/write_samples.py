@@ -187,7 +187,7 @@ def parser():
 	mp.add_option('-r','--readonly',help='Print content of output file.',dest='readonly',action='store_true',default=False)
 	mp.add_option('-c','--clean',help='Clean json file.',dest='clean',action='store_true',default=False)
 	mp.add_option('-u','--update',help='Update json file.',dest='update',action='store_true',default=False)
-	mp.add_option('-b','--baseinfo',help='File with cross section info (including prefix).',dest='baseinfo',type='str',default='%s/vbfHbb_info.json'%basepath)
+	mp.add_option('-b','--baseinfo',help='File with cross section info (including prefix).',dest='baseinfo',type='str',default='%s/vbfHbb_info_2013.json'%basepath)
 	mp.add_option('-G','--globalpath',help='Restate globalpath when updating.',dest='globalpath',type='str')
 	return mp
 
