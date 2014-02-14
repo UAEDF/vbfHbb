@@ -433,7 +433,9 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		for istack,tagNstack in enumerate([(g,stacks[g]['effis']) for g in stacks.keys()]):
 			tag = tagNstack[0]
 			stack = tagNstack[1]
-			ymax = round(0.12*1.4,3) if not 'mva' in stack.e.GetPaintedGraph().GetXaxis().GetTitle() else 0.7
+			if any(['NOM' in x for x in trg]): ymax = 0.7 if not any([x in stack.e.GetPaintedGraph().GetXaxis().GetTitle() for x in ['mva','Bjet']]) else 0.7 #0.14
+			elif any(['VBF' in x for x in trg]): ymax = 1.2
+			else: ymax = 1.0
 			#stack.e.SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
 			stack.e.SetTitle(";;N-1 efficiency curves")
 			stack.e.GetPaintedGraph().SetTitle(";;N-1 efficiency curves")

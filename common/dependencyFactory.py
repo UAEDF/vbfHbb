@@ -415,7 +415,7 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		# create
 		trg,trg_orig = trigData(opts,'',trg)
 		mapname = "2DMap_%s-%s_s%s-t%s-r%s-d%s_%s-%s"%(ratio,'Rat','-'.join(sorted(sel)),'-'.join(trg_orig),'-'.join(ref),'-'.join(trg),vx[0],vy[0])
-		maptitle = "%s;%s;%s"%(mapname,variables[vx[0]]['title_x'],variables[vy[0]]['title_x'])
+		maptitle = "%s;%s;%s"%("",variables[vx[0]]['title_x'],variables[vy[0]]['title_x']) #mapname
 		trg = dc(trg_orig)
 		maps[ratio]['Rat'] = TH2F(mapname,maptitle,len(xvals)-1,xvals,len(yvals)-1,yvals)
 		maps[ratio]['Rat'].Sumw2()
@@ -425,7 +425,12 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		# plot
 		canvas.cd()
 		maps[ratio]['Rat'].SetTitleOffset(1.0,"Y")
-		maps[ratio]['Rat'].SetMarkerSize(maps[ratio]['Rat'].GetMarkerSize()*0.75)
+		maps[ratio]['Rat'].SetTitleOffset(1.2,"X")
+		if 'VBF' in trg:
+			gPad.SetLogx(1)
+			#maps[ratio]['Rat'].GetXaxis().SetNdivisions(102020)
+			maps[ratio]['Rat'].GetXaxis().SetMoreLogLabels()
+			maps[ratio]['Rat'].SetMarkerSize(maps[ratio]['Rat'].GetMarkerSize()*0.75)
 		maps[ratio]['Rat'].Draw('colz,error,text')
 		print '\033[1;31mRatio drawn\033[m'
 		canvas.WaitPrimitive()
