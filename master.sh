@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ "$1" == "0"]; then 
+if [ "$1" == "0" ]; then 
 	prefix='echo';
 else
 	prefix='';
