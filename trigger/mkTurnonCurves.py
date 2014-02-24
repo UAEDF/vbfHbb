@@ -236,12 +236,12 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	#top     = 1-gPad.GetTopMargin()-0.02
 	left    = 1 + 0.01 - gPad.GetRightMargin()
 	right   = 1 - 0.02
-	bottom  = 1 - gPad.GetTopMargin() - 0.3 - 0.02 - (0.045*rows) 
-	top     = 1 - gPad.GetTopMargin() - 0.3 - 0.02 
-	legend  = getTLegend(left,bottom,right,top,columns,"(N-1) cut trg effi.",3001,1,0.035)
+	bottom  = 1 - gPad.GetTopMargin() - 0.25 - 0.02 - (0.045*rows) 
+	top     = 1 - gPad.GetTopMargin() - 0.25 - 0.02 
+	legend  = getTLegend(left,bottom,right,top,columns,"(N-1) cut trg effi.",3001,1,0.030)
 
 	# info text
-	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']]),sum([(x[0:3]=='MAP' or x[0:3]=='FUN' or x[0:3]=='COR') for x in opts.weight[1]]),1]) # counting lines about weights + 1 for vbfHbb tag 
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','LUMI']]),sum([(x[0:2]=='PU' or x[0:3] in ['MAP','COR']) for x in opts.weight[1]]),1]) # counting lines about weights + 1 for vbfHbb tag 
 	#left   = 1-gPad.GetRightMargin()-0.02 - (0.25) # width 0.3
 	#right  = 1-gPad.GetRightMargin()-0.02
 	#top    = 1-gPad.GetTopMargin()
@@ -250,16 +250,14 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	right  = 1 - 0.02
 	bottom = 1 - gPad.GetTopMargin() - 0.02 - (0.05*rows) 
 	top = 1 - gPad.GetTopMargin() - 0.02 
-	text = getTPave(left,bottom,right,top,None,0,0,1,0.035)
+	text = getTPave(left,bottom,right,top,None,0,0,1,0.030)
 	text.AddText("VBF H #rightarrow b#bar{b}:") 
 	text.AddText("#sqrt{s} = 8 TeV (2012)")
 	if not opts.weight==[[''],['']] and 'LUMI' in opts.weight[1]: text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
-	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
-	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	if not opts.weight==[[''],['']] and 'PU'  in [x[0:2] for x in opts.weight[1]]: text.AddText("PU reweighted")
 	if not opts.weight==[[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: text.AddText("1DMap reweighted")
 	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")
-	if not opts.weight==[[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DFun reweighted")
 	# layout scaling
 	ymin=0
 	ymax=0
@@ -268,12 +266,13 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	rows = 2+sum([1 for x in sel])
 	left   = 1 - gPad.GetRightMargin() + 0.01
 	right  = 1 - 0.02
-	top    = 1 - gPad.GetTopMargin() -0.02 - 0.80
-	bottom = 1 - gPad.GetTopMargin() -0.02 - 0.80 - (0.03*rows) # n rows size 0.03
+	top    = 1 - gPad.GetTopMargin() -0.02 - 0.55
+	bottom = 1 - gPad.GetTopMargin() -0.02 - 0.55 - (0.03*rows) # n rows size 0.03
 	selleg = getSelLegend(left,bottom,right,top)
 	for iline,line in enumerate(sorted([x.strip() for x in sel],key=lambda x:x.lower())): selleg.AddText('%s %s'%('sel:' if iline==0 else ' '*4,line))
 	selleg.AddText('trg: %s (MC)'%(','.join(trg)))
-	selleg.AddText('     %s (data)'%(','.join(opts.datatrigger[opts.trigger.index(trg)])))
+	selleg.AddText('     %s (data)'%(','.join(opts.datatrigger[opts.trigger.index(trg)] if opts.datatrigger else trg)))
+	selleg.AddText('ref: %s '%(','.join(ref)))
 
 	# containers
 	stacks = {}
@@ -548,9 +547,11 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			stack.e.GetPaintedGraph().Draw("" if istack==0 else "same")
 
 	# write plot to file
+	canvas.cd()
 	legend.Draw()
 	text.Draw()
 	selleg.Draw()
+
 	path = '%s/%s/%s/%s/%s'%('plots',os.path.split(fout.GetName())[1][:-5],wpars,'turnonCurves',namesGlobal['path-turnon'])
 	makeDirs(path)
 	canvas.SetName(namesGlobal['turnon'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon'])

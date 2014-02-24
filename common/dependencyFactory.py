@@ -344,6 +344,7 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		maps[group] = {}
 		cuts[group] = {}
 		for tag in ['Num','Den','Rat']:
+			if opts.numonly and not tag=='Num': continue
 			trg,trg_orig = trigData(opts,'',trg)
 			mapname = "2DMap_%s-%s_s%s-t%s-r%s-d%s_%s-%s"%(group,tag,'-'.join(sorted(sel)),'-'.join(trg_orig),'-'.join(ref),'-'.join(trg),vx[0],vy[0])
 			maptitle = "%s;%s;%s"%(mapname,variables[vx[0]]['title_x'],variables[vy[0]]['title_x'])
@@ -368,14 +369,16 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		# to save
 		path = 'plots/%s/2DMaps/%s'%(fout.GetName().split('/')[-1][:-5],group)
 		makeDirs(path)
-		# ratio
-		maps[group]['Rat'].Divide(maps[group]['Num'],maps[group]['Den'],1.0,1.0,'B')
-#$		maps[group]['Rat'] = TEfficiency(maps[group]['Num'],maps[group]['Den'])
-		maps[group]['Rat'].SetName(mapname)
-		maps[group]['Rat'].SetTitle(maptitle)
-		# save		
+		if not opts.numonly:
+			# ratio
+			maps[group]['Rat'].Divide(maps[group]['Num'],maps[group]['Den'],1.0,1.0,'B')
+	#$		maps[group]['Rat'] = TEfficiency(maps[group]['Num'],maps[group]['Den'])
+			maps[group]['Rat'].SetName(mapname)
+			maps[group]['Rat'].SetTitle(maptitle)
+			# save		
 		gDirectory.cd('%s:/2DMaps/%s'%(fout.GetName(),group))
 		for tag in ['Num','Den','Rat']:
+			if opts.numonly and not tag=='Num': continue
 			if not tag in maps[group]: continue
 			maps[group][tag].Write(maps[group][tag].GetName(),TH1.kOverwrite)
 #$			if tag=='Rat': 
@@ -394,6 +397,7 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 # FOCUS ON RATIO MAPS JetMon / QCD
 	gDirectory.cd("%s:/"%fout.GetName())
 	for ratio in ratios:
+		if opts.numonly: continue
 		# store
 		makeDirsRoot(fout,'2DMaps/%s'%ratio)
 		maps[ratio] = {}

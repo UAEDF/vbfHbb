@@ -87,7 +87,7 @@ void styleCMS() {
   tdrStyle->SetPadTopMargin(0.05);
   tdrStyle->SetPadBottomMargin(0.10);
   tdrStyle->SetPadLeftMargin(0.10);
-  tdrStyle->SetPadRightMargin(0.20);
+  tdrStyle->SetPadRightMargin(0.22);
 
 // For the Global title:
 

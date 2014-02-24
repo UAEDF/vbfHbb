@@ -114,7 +114,7 @@ def do_draw(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	legend.Draw()
 	
 	# info text
-	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']]+[x[0:3]=='MAP' or x[0:3]=='FUN' or x[0:3]=='COR' for x in opts.weight[1]])]) # counting lines about weights + 1 for vbfHbb tag 
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','LUMI']]+[(x[0:2]=='PU' or x[0:3] in ['MAP','COR']) for x in opts.weight[1]])]) # counting lines about weights + 1 for vbfHbb tag 
 	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
 	right  = 1-gPad.GetRightMargin()-0.02
 	top    = 1-gPad.GetTopMargin()
@@ -123,11 +123,9 @@ def do_draw(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	text.AddText("VBF H #rightarrow b#bar{b}: #sqrt{s} = 8 TeV (2012)")
 	if not opts.weight==[[''],['']] and 'LUMI' in opts.weight[1]: text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
-	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
-	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	if not opts.weight==[[''],['']] and 'PU'  in [x[0:2] for x in opts.weight[1]]: text.AddText("PU reweighted")
 	if not opts.weight==[[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: text.AddText("1DMap reweighted")#\n (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
-	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")#\n (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
-	if not opts.weight==[[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DFun reweighted")
+	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap(%s,%s) reweighted"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
 	
 	# selection legend
 	rows = 2+sum([1 for x in sel])
@@ -139,6 +137,7 @@ def do_draw(opts,fout,s,v,sel,trg,ref,KFWght=None):
 	for iline,line in enumerate(sorted([x.strip() for x in sel])): selleg.AddText('%s %s'%('sel:' if iline==0 else ' '*4,line))
 	selleg.AddText('trg: %s (MC)'%(','.join(trg)))
 	selleg.AddText('     %s (data)'%(','.join(opts.datatrigger[opts.trigger.index(trg)])))
+	selleg.AddText('ref: %s'%(','.join(ref)))
 
 	text.Draw()
 	selleg.Draw()
@@ -190,30 +189,31 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	rows 	= len(groups)+1
 	left    = 1-gPad.GetRightMargin()+0.01
 	right   = 1-0.02
-	bottom  = 1-gPad.GetTopMargin()-0.02 - (0.045*rows) # n rows sized 0.035
-	top     = 1-gPad.GetTopMargin()-0.02
-	legend  = getTLegendRight(left,bottom,right,top,columns,"Presel. & Trigger",3001,1,0.035)
+	bottom  = 1-gPad.GetTopMargin() - (0.035*rows) # n rows sized 0.035
+	top     = 1-gPad.GetTopMargin()
+	legend  = getTLegendRight(left,bottom,right,top,columns,"Presel. & Trigger",3001,1,0.030)
 
 	# info text
-	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['PU','BMAP']]+[x[0:3]=='MAP' or x[0:3]=='FUN' or x[0:3]=='COR' for x in opts.weight[1]])])+2 # counting lines about weights + 2 for vbfHbb tag #(LUMI,KFAC in array)
+	rows   = sum([not opts.weight==[[''],['']],sum([(x[0:2]=='PU' or x[0:3] in ['MAP','COR']) for x in opts.weight[1]])])+2 # counting lines about weights + 2 for vbfHbb tag #(LUMI,KFAC in array)
+	if any([x[0:3]=='MAP' for x in opts.weight[1]]): rows += 1
 #old#	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
 #old#	right  = 1-gPad.GetRightMargin()-0.02
 #old#	top    = 1-gPad.GetTopMargin()
 #old#	bottom = 1-gPad.GetTopMargin() - (0.04*rows) # n rows size 0.04
 	left    = 1-gPad.GetRightMargin()+0.01
 	right   = 1-0.02
-	bottom  = 1-gPad.GetTopMargin()-0.02 -0.5 - (0.045*rows) # n rows sized 0.035
-	top     = 1-gPad.GetTopMargin()-0.02 -0.5
-	text = getTPave(left,bottom,right,top,None,0,0,1,0.035)
+	bottom  = 1-gPad.GetTopMargin() -0.35 - (0.030*rows) # n rows sized 0.035
+	top     = 1-gPad.GetTopMargin() -0.35
+	text = getTPave(left,bottom,right,top,None,0,0,1,0.027)
 	text.AddText("VBF H #rightarrow b#bar{b}:")
 	text.AddText("#sqrt{s} = 8 TeV (2012)")
 	#if not opts.weight==[[''],['']] and 'LUMI' in opts.weight[1]: text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
 	#if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
-	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
-	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
+	if not opts.weight==[[''],['']] and 'PU'  in [x[0:2] for x in opts.weight[1]]: text.AddText("PU reweighted")
 	if not opts.weight==[[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: text.AddText("1DMap reweighted")#\n (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
-	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")#\n (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
-	if not opts.weight==[[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DFun reweighted")
+	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: 
+		text.AddText("2DMap reweighted") 
+		text.AddText("(%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
 	# layout scaling
 	ymin=0
 	ymax=0
@@ -222,12 +222,12 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	rows = 2+sum([1 for x in sel])
 	left   = 1-gPad.GetRightMargin()+0.01
 	right  = 1-0.02
-	top    = 1-gPad.GetTopMargin()-0.80
-	bottom = 1-gPad.GetTopMargin()-0.80 - (0.03*rows) # n rows size 0.03
+	top    = 1-gPad.GetTopMargin()-0.58
+	bottom = 1-gPad.GetTopMargin()-0.58 - (0.03*rows) # n rows size 0.03
 	selleg = getSelLegend(left,bottom,right,top)
 	for iline,line in enumerate(sorted([x.strip() for x in sel])): selleg.AddText('%s %s'%('sel:' if iline==0 else ' '*4,line))
 	selleg.AddText('trg: %s (MC)'%(','.join(trg)))
-	selleg.AddText('     %s (data)'%(','.join(opts.datatrigger[opts.trigger.index(trg)])))
+	selleg.AddText('     %s (data)'%(','.join(opts.datatrigger[opts.trigger.index(trg)] if opts.datatrigger else trg)))
 
 	### LOOP over all samples
 	for s in sorted(samples,key=lambda x:('QCD' in x['tag'],not 'WJets' in x['tag'],jsoninfo['crosssections'][x['tag']])):
@@ -335,6 +335,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		if not datHistos == []: 
 			datStack.GetStack().Last().Draw("same" if not (bkgHistos == [] and sigHistos == []) else "")
 	# draw legend/textinfo
+	canvas.cd()
 	legend.Draw()
 	text.Draw()
 	selleg.Draw()
@@ -393,19 +394,18 @@ def do_drawnormalized(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	legend  = getTLegend(left,bottom,right,top,columns)
 
 	# info text
-	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','PU','BMAP','LUMI']])]) # counting lines about weights + 1 for vbfHbb tag 
+	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','LUMI']]+[(x[0:2]=='PU' or x[0:3] in ['MAP','COR']) for x in opts.weight[1]])]) # counting lines about weights + 1 for vbfHbb tag 
 	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
 	right  = 1-gPad.GetRightMargin()-0.02
 	top    = 1-gPad.GetTopMargin()
-	bottom = 1-gPad.GetTopMargin() - (0.04*rows) # n rows size 0.04
+	bottom = 1-gPad.GetTopMargin() - (0.035*rows) # n rows size 0.035
 	text = getTPave(left,bottom,right,top)
 	text.AddText("VBF H #rightarrow b#bar{b}: #sqrt{s} = 8 TeV (2012)")
 	if not opts.weight==[[''],['']] and 'LUMI' in opts.weight[1]: text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
 	if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
-	if not opts.weight==[[''],['']] and 'BMAP' in opts.weight[1]: text.AddText("BMAP reweighted")
-	if not opts.weight==[[''],['']] and 'PU' in opts.weight[1]: text.AddText("PU reweighted")
-	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")#\n (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
-	if not opts.weight==[[''],['']] and 'FUN' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DFun reweighted")
+	if not opts.weight==[[''],['']] and 'PU'  in [x[0:2] for x in opts.weight[1]]: text.AddText("PU reweighted")
+	if not opts.weight==[[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: text.AddText("1DMap reweighted")#\n (%s,%s)"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
+	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap(%s,%s) reweighted"%([x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[1],[x for x in opts.weight[1] if x[0:3]=='MAP'][0].split('#')[2]))
 	# layout scaling
 	ymin=0
 	ymax=0

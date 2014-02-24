@@ -60,6 +60,7 @@ def parser(mp=None):
 	mgd.add_option('-y','--yields',help='Print yields for each sample for specified sel+trg+cuts',action='store_true',default=False)
 	mgd.add_option('-l','--latex',help='Print latex output.',action='store_true',default=False)
 	mgd.add_option('-m','--map',help='Create 2D map ("var1;binlim1#binlim2#...,var2;binlim1#binlim2#...").',type='str',action='callback',callback=optsplitlist)
+	mgd.add_option('--numonly',help='Create 2D map numerator only.',action='store_true',default=False)
 	mgd.add_option('-c','--cor',help='Create 1D map ("var1;binlim1#binlim2#...").',type='str',action='callback',callback=optsplitlist)
 	mgd.add_option('--significance',help='Do significance map calculations; give: var1,var2.',type='str',action='callback',callback=optsplit)
 
@@ -358,7 +359,7 @@ def main(mp=None):
 		if not len(opts.weight)>3: sys.exit(red+"Check twoDWght weight settings. Exiting."+plain)
 		if not len(opts.weight[3])>1: sys.exit(red+"Please provide filename;keyname for the twoDMap. Exiting."+plain)
 		if not os.path.exists(opts.weight[3][0]): sys.exit(red+"Check twoDWght file path. Exiting."+plain)
-		loadTwoDWght(fout,opts.weight[3][0],opts.weight[4][1])
+		loadTwoDWght(fout,opts.weight[3][0],opts.weight[3][1])
 		
 # print kfwght
 	KFWghts = {}
