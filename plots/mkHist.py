@@ -275,6 +275,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			if not jsoninfo['groups'][s['tag']] in [x for (x,y) in groupsInLegend]: 
 				groupsInLegend += [(jsoninfo['groups'][s['tag']],bkgHistos[-1])]
 			ymin, ymax = getRangeTH1F(bkgHistos[-1],ymin,ymax)
+		#bkgStack.GetStack().Last().SetLineWidth(1)
 
 		# clean
 		trg = dc(trg_orig)
@@ -353,7 +354,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	canvas.Update()
 
 	# var2: strip off the path and the suffix, keep the basename
-	path = '%s/%s/%s/%s/%s'%('plots',os.path.split(fout.GetName())[1][:-5],wpars,'stack',namesGlobal['path-hist'])
+	path = '%s/../plots/%s/%s/%s/%s/%s'%(basepath,'plots',os.path.split(fout.GetName())[1][:-5],wpars,'stack',namesGlobal['path-hist'])
 	makeDirs(path)
 
 	canvas.SaveAs('%s/%s.png'%(path, canvas.GetName()))
