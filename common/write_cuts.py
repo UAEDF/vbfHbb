@@ -114,9 +114,9 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	wfString = ''
 	if not weight == [[''],['']]:
 		parsedWeight = dc(weight)
-		if (trg==[]) and (('MAP' in [x[:3] for x in weight[1]]) or ('FUN' in [x[:3] for x in weight[1]]) or ('COR' in [x[:3] for x in weight[1]])): parsedWeight[1] = [x for x in weight[1] if not (x[:3]=='MAP' or x[:3]=='FUN' or x[:3]=='COR')] 
+		if (trg==[]) and (len(weight)>1) and (('MAP' in [x[:3] for x in weight[1]]) or ('FUN' in [x[:3] for x in weight[1]]) or ('COR' in [x[:3] for x in weight[1]])): parsedWeight[1] = [x for x in weight[1] if not (x[:3]=='MAP' or x[:3]=='FUN' or x[:3]=='COR')] 
 		wf = weightFactory(kwargs['jsonsamp'],weight[0][0],KFWght) 
-		wfString = wf.getFormula(','.join(parsedWeight[1]),kwargs['sample'])
+		wfString = wf.getFormula(','.join(parsedWeight[1]),kwargs['sample']) if len(weight)>1 else wf.getFormula('',kwargs['sample'])
 
 	# construct
 	if not (selold==[] and trgold==[]):

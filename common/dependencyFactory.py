@@ -333,7 +333,8 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 	cuts = {}
 	inroot('TTree *t = 0;')
 # To Save
-	canvas = TCanvas("cmap","cmap",1800,1200)
+	if not opts.notext: canvas = TCanvas("cmap","cmap",1800,1000)
+	else: canvas = TCanvas("cmap","cmap",1800,1200)
 	canvas.cd()
 	gPad.SetGrid(0,0)
 	gPad.SetRightMargin(0.14)
@@ -350,7 +351,7 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 			maptitle = "%s;%s;%s"%(mapname,variables[vx[0]]['title_x'],variables[vy[0]]['title_x'])
 			trg = dc(trg_orig)
 			maps[group][tag] = fout.FindObjectAny(mapname)
-			if (not maps[group][tag]) or (not len(xvals)-1==maps[group][tag].GetXaxis().GetNbins()) or (not len(yvals)-1==maps[group][tag].GetYaxis().GetNbins()):
+			if (not maps[group][tag]) or (not len(xvals)-1==maps[group][tag].GetXaxis().GetNbins()) or (not len(yvals)-1==maps[group][tag].GetYaxis().GetNbins()) or opts.redo:
 				maps[group][tag] = TH2F(mapname,maptitle,len(xvals)-1,xvals,len(yvals)-1,yvals)
 				maps[group][tag].Sumw2()
 ## LOOP over ALL SAMPLES
@@ -371,7 +372,23 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		makeDirs(path)
 		if not opts.numonly:
 			# ratio
+##CHECK THIS!!!##			
 			maps[group]['Rat'].Divide(maps[group]['Num'],maps[group]['Den'],1.0,1.0,'B')
+##ALTERNATIVE#			for ix in range(0,maps[group]['Num'].GetNbinsX()+1):
+##ALTERNATIVE#				for iy in range(0,maps[group]['Num'].GetNbinsX()+1):
+##ALTERNATIVE#					v1 = maps[group]['Num'].GetBinContent(ix,iy)
+##ALTERNATIVE#					ev1 = maps[group]['Num'].GetBinError(ix,iy)
+##ALTERNATIVE#					v2 = maps[group]['Den'].GetBinContent(ix,iy)
+##ALTERNATIVE#					ev2 = maps[group]['Den'].GetBinError(ix,iy)
+##ALTERNATIVE#					if not v2 == 0: 
+##ALTERNATIVE#						div = v1/v2
+##ALTERNATIVE#						ediv = sqrt(div*(1.-div)/v2)*ev2/sqrt(v2)
+##ALTERNATIVE#					else: 
+##ALTERNATIVE#						div = 0
+##ALTERNATIVE#						ediv = 0
+##ALTERNATIVE#					maps[group]['Rat'].SetBinContent(ix,iy,div)
+##ALTERNATIVE#					maps[group]['Rat'].SetBinError(ix,iy,ediv)
+ 
 	#$		maps[group]['Rat'] = TEfficiency(maps[group]['Num'],maps[group]['Den'])
 			maps[group]['Rat'].SetName(mapname)
 			maps[group]['Rat'].SetTitle(maptitle)
@@ -385,10 +402,16 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 #$				maps[group][tag].Paint("colz,text90,error")
 #$				maps[group][tag].GetPaintedHistogram().SetTitleOffset(1.0,"Y")
 #$			else: maps[group][tag].SetTitleOffset(1.0,"Y")
-			gPad.SetRightMargin(0.14)
 			maps[group][tag].SetTitleOffset(1.0,"Y")
 			maps[group][tag].SetMarkerSize(maps[group][tag].GetMarkerSize()*0.75)
+			maps[group][tag].SetTitle("")
 			maps[group][tag].Draw("colz,text45,error")
+
+			if not opts.notext:
+				text,selleg = addText(opts,group,tag,vx,vy,sel,trg,ref)
+				text.Draw("same")
+				selleg.Draw("same")
+
 			canvas.SaveAs('%s/%s.png'%(path,maps[group][tag].GetName()))
 			canvas.SaveAs('%s/%s.pdf'%(path,maps[group][tag].GetName()))
 			l3("Written %s map to (eog %s/%s.png)"%(tag,path,maps[group][tag].GetName()))
@@ -416,11 +439,16 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		canvas.cd()
 		maps[ratio]['Rat'].SetTitleOffset(1.0,"Y")
 		maps[ratio]['Rat'].SetTitleOffset(1.2,"X")
+		maps[ratio]['Rat'].GetZaxis().SetRangeUser(0,1.4)
 		if 'VBF' in trg:
 			gPad.SetLogx(1)
 			maps[ratio]['Rat'].GetXaxis().SetMoreLogLabels()
 			maps[ratio]['Rat'].SetMarkerSize(maps[ratio]['Rat'].GetMarkerSize()*0.75)
 		maps[ratio]['Rat'].Draw('colz,error,text')
+		if not opts.notext:
+			text,selleg = addText(opts,'Data / QCD','SF',vx,vy,sel,trg,ref)
+			text.Draw("same")
+			selleg.Draw("same")
 		print '\033[1;31mRatio drawn\033[m'
 		canvas.WaitPrimitive()
 		
@@ -759,6 +787,41 @@ def getSignificance(opts,fout,samples,variables,sel,trg,references,vx,vy):
 					drawNsave(fout,SoverSqSpB[ratioref][tag][suffix],path,title,'text90,colz,error','Written SoverSqSpB %s (%s) to: (eog plots/%s/%s.png)'%(suffix,tag,fout.GetName().split('/')[-1][:-5],name))
 					drawNsave(fout,SoverSqSpBScaled[ratioref][tag][suffix],path.replace('SoverSqSpB','SoverSqSpBScaled'),title.replace('SoverSqSpB','SoverSqSpBScaled'),'text90,colz,error','Written SoverSqSpBScaled %s (%s) to: (eog plots/%s/%s.png)'%(suffix,tag,fout.GetName().split('/')[-1][:-5],name.replace('SoverSqSpB','SoverSqSpBScaled')))
 			
+############################################################################################################################################
+def addText(opts,sample,tag,vx,vy,sel,trg,ref):
+	gPad.SetRightMargin(0.25)
+	lines = 5 if (tag=='Rat' or tag=='SF') else 6
+	text = TPaveText(1-0.15,1-0.1-(lines*0.045),1-0.005,1-0.1,"NDC")
+	text.SetTextFont(42)
+	text.SetFillColor(0)
+	text.SetTextColor(kBlack)
+	text.SetTextSize(0.025)
+	text.SetTextAlign(11)
+	text.SetBorderSize(0)
+	text.AddText("CMS VBF H#rightarrow b#bar{b}:")
+	text.AddText("#sqrt{s} = 8 TeV")
+	text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000))
+	if tag=='Rat': 
+		text.AddText("2D Efficiency Map")
+	elif tag=='Num': 
+		text.AddText("2D Distribution Map") 
+		text.AddText("SEL+TRG+REFTRG")
+	elif tag=='Den': 
+		text.AddText("2D Distribution Map") 
+		text.AddText("SEL+REFTRG")
+	elif tag=='SF':
+		text.AddText("2D Scale Factor Map")
+	text.AddText("%s"%sample)
+	text.AddText("%s,%s"%(vx[0],vy[0]))
+
+	lines = len(sel)+3
+	selleg = getSelLegend(1-0.15,1-0.5-(lines*0.030),1-0.005,1-0.5)
+	for iline,line in enumerate(sorted([x.strip() for x in sel])): selleg.AddText('%s %s'%('sel:' if iline==0 else ' '*4,line))
+	selleg.AddText('trg: %s (MC)'%(','.join(trg)))
+	selleg.AddText('     %s (data)'%(','.join(opts.datatrigger[opts.trigger.index(trg)])))
+	selleg.AddText('ref: %s'%(','.join(ref)))
+
+	return text,selleg
 
 ####################################################################################################################################################################################
 

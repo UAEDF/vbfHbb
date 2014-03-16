@@ -103,7 +103,9 @@ def getSelLegend(left,bottom,right,top,rows=None,fillColor=0,fillStyle=0,textCol
 
 def getTLegend(left,bottom,right,top,columns=None,header=None,fillStyle=0,textColor=1,textSize=0.025):
 	legend = TLegend(left,bottom,right,top)
-	if not header==None: legend.SetHeader(header)
+	if not header==None: 
+		legend.SetTextSize(textSize+0.005)
+		legend.SetHeader(header)
 	if not columns==None: legend.SetNColumns(int(columns))
 	legend.SetFillStyle(fillStyle)
 	legend.SetFillColor(kWhite)
@@ -185,8 +187,8 @@ def setRangeTH1F(h,ymin,ymax,log=True):
 		h.SetMaximum(round(ymax*1.3,2))
 
 def getRatioPlotCanvas(canvas):
-	c1 = TPad('c1','c1',0,0.2,1,1)
-	c2 = TPad('c2','c2',0,0,1,0.221)
+	c1 = TPad('c1','c1',0,0.3,1,1)
+	c2 = TPad('c2','c2',0,0,1,0.332)
 	c1.SetBottomMargin(0.0)
 	c2.SetTopMargin(0.10)
 	c2.SetBottomMargin(c2.GetBottomMargin()+0.25)
@@ -199,12 +201,13 @@ def getRatioPlotCanvas(canvas):
 def setStyleTH1Fratio(h):
 	# main
 	h.SetTitle("")
-	h.GetYaxis().SetTitle('Data / MC')
+	h.GetYaxis().SetTitle('Data / MC - 1')
+	#h.GetYaxis().SetTitleSize(h.GetYaxis().GetTitleSize()*0.75)
 	#h.GetYaxis().SetRangeUser(0.5,1.5)
 	#h.GetYaxis().SetRangeUser(0.0,2.0)
 	gPad.SetGridy(1)
-	h.GetYaxis().SetRangeUser(0.0,2.0)
-	h.GetYaxis().SetNdivisions(505)
+	h.GetYaxis().SetRangeUser(-0.75,0.75)
+	h.GetYaxis().SetNdivisions(205)
 	h.GetXaxis().SetTickLength(0.08)
 	h.GetYaxis().SetTickLength(0.015)
 	# fonts & offsets

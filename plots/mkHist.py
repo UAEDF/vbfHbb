@@ -173,6 +173,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	sigHistos = []
 	datHistos = []
 	bkgHistos = []	
+	totHist = None
 
 	groups = list(set([jsoninfo['groups'][s['tag']] for s in samples]))
 	groupsInLegend = []
@@ -186,26 +187,29 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 #	top     = 1-gPad.GetTopMargin()-0.02
 #	legend  = getTLegend(left,bottom,right,top,columns,None,3001,1,0.035)
 	columns = 1
-	rows 	= len(groups)+1
+	rows 	= len(groups)+1+1 #(samples + header + MC uncertainty)
 	left    = 1-gPad.GetRightMargin()+0.01
 	right   = 1-0.02
-	bottom  = 1-gPad.GetTopMargin() - (0.035*rows) # n rows sized 0.035
-	top     = 1-gPad.GetTopMargin()
-	legend  = getTLegendRight(left,bottom,right,top,columns,"Presel. & Trigger",3001,1,0.030)
+	bottom  = 1-gPad.GetTopMargin() - 0.24 - (0.031*rows) # n rows sized 0.035
+	top     = 1-gPad.GetTopMargin() - 0.24
+	legend  = getTLegendRight(left,bottom,right,top,columns,"Presel. & Trigger",3001,1,0.025)
 
 	# info text
 	rows   = sum([not opts.weight==[[''],['']],sum([(x[0:2]=='PU' or x[0:3] in ['MAP','COR']) for x in opts.weight[1]])])+2 # counting lines about weights + 2 for vbfHbb tag #(LUMI,KFAC in array)
 	if any([x[0:3]=='MAP' for x in opts.weight[1]]): rows += 1
+	rows += 1 #LUMI
 #old#	left   = 1-gPad.GetRightMargin()-0.02 - (0.3) # width 0.3
 #old#	right  = 1-gPad.GetRightMargin()-0.02
 #old#	top    = 1-gPad.GetTopMargin()
 #old#	bottom = 1-gPad.GetTopMargin() - (0.04*rows) # n rows size 0.04
 	left    = 1-gPad.GetRightMargin()+0.01
 	right   = 1-0.02
-	bottom  = 1-gPad.GetTopMargin() -0.35 - (0.030*rows) # n rows sized 0.035
-	top     = 1-gPad.GetTopMargin() -0.35
+	bottom  = 1-gPad.GetTopMargin() -0.0 - (0.030*rows) # n rows sized 0.035
+	top     = 1-gPad.GetTopMargin() -0.0
 	text = getTPave(left,bottom,right,top,None,0,0,1,0.027)
-	text.AddText("VBF H #rightarrow b#bar{b}:")
+	t0 = text.AddText("CMS VBF H #rightarrow b#bar{b}:")
+	t0.SetTextFont(62)
+	text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000. if len(opts.weight)>0 else 0.0))
 	text.AddText("#sqrt{s} = 8 TeV (2012)")
 	#if not opts.weight==[[''],['']] and 'LUMI' in opts.weight[1]: text.AddText("L = %.1f fb^{-1}"%(float(opts.weight[0][0])/1000.))
 	#if not opts.weight==[[''],['']] and 'KFAC' in opts.weight[1]: text.AddText("k-factor = %s"%("%.3f"%KFWght if not KFWght==None else 'default'))
@@ -229,6 +233,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	selleg.AddText('trg: %s (MC)'%(','.join(trg)))
 	selleg.AddText('     %s (data)'%(','.join(opts.datatrigger[opts.trigger.index(trg)] if opts.datatrigger else trg)))
 
+	sprev = None
 	### LOOP over all samples
 	for s in sorted(samples,key=lambda x:('QCD' in x['tag'],not 'WJets' in x['tag'],jsoninfo['crosssections'][x['tag']])):
 		# names
@@ -268,23 +273,46 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			ymin, ymax = getRangeTH1F(sigHistos[-1],ymin,ymax)
 ### QCD
 		else:
-			bkgHistos += [hload]
-			setStyleTH1F(bkgHistos[-1],1,1,jsoninfo['colours'][names['tag']],1001,0,0,1,0)
-			bkgStack.Add(bkgHistos[-1])
+			# for MC band
+			if not totHist: totHist = hload.Clone("totHist")
+			else: totHist.Add(hload)
+			# rest
+			scurr = jsoninfo['groups'][s['tag']]
+			if scurr==sprev and len(bkgHistos)>0: 
+				bkgHistos[-1].Add(hload)
+			else:
+				bkgHistos += [hload]
+				setStyleTH1F(bkgHistos[-1],1,1,jsoninfo['colours'][names['tag']],1001,0,0,1,0)
+			if not scurr==sprev:
+				bkgStack.Add(bkgHistos[-1])
 			#legend.AddEntry(bkgHistos[-1],names['tag'],'F')
 			if not jsoninfo['groups'][s['tag']] in [x for (x,y) in groupsInLegend]: 
 				groupsInLegend += [(jsoninfo['groups'][s['tag']],bkgHistos[-1])]
+			sprev = scurr
 			ymin, ymax = getRangeTH1F(bkgHistos[-1],ymin,ymax)
-		#bkgStack.GetStack().Last().SetLineWidth(1)
+		mcErrorUp = totHist.Clone("mcErrorUp")
+		for i in range(mcErrorUp.GetNbinsX()): 
+			mcErrorUp.SetBinContent(i,totHist.GetBinError(i)/totHist.GetBinContent(i) if not totHist.GetBinContent(i)==0 else 0.0)
+			mcErrorUp.SetBinError(i,0.0)
+		mcErrorUp.SetLineColor(kBlue)
+		mcErrorUp.SetLineWidth(1)
+		mcErrorUp.SetFillColor(kBlue)
+		mcErrorUp.SetFillStyle(3003)
+		mcErrorUp.SetMarkerStyle(0)
+		mcErrorDown = mcErrorUp.Clone("mcErrorDown")
+		mcErrorDown.Scale(-1)
 
 		# clean
 		trg = dc(trg_orig)
 	
 	for g,h in sorted(groupsInLegend,key=lambda (x,y):('Data' in x, 'QCD' in x, 'Z' in x, 'TT' in x, 'T' in x, 'W' in x,'VBF' in x, 'G' in x),reverse=True):
-		if 'Data' in g: legend.AddEntry(h,g + ' (%.1f fb^{-1})'%(float(opts.weight[0][0])/1000.) if opts.weight[0] and opts.weight[0][0] else 0.0,'P')
-		elif 'VBF' in g or 'G' in g: legend.AddEntry(h,g + ' H(125) #rightarrow b#bar{b}','L')
-		elif 'QCD' in g: legend.AddEntry(h,g + ' (x %.2f)'%(KFWght) if KFWght else '','F')
-		else: legend.AddEntry(h,g,'F')
+		nicetext = {"ZJets":"Z+jets","WJets":"W+jets","TTJets":"t#bar{t}","singleT":"single top"}
+		gstyled = nicetext[g] if g in nicetext.keys() else g
+		if 'Data' in g: legend.AddEntry(h,gstyled + ' (%.1f fb^{-1})'%(float(opts.weight[0][0])/1000.) if opts.weight[0] and opts.weight[0][0] else 0.0,'P')
+		elif 'VBF' in g or 'G' in g: legend.AddEntry(h,gstyled + ' H(125) #rightarrow b#bar{b}','L')
+		elif 'QCD' in g: legend.AddEntry(h,gstyled + ' (x %.2f)'%(KFWght) if KFWght else '','F')
+		else: legend.AddEntry(h,gstyled,'F')
+	legend.AddEntry(mcErrorUp,"MC uncertainty",'F')
 
 ### RATIO plot if Data is plotted
 	if not (datHistos == [] or bkgHistos == []):
@@ -302,7 +330,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	if sigStack.GetStack(): setRangeTH1F(sigStack,ymin,ymax)
 	if datStack.GetStack(): setRangeTH1F(datStack,ymin,ymax)
 	if bkgStack.GetStack(): 
-		bkgStack.SetTitle('%s;%s;%s'%('','',bkgHistos[0].GetYaxis().GetTitle())) #bkgStack.SetTitle(namesGlobal['hist-title'])#"stack_%s;%s;%s"%(bkgStack.GetName()[5:],bkgStack.GetStack().Last().GetXaxis().GetTitle(),bkgStack.GetStack().Last().GetYaxis().GetTitle()))
+		bkgStack.SetTitle('%s;%s;%s'%('','',bkgHistos[0].GetYaxis().GetTitle().replace('N /','Events /'))) #bkgStack.SetTitle(namesGlobal['hist-title'])#"stack_%s;%s;%s"%(bkgStack.GetName()[5:],bkgStack.GetStack().Last().GetXaxis().GetTitle(),bkgStack.GetStack().Last().GetYaxis().GetTitle()))
 
 	if not ratio==None:
 		# containers
@@ -317,12 +345,17 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		if not datHistos == []: datStack.GetStack().Last().Draw("same" if not (bkgHistos == [] and sigHistos == []) else "")
 		# draw (bottom)
 		c2.cd()
-		setStyleTH1Fratio(ratio)
-		#ratio.GetYaxis().SetRangeUser(0.5,1.5)
-		ratio.Draw('e')
+		ratioshifted = ratio.Clone("ratioshifted")
+		for i in range(ratioshifted.GetNbinsX()): ratioshifted.SetBinContent(i,-1.0)
+		ratioshifted.Add(ratio,1.0)
+		setStyleTH1Fratio(ratioshifted)
+		ratioshifted.Draw('e')
+		gPad.Update()
+		mcErrorUp.Draw("same,hist")
+		mcErrorDown.Draw("same,hist")
 		# line through y=1
 		gPad.Update()
-		line = TLine(gPad.GetUxmin(),1.0,gPad.GetUxmax(),1.0)
+		line = TLine(gPad.GetUxmin(),0.0,gPad.GetUxmax(),0.0)
 		line.SetLineWidth(2)
 		line.SetLineColor(kBlack)
 		line.Draw("same")
