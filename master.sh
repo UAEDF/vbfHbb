@@ -68,7 +68,7 @@ $prefix
 #* data/mc NOM *
 #***************
 trigger="-t NOMMC --datatrigger NOM -r NOM"
-selection="-p jetPt0_gt80;jetPt1_gt70;jetPt2_gt50;jetPt3_gt40;mqq1_gt250;dEtaqq1_gt2p5;Btag0_LL;nLeptons;dPhibb_lt2"
+selection="-p jetPt0_gt80;jetPt1_gt70;jetPt2_gt50;jetPt3_gt40;mqq1_gt250;dEtaqq1_gt2p5;Btag0_LL;nLeptons;dPhibb1_lt2"
 outfile="-o plots/rootfiles/control_NOM.root"
 execute="--drawstack"
 

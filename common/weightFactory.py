@@ -18,6 +18,7 @@ class weightFactory:
 	def getFormula(self,weights,sample_tag):
 		self.wOut='1.'
 		for iWght in weights.split(','):
+			if iWght == ''     : continue
 			if iWght == 'PU'   : self.addPUWght(sample_tag)
 			if iWght == 'XSEC' : self.addXSWght(sample_tag)
 			if iWght == 'LUMI' : self.addLUWght(sample_tag)

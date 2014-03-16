@@ -63,6 +63,8 @@ def parser(mp=None):
 	mgd.add_option('--numonly',help='Create 2D map numerator only.',action='store_true',default=False)
 	mgd.add_option('-c','--cor',help='Create 1D map ("var1;binlim1#binlim2#...").',type='str',action='callback',callback=optsplitlist)
 	mgd.add_option('--significance',help='Do significance map calculations; give: var1,var2.',type='str',action='callback',callback=optsplit)
+	mgd.add_option('--redo',help='Refill if existing.',action='store_true',default=False)
+	mgd.add_option('--notext',help='Don\'t draw legends.',action='store_true',default=False)
 
 	mgst = OptionGroup(mp,cyan+"Run for subselection determined by variable, sample and/or selection/trigger"+plain)
 	mgst.add_option('-v','--variable',help=purple+"Run only for these variables (comma separated)."+plain,dest='variable',default='',type='str',action='callback',callback=optsplit)
@@ -218,12 +220,12 @@ def getYields(opts,loadedSamples,KFWghts):
 
 # HELPER FUNCTIONS #################################################################################
 def printKFWghtsTable(KFWghts):
-	print "%65s | %30s | %12s |"%('sel','trg','K-factor')
+	print "%115s | %30s | %12s |"%('sel','trg','K-factor')
 	tprev=""
 	for s,t in sorted(KFWghts.iterkeys(),key=lambda (x,y):(y,x)):
 		if not tprev==t: 
-			print '-'*(3*3 + 107)
-		print "%65s | %30s |"%(s,t),
+			print '-'*(3*3 + 157)
+		print "%115s | %30s |"%(s,t),
 		print "%12s |"%("%.6f"%KFWghts[(s,t)] if KFWghts[(s,t)] else "-")
 		tprev=t
 	print
@@ -278,10 +280,18 @@ def printYieldTableLatex(opts,yieldarchive,keys):
 
 
 # MAIN #############################################################################################
-def main(mp=None):
+def main(mp=None,parseronly=None):
 	l1("Parsing options:")
 	mp = parser(mp)
 	opts,args = mp.parse_args() 
+
+
+# open/create output file
+	if not os.path.exists(os.path.split(opts.fout)[0]) and not os.path.split(opts.fout)[0]=='': os.makedirs(os.path.split(opts.fout)[0])
+	fout = TFile(opts.fout,'recreate' if (not os.path.exists(opts.fout) or opts.new) else 'update')
+	fout.cd()
+
+	if parseronly: return opts,fout
 
 # initialize
 	# decide batch mode
@@ -297,12 +307,6 @@ def main(mp=None):
 	# load style
 	inroot('.x %s'%(os.path.join(basepath,'../common/styleCMS.C+')))
 	inroot('gROOT->ForceStyle();')
-
-
-# open/create output file
-	if not os.path.exists(os.path.split(opts.fout)[0]) and not os.path.split(opts.fout)[0]=='': os.makedirs(os.path.split(opts.fout)[0])
-	fout = TFile(opts.fout,'recreate' if (not os.path.exists(opts.fout) or opts.new) else 'update')
-	fout.cd()
 
 
 # load sample info
@@ -335,7 +339,7 @@ def main(mp=None):
 				variables[v]['xmin'] = x1
 				variables[v]['xmax'] = x2
 				print x1,x2,b,v
-				variables[v]['title_y'] = 'N / %.2f'%((float(x2)-float(x1))/float(b))
+				variables[v]['title_y'] = 'Events / %.2f'%((float(x2)-float(x1))/float(b))
 
 
 # convert samples
@@ -345,22 +349,24 @@ def main(mp=None):
 	loadedSamples = loadSamples(opts,samples)
 
 # load oneDWght (if needed)
-	if not opts.weight == [[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: 
-		l1("Loaded oneDWght() and map.")
-		# checks
-		if not len(opts.weight)>3: sys.exit(red+"Check oneDWght weight settings. Exiting."+plain)
-		if not len(opts.weight[3])>1: sys.exit(red+"Please provide filename;keyname for the oneDMap. Exiting."+plain)
-		if not os.path.exists(opts.weight[3][0]): sys.exit(red+"Check oneDWght file path. Exiting."+plain)
-		loadOneDWght(fout,opts.weight[3][0],opts.weight[3][1])
+	if len(opts.weight)>1:
+		if not opts.weight == [[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: 
+			l1("Loaded oneDWght() and map.")
+			# checks
+			if not len(opts.weight)>3: sys.exit(red+"Check oneDWght weight settings. Exiting."+plain)
+			if not len(opts.weight[3])>1: sys.exit(red+"Please provide filename;keyname for the oneDMap. Exiting."+plain)
+			if not os.path.exists(opts.weight[3][0]): sys.exit(red+"Check oneDWght file path. Exiting."+plain)
+			loadOneDWght(fout,opts.weight[3][0],opts.weight[3][1])
 
 # load twoDWght (if needed)
-	if not opts.weight == [[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: 
-		l1("Loaded twoDWght() and map.")
-		# checks
-		if not len(opts.weight)>3: sys.exit(red+"Check twoDWght weight settings. Exiting."+plain)
-		if not len(opts.weight[3])>1: sys.exit(red+"Please provide filename;keyname for the twoDMap. Exiting."+plain)
-		if not os.path.exists(opts.weight[3][0]): sys.exit(red+"Check twoDWght file path. Exiting."+plain)
-		loadTwoDWght(fout,opts.weight[3][0],opts.weight[3][1])
+	if len(opts.weight)>1:
+		if not opts.weight == [[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: 
+			l1("Loaded twoDWght() and map.")
+			# checks
+			if not len(opts.weight)>3: sys.exit(red+"Check twoDWght weight settings. Exiting."+plain)
+			if not len(opts.weight[3])>1: sys.exit(red+"Please provide filename;keyname for the twoDMap. Exiting."+plain)
+			if not os.path.exists(opts.weight[3][0]): sys.exit(red+"Check twoDWght file path. Exiting."+plain)
+			loadTwoDWght(fout,opts.weight[3][0],opts.weight[3][1])
 		
 # print kfwght
 	KFWghts = {}
