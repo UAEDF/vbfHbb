@@ -319,7 +319,6 @@ def main(mp=None,parseronly=None):
 		if any([x in samples[key]['tag'] for x in opts.nosample]): del samples[key] 
 		elif not any([x in samples[key]['tag'] for x in opts.sample]): del samples[key]
 
-
 # load variable info
 	variablesfull = json.loads(filecontent(opts.jsonvars))
 	variables = variablesfull['variables'] # dictionary
@@ -338,7 +337,7 @@ def main(mp=None,parseronly=None):
 				variables[v]['nbins_x'] = b
 				variables[v]['xmin'] = x1
 				variables[v]['xmax'] = x2
-				print x1,x2,b,v
+				#print x1,x2,b,v
 				variables[v]['title_y'] = 'Events / %.2f'%((float(x2)-float(x1))/float(b))
 
 

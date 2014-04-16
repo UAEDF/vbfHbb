@@ -1,91 +1,142 @@
 #!/bin/sh
 
-if [ "$1" == "0" ]; then 
-	prefix='echo';
-else
-	prefix='';
+if [ "$1" == "all" ]; then
+### TRIGGER
+./trigger/mkTurnonCurves.sh 1			# MAPS
+./trigger/mkTurnonCurves.sh 2 1			# bias NOM
+./trigger/mkTurnonCurves.sh 2 2			# bias VBF
+./trigger/mkTurnonCurves.sh 3 1			# NOM map1
+./trigger/mkTurnonCurves.sh 3 2			# NOM map2
+./trigger/mkTurnonCurves.sh 3 3			# VBF map3
+
+### TRIGGER UNCERTAINTY
+./trigger/mkTriggerUncertainty.sh 1		# MAPS 
+./trigger/mkTriggerUncertainty.sh 2		# DISTMAPS
+./trigger/mkTriggerUncertainty.sh 3		# SCALEFACTORS
+./trigger/mkTriggerUncertainty.sh 4		# OVERLAYS
+
+### PLOTS
+./plots/mkHist.sh 1						# MAPS
+./plots/mkHist.sh 2 1					# NOM
+./plots/mkHist.sh 2 2					# NOM map1
+./plots/mkHist.sh 2 3					# NOM map2
+./plots/mkHist.sh 2 4					# VBF
+./plots/mkHist.sh 2 5					# VBF map3
+./plots/mkHist.sh 2 6					# VBF      NOMveto
+./plots/mkHist.sh 2 7					# VBF map3 NOMveto
 fi
 
-binstrigger="--binning mvaNOM;10;-1;1,mbbReg1;15;0;300,jetBtag00;20;0;1,jetBtag10;20;0;1,jetPt0;20;0;400,jetPt1;15;0;300,jetPt2;8;0;160,jetPt3;6;0;120,dEtaqq1;14;2;9,mqq1;20;0;2000,dPhibb1;10;0;2"
-binscomparison="--binning mvaNOM;40;-1;1,mbbReg1;60;0;300,jetBtag00;50;0;1,jetBtag10;50;0;1,jetPt0;80;0;400,jetPt1;60;0;300,jetPt2;24;0;160,jetPt3;24;0;120,dEtaqq1;56;2;9,mqq1;80;0;2000,dPhibb1;40;0;2"
-
-#********************
-#* TRIGGER BIAS NOM *
-#********************
-baseoptions="-d -S common/vbfHbb_samples_2013.json -V common/vbfHbb_variables_2013.json -C common/vbfHbb_cuts.json -I common/vbfHbb_info_2013.json -G /data/UAData/autumn2013 --fileformat 2"
-trigger="-t NOMMC --datatrigger NOMMC -r AV80"
-selection="-p jetPt0_gt80;jetPt1_gt70;jetPt2_gt50;jetPt3_gt40;mqq1_gt250;dEtaqq1_gt2p5;Btag0_LL"
-weight="-w 19800.,XSEC;LUMI;PU#3"
-samples="-s JetMon,QCD"
-variables="-v mqq1,mbbReg1,dEtaqq1,mvaNOM,jetBtag00,jetBtag10,jetPt0,jetPt1,jetPt2,jetPt3,dPhibb1"
-outfile="-o trigger/rootfiles/trigger_Nmin1_NOM_bias.root"
-execute="--drawstack --closure --shade"
-
-if [ "$1" == "1" ] || [ "$1" == "0" ]; then
-	$prefix ./trigger/mkTurnonCurves.py $baseoptions $binstrigger $trigger $selection $weight $samples $variables $outfile $execute
+### WEBPAGE
+if [ "$1" == "cpweb" ]; then
+	indexphp="/afs/cern.ch/user/s/salderwe/www/vbfhbb/index.php"
+	red="\033[0;31m"
+	green="\033[0;32m"
+	plain="\033[m"
+# prepare
+	basefolders=(\
+	"/afs/cern.ch/user/s/salderwe/www/vbfhbb/trigger" \
+	"/afs/cern.ch/user/s/salderwe/www/vbfhbb/plots" 
+	)
+	sources=(\
+	"trigger/plots/trigger_Nmin1_NOM_bias" \
+	"trigger/plots/trigger_Nmin1_VBF_bias" \
+	"trigger/plots/trigger_Nmin1_NOM_jetBtag00-jetBtag10" \
+	"trigger/plots/trigger_Nmin1_NOM_jetBtag00-mqq1" \
+	"trigger/plots/trigger_Nmin1_VBF_mqq2-dEtaqq2" \
+	"trigger/plots/trigger_Nmin1_VBF_mqq2-dEtaqq2_bins2" \
+	"trigger/plots/trigger_Nmin1_VBF_NOMveto_mqq2-dEtaqq2_bins2" \
+	"trigger/plots/trigger_Nmin1_VBF_NOMvetoNoBtag_mqq2-dEtaqq2_bins2" \
+	"trigger/plots/trigger_Nmin1_VBF_NOMvetoSelNoBtag_mqq2-dEtaqq2_bins2" \
+	"trigger/plots/trigger_Nmin1_VBF_mqq2-dEtaqq2_LL" \
+	"trigger/plots/trigger_Nmin1_VBF_mqq2-dEtaqq2_corrected" \
+	"trigger/plots/trigger_2DMaps_NOM_jetBtag00-jetBtag10" \
+	"trigger/plots/trigger_2DMaps_NOM_jetBtag00-mqq1" \
+	"trigger/plots/trigger_2DMaps_VBF_mqq2-dEtaqq2" \
+	"trigger/plots/trigger_2DMaps_VBF_mqq2-dEtaqq2_bins2" \
+	"trigger/plots/trigger_2DMaps_VBF_mqq2-dEtaqq2_corrected" \
+	"trigger/plots/trigger_2DMaps_VBF_NOMveto_mqq2-dEtaqq2_bins2" \
+	"trigger/plots/trigger_2DMaps_VBF_NOMvetoNoBtag_mqq2-dEtaqq2_bins2" \
+	"trigger/plots/trigger_2DMaps_VBF_NOMvetoSelNoBtag_mqq2-dEtaqq2_bins2" \
+	"trigger/plots/trigger_2DMaps_VBF_mqq2-dEtaqq2_LL" \
+	"plots/plots/control_NOM" \
+	"plots/plots/control_NOM_jetBtag00-jetBtag10" \
+	"plots/plots/control_NOM_jetBtag00-mqq1" \
+	"plots/plots/control_VBF" \
+	"plots/plots/control_VBF_mqq2-dEtaqq2" \
+	"plots/plots/control_VBF_mqq2-dEtaqq2_bins2" \
+	"plots/plots/control_VBF_mqq2-dEtaqq2_corrected" \
+	"plots/plots/control_VBF_NOMveto" \
+	"plots/plots/control_VBF_NOMveto_mqq2-dEtaqq2_bins2" \
+	"plots/plots/control_VBF_NOMvetoNoBtag" \
+	"plots/plots/control_VBF_NOMvetoNoBtag_mqq2-dEtaqq2_bins2" \
+	"plots/plots/control_VBF_NOMvetoSelNoBtag" \
+	"plots/plots/control_VBF_NOMvetoSelNoBtag_mqq2-dEtaqq2_bins2" \
+#	"trigger/plots/trigger_ScaleFactors_NOM_jetBtag00-jetBtag10" \
+#	"trigger/plots/trigger_ScaleFactors_NOM_jetBtag00-mqq1" \
+#	"trigger/plots/trigger_ScaleFactors_VBF_mqq2-dEtaqq2" \
+#	"trigger/plots/trigger_ScaleFactors_NOM_all" \
+#	"trigger/plots/trigger_ScaleFactors_VBF_all" \
+	)
+	folders=()
+	for s in ${sources[@]}; do
+		if [ ! -d $s ]; then 
+			suffix="";
+		elif [[ $s == *control* ]]; then
+			path=`ls $s`;
+			if [ ! "$path" == "" ]; then suffix="${s/plots\//}/$(basename `ls $s/`)"; fi
+		elif [[ $s == *Nmin1* ]]; then 
+			suffix=${s/plots\//};
+			suffix=${suffix/trigger/trigger\/Nmin1};
+		elif [[ $s == *2DMaps* ]]; then
+			suffix=${s/plots\//};
+			suffix=${suffix/trigger/trigger\/2DMaps};
+		elif [[ $s == *ScaleFactors* ]]; then
+			suffix=${s/plots\//};
+			suffix=${suffix/trigger/trigger\/ScaleFactors};
+		else
+			suffix="";
+		fi
+		folders=(${folders[@]} "/afs/cern.ch/user/s/salderwe/www/vbfhbb/$suffix")
+	done
+	
+# start copying
+	for f in ${basefolders[@]}; do 
+		echo -e "${red}Cleaning${plain} $f";
+		rm -rf $f;
+		if [ ! -d $f ]; then mkdir $f; fi
+		cp $indexphp $f/index.php
+	done
+	for i in `seq 0 $((${#folders[@]}-1))`; do
+		s=${sources[$i]};
+		f=${folders[$i]};
+		echo -e "${green}Copying from${plain} $s ${green}to${plain} $f"
+		if [ ! -d $f ]; then 
+			map0=$f
+			map1=${f/\/$(basename $f)/}
+			map2=${map1/\/$(basename $map1)/}
+			if [[ $f == *control* ]] || [[ $f == *Nmin1* ]] || [[ $f == *2DMaps* ]] || [[ $f == *ScaleFactors* ]]; then 
+				[ ! -d $map1 ] && mkdir $map1;
+				cp $indexphp "$map1/index.php";
+				[ ! -d $map0 ] && mkdir $map0;
+				cp $indexphp "$map0/index.php";
+			fi
+		fi
+		if [[ $f == *2DMaps* ]];then
+			source=$s/*/*/*.png;
+		elif [[ $f == *ScaleFactors* ]];then
+			source=$s/*/ScaleFactors1D_*.png;
+		elif [[ $f == *Nmin1* ]] || [[ $f == *control* ]]; then
+		   	source=$s/*/*/*/*/*.png;
+		else
+			echo -e "${red}Empty:${plain} $s";
+			continue;#break;	
+		fi
+		if [ "`ls $s`" == "" ]; then 
+			echo -e "${red}Empty:${plain} $s";
+			continue;#break; 
+		fi
+		cp $source $f/;
+		tar -cjf $f/$(basename $f)_pdf.tar.bz2 ${source//png/pdf};
+		tar -cjf $f/$(basename $f)_png.tar.bz2 ${source};
+	done
 fi
-
-$prefix
-
-#********************
-#* TRIGGER MAPS NOM *
-#********************
-outfile="-o trigger/rootfiles/trigger_2DMaps_NOM_jetBtag00-jetBtag10.root"
-mapstring="-m jetBtag00;0.0#0.244#0.679#0.898#1.001,jetBtag10;0.0#0.244#0.679#0.898#1.001"
-if [ "$1" == "2" ] || [ "$1" == "0" ]; then
-	$prefix ./common/main.py $baseoptions $trigger $selection $weight $samples $outfile $mapstring
-fi
-
-outfile="-o trigger/rootfiles/trigger_2DMaps_NOM_jetBtag00-mqq1.root"
-mapstring="-m jetBtag00;0.0#0.244#0.679#0.898#1.001,mqq1;0#250#450#700#1200#2000"
-if [ "$1" == "2" ] || [ "$1" == "0" ]; then
-	$prefix ./common/main.py $baseoptions $trigger $selection $weight $samples $outfile $mapstring
-fi
-
-$prefix
-
-#***********************
-#* TRIGGER CLOSURE NOM *
-#***********************
-execute="--drawstack --overlay --shade"
-
-outfile="-o trigger/rootfiles/trigger_Nmin1_NOM_closure.root"
-weight="-w 19800.,XSEC;LUMI;PU#3;MAP#jetBtag[b1[0]]#jetBtag[b2[0]],,trigger/rootfiles/trigger_2DMaps_NOM_jetBtag00-jetBtag10.root;2DMaps/JetMon-QCD/2DMap_JetMon-QCD-Rat_sBtag0_LL-dEtaqq0_gt2p5-jetPt0_gt80-jetPt1_gt70-jetPt2_gt50-jetPt3_gt40-mqq1_gt250-tNOMMC-rAV80-dNOMMC_jetBtag00-jetBtag10"
-if [ "$1" == "3" ] || [ "$1" == "0" ]; then
-	$prefix ./trigger/mkTurnonCurves.py $baseoptions $binstrigger $trigger $selection $weight $samples $variables $outfile $execute
-fi
-
-outfile="-o trigger/rootfiles/trigger_Nmin1_NOM_closure.root"
-weight="-w 19800.,XSEC;LUMI;PU#3;MAP#jetBtag[b1[0]]#mqq[1],,trigger/rootfiles/trigger_2DMaps_NOM_jetBtag00-mqq1.root;2DMaps/JetMon-QCD/2DMap_JetMon-QCD-Rat_sBtag0_LL-dEtaqq0_gt2p5-jetPt0_gt80-jetPt1_gt70-jetPt2_gt50-jetPt3_gt40-mqq1_gt250-tNOMMC-rAV80-dNOMMC_jetBtag00-mqq1"
-if [ "$1" == "4" ] || [ "$1" == "0" ]; then
-	$prefix ./trigger/mkTurnonCurves.py $baseoptions $binstrigger $trigger $selection $weight $samples $variables $outfile $execute
-fi
-
-$prefix
-
-######################################################################################################################################################
-#***************
-#* data/mc NOM *
-#***************
-trigger="-t NOMMC --datatrigger NOM -r NOM"
-selection="-p jetPt0_gt80;jetPt1_gt70;jetPt2_gt50;jetPt3_gt40;mqq1_gt250;dEtaqq1_gt2p5;Btag0_LL;nLeptons;dPhibb1_lt2"
-outfile="-o plots/rootfiles/control_NOM.root"
-execute="--drawstack"
-
-weight="-w 19800.,XSEC;LUMI;PU#0;KFAC"
-if [ "$1" == "5" ] || [ "$1" == "0" ]; then
-	$prefix ./plots/mkPlots.py $baseoptions $binscomparison $trigger $trigger $selection $weight $samples $variables $outfile $execute 
-fi
-
-weight="-w 19800.,XSEC;LUMI;PU#0;KFAC;MAP#jetBtag[b1[0]]#jetBtag[b2[0]],,trigger/rootfiles/trigger_2DMaps_NOM_jetBtag00-jetBtag10.root;2DMaps/JetMon-QCD/2DMap_JetMon-QCD-Rat_sBtag0_LL-dEtaqq0_gt2p5-jetPt0_gt80-jetPt1_gt70-jetPt2_gt50-jetPt3_gt40-mqq1_gt250-tNOMMC-rAV80-dNOMMC_jetBtag00-jetBtag10"
-if [ "$1" == "6" ] || [ "$1" == "0" ]; then
-	$prefix ./plots/mkPlots.py $baseoptions $binscomparison $trigger $trigger $selection $weight $samples $variables $outfile $execute 
-fi
-
-weight="-w 19800.,XSEC;LUMI;PU#0;KFAC;MAP#jetBtag[b1[0]]#mqq[1],,trigger/rootfiles/trigger_2DMaps_NOM_jetBtag00-mqq1.root;2DMaps/JetMon-QCD/2DMap_JetMon-QCD-Rat_sBtag0_LL-dEtaqq0_gt2p5-jetPt0_gt80-jetPt1_gt70-jetPt2_gt50-jetPt3_gt40-mqq1_gt250-tNOMMC-rAV80-dNOMMC_jetBtag00-mqq1"
-if [ "$1" == "7" ] || [ "$1" == "0" ]; then
-	$prefix ./plots/mkPlots.py $baseoptions $binscomparison $trigger $trigger $selection $weight $samples $variables $outfile $execute 
-fi
-
-######################################################################################################################################################
-
