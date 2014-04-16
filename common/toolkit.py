@@ -206,7 +206,7 @@ def setStyleTH1Fratio(h):
 	#h.GetYaxis().SetRangeUser(0.5,1.5)
 	#h.GetYaxis().SetRangeUser(0.0,2.0)
 	gPad.SetGridy(1)
-	h.GetYaxis().SetRangeUser(-0.75,0.75)
+	h.GetYaxis().SetRangeUser(-0.5,0.5)
 	h.GetYaxis().SetNdivisions(205)
 	h.GetXaxis().SetTickLength(0.08)
 	h.GetYaxis().SetTickLength(0.015)
@@ -219,7 +219,7 @@ def setStyleTH1Fratio(h):
 #	h.SetFillStyle(1)
 	h.SetMarkerStyle(20)
 	h.SetMarkerColor(kBlack)
-	h.SetMarkerSize(0.8)
+	h.SetMarkerSize(0.7)
 
 # CLOSE BRACKETS OF STRING #########################################################################
 def closeBrackets(text):

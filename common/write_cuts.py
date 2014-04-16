@@ -101,14 +101,14 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 			if 'selection' in cuts['sel'][k].keys():
 				subsel = [y[1] for x,y in cuts['sel'][k].iteritems() if x=='selection']
 				es, eslabels = write_cuts(subsel,['None'],[],[],sample=sample,jsonsamp=kwargs['jsonsamp'],jsoncuts=kwargs['jsoncuts'],weight=[[''],['']],KFWght=KFWght,trigequal=kwargs['trigequal'])
-				es = '(!'+es[1:]
+				es = '('+es[1:]
 				est += es + ' && '
 			if 'trigger' in cuts['sel'][k].keys():
 				subtrg = [y[1] for x,y in cuts['sel'][k].iteritems() if x=='trigger']
 				et, etlabels = write_cuts(['None'],subtrg,[],[],sample=sample,jsonsamp=kwargs['jsonsamp'],jsoncuts=kwargs['jsoncuts'],weight=[[''],['']],KFWght=KFWght,trigequal=kwargs['trigequal'])
-				et = '(!'+et[1:]
+				et = '('+et[1:]
 				est += et + ' && '
-	if not est=='': est = group(est.rstrip(' && '))
+	if not est=='': est = group("!"+group(est.rstrip(' && ')))
 
 	# edit weights if needed
 	wfString = ''

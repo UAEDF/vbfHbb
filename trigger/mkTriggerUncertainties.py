@@ -210,7 +210,7 @@ def getCanvases(opts,fout,info):
 	c = TCanvas("c","",1800,1200)
 	for i in gDirectory.GetListOfKeys():
 		gPad.SetRightMargin(0.25)
-		text = printText(1-0.1,1-0.15,i.GetName().split('_')[1],"NOM" if "NOM" in fout.GetName() else ("VBF" if "VBF" in fout.GetName() else "???"),info[4])#,0.020,kBlue-2)
+		text = printText(1-0.1,1-0.15,i.GetName().split('_')[1],"NOM" if "NOM_" in fout.GetName() else ("VBF" if "VBF" in fout.GetName() else "???"),info[4])#,0.020,kBlue-2)
 		h = fout.Get("ScaleFactors/%s"%(i.GetName()))
 		h.SetTitle("")
 		th2f = (h.IsA().GetName() == "TH2F")

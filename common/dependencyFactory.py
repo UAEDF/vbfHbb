@@ -40,9 +40,9 @@ def drawNsave(fout,h,hpath,htitle,hopts,printout):
 	if set(hopts.split(','))==set('text,colz,error'.split(',')): h.SetMarkerSize(0.75)
 	h.SetTitleOffset(1.0,'Y')
 	h.Draw(hopts)
-	makeDirs('plots/%s/%s'%(fout.GetName().split('/')[-1].strip(".root"),hpath))
-	canvas.SaveAs('plots/%s/%s/%s.png'%(fout.GetName().split('/')[-1].strip(".root"),hpath,htitle))
-	canvas.SaveAs('plots/%s/%s/%s.pdf'%(fout.GetName().split('/')[-1].strip(".root"),hpath,htitle))
+	makeDirs('%s/../trigger/plots/%s/%s'%(basepath,fout.GetName().split('/')[-1].strip(".root"),hpath))
+	canvas.SaveAs('%s/../trigger/plots/%s/%s/%s.png'%(basepath,fout.GetName().split('/')[-1].strip(".root"),hpath,htitle))
+	canvas.SaveAs('%s/../trigger/plots/%s/%s/%s.pdf'%(basepath,fout.GetName().split('/')[-1].strip(".root"),hpath,htitle))
 	l3("%-45s (eog%-s"%(printout.split('(eog')[0],printout.split('(eog')[1]))
 	canvas.Close()
 
@@ -165,10 +165,10 @@ def get2DMapCombo(opts,fout,inputs):
 	mc.Write(mc.GetName(),TH1.kOverwrite)
 	mc.GetYaxis().SetTitleOffset(1)
 	mc.Draw("colz,error,text90")
-	makeDirs('plots/%s'%path)
-	canvas.SaveAs('plots/%s/%s/%s.png'%(fout.GetName().split('/')[-1][:-5],path,name))
-	canvas.SaveAs('plots/%s/%s/%s.pdf'%(fout.GetName().split('/')[-1][:-5],path,name))
-	l2("Written map to plots/%s/%s/%s.png"%(fout.GetName().split('/')[-1][:-5],path,name))
+	makeDirs('%s/../trigger/plots/%s'%(basepath,path))
+	canvas.SaveAs('%s/../trigger/plots/%s/%s/%s.png'%(basepath,fout.GetName().split('/')[-1][:-5],path,name))
+	canvas.SaveAs('%s/../trigger/plots/%s/%s/%s.pdf'%(basepath,fout.GetName().split('/')[-1][:-5],path,name))
+	l2("Written map to %s/../trigger/plots/%s/%s/%s.png"%(basepath,fout.GetName().split('/')[-1][:-5],path,name))
 	# clean
 	canvas.Close()
 
@@ -228,7 +228,7 @@ def get1DMap(opts,fout,samples,variables,sel,trg,ref,vx):
 				l3("Loaded from file for group: %s%s%s"%(cyan,group,plain))
 ## END LOOP over ALL SAMPLES
 		# to save
-		path = 'plots/%s/1DMaps/%s'%(fout.GetName().split('/')[-1][:-5],group)
+		path = '%s/../trigger/plots/%s/1DMaps/%s'%(basepath,fout.GetName().split('/')[-1][:-5],group)
 		makeDirs(path)
 		# ratio
 		maps[group]['Rat'].Divide(maps[group]['Num'],maps[group]['Den'],1.0,1.0,'B')
@@ -272,13 +272,12 @@ def get1DMap(opts,fout,samples,variables,sel,trg,ref,vx):
 		maps[ratio]['Rat'].SetTitleOffset(1.0,"Y")
 		maps[ratio]['Rat'].SetMarkerSize(maps[ratio]['Rat'].GetMarkerSize()*0.75)
 		maps[ratio]['Rat'].Draw('text45,error')
-		print '\033[1;31mRatio drawn\033[m'
 		
 		# save		
 		gDirectory.cd('%s:/1DMaps/%s'%(fout.GetName(),ratio))
 		maps[ratio]['Rat'].Write(maps[ratio]['Rat'].GetName(),TH1.kOverwrite)
 
-		path = "plots/%s/1DMaps/%s"%(fout.GetName().split('/')[-1][:-5],ratio)
+		path = "%s/../trigger/plots/%s/1DMaps/%s"%(basepath,fout.GetName().split('/')[-1][:-5],ratio)
 		makeDirs(path)
 		for tag in ['Num','Den','Rat']:
 			if not tag in maps[ratio]: continue
@@ -368,7 +367,7 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 				l3("Loaded from file for group: %s%s%s"%(cyan,group,plain))
 ## END LOOP over ALL SAMPLES
 		# to save
-		path = 'plots/%s/2DMaps/%s'%(fout.GetName().split('/')[-1][:-5],group)
+		path = '%s/../trigger/plots/%s/2DMaps/%s'%(basepath,fout.GetName().split('/')[-1][:-5],group)
 		makeDirs(path)
 		if not opts.numonly:
 			# ratio
@@ -435,6 +434,16 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 #$		maps[ratio]['Rat'].Divide(maps[ratio.split('-')[0]]['Rat'].GetPaintedHistogram(),maps[ratio.split('-')[1]]['Rat'].GetPaintedHistogram())
 		maps[ratio]['Rat'].Divide(maps[ratio.split('-')[0]]['Rat'],maps[ratio.split('-')[1]]['Rat'])
 
+###### CORRECTION FACTOR
+#####		for ix in range(maps[ratio]['Rat'].GetNbinsX()+1):
+#####			for iy in range(maps[ratio]['Rat'].GetNbinsY()+1):
+#####				x = maps[ratio]['Rat'].GetXaxis().GetBinCenter(ix)
+#####				y = maps[ratio]['Rat'].GetYaxis().GetBinCenter(iy)
+#####				if y >= 3.5	and y < 4.0: maps[ratio]['Rat'].SetBinContent(ix,iy,maps[ratio]['Rat'].GetBinContent(ix,iy)*1.0/0.8)
+#####				elif y >= 4.0	and y < 4.5: maps[ratio]['Rat'].SetBinContent(ix,iy,maps[ratio]['Rat'].GetBinContent(ix,iy)*1.0/0.92)
+#####				elif y >= 4.5	and y < 5.0: maps[ratio]['Rat'].SetBinContent(ix,iy,maps[ratio]['Rat'].GetBinContent(ix,iy)*1.0/1.0)
+#####				elif y >= 5.0	and y < 5.5: maps[ratio]['Rat'].SetBinContent(ix,iy,maps[ratio]['Rat'].GetBinContent(ix,iy)*1.0/1.15)
+
 		# plot
 		canvas.cd()
 		maps[ratio]['Rat'].SetTitleOffset(1.0,"Y")
@@ -449,14 +458,12 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 			text,selleg = addText(opts,'Data / QCD','SF',vx,vy,sel,trg,ref)
 			text.Draw("same")
 			selleg.Draw("same")
-		print '\033[1;31mRatio drawn\033[m'
-		canvas.WaitPrimitive()
 		
 		# save		
 		gDirectory.cd('%s:/2DMaps/%s'%(fout.GetName(),ratio))
 		maps[ratio]['Rat'].Write(maps[ratio]['Rat'].GetName(),TH1.kOverwrite)
 
-		path = "plots/%s/2DMaps/%s"%(fout.GetName().split('/')[-1][:-5],ratio)
+		path = "%s/../trigger/plots/%s/2DMaps/%s"%(basepath,fout.GetName().split('/')[-1][:-5],ratio)
 		makeDirs(path)
 		for tag in ['Num','Den','Rat']:
 			if not tag in maps[ratio]: continue
@@ -524,7 +531,7 @@ def getSignificance(opts,fout,samples,variables,sel,trg,references,vx,vy):
 # 1) get efficiencies
 	gDirectory.cd('%s:/'%fout.GetName())
 	makeDirsRoot(fout,'effMaps/')
-	makeDirs('plots/%s/effMaps'%fout.GetName().split('/')[-1].strip(".root"))
+	makeDirs('%s/../trigger/plots/%s/effMaps'%(basepath,fout.GetName().split('/')[-1].strip(".root")))
 	effnames = {}
 	effs = {}
 	effsInt = {}
@@ -532,9 +539,9 @@ def getSignificance(opts,fout,samples,variables,sel,trg,references,vx,vy):
 		l2('EffMaps for group %s'%group)
 		gDirectory.cd('%s:/'%fout.GetName())
 		makeDirsRoot(fout,'effMaps/%s'%group)
-		makeDirs('plots/%s/effMaps/%s'%(fout.GetName().split('/')[-1].strip(".root"),group))
+		makeDirs('%s/../trigger/plots/%s/effMaps/%s'%(basepath,fout.GetName().split('/')[-1].strip(".root"),group))
 		makeDirsRoot(fout,'effIntMaps/%s'%group)
-		makeDirs('plots/%s/effIntMaps/%s'%(fout.GetName().split('/')[-1].strip(".root"),group))
+		makeDirs('%s/../trigger/plots/%s/effIntMaps/%s'%(basepath,fout.GetName().split('/')[-1].strip(".root"),group))
 		effnames[group] = {}
 		effs[group] = {}
 		effsInt[group] = {}
@@ -641,7 +648,7 @@ def getSignificance(opts,fout,samples,variables,sel,trg,references,vx,vy):
 			gDirectory.cd('%s:/'%fout.GetName())
 			makeDirsRoot(fout,'/'.join(path.split('/')[:-1]))
 			gDirectory.cd('/')
-			makeDirs('/'.join(['plots',fout.GetName().split('/')[-1].strip(".root")]+path.split('/')[:-1]))
+			makeDirs(basepath+'/../trigger/'+'/'.join(['plots',fout.GetName().split('/')[-1].strip(".root")]+path.split('/')[:-1]))
 			# get
 			if ndat in effs.keys() and nqcd in effs.keys() and ref in effs[ndat].keys() and ref in effs[nqcd].keys():
 				# calculate

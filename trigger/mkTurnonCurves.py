@@ -129,13 +129,13 @@ def ratio(eff1,eff2):
 	g.SetTitle("")
 	g.GetXaxis().SetTitle(eff1.GetPaintedGraph().GetXaxis().GetTitle())
 	g.GetYaxis().SetTitle("Data / MC")
-	g.GetYaxis().SetRangeUser(0.5,1.5) #0.6,1.4 #0.0,2.0
+	g.GetYaxis().SetRangeUser(0.65,1.35) #0.6,1.4 #0.0,2.0
 	g.GetYaxis().SetNdivisions(505)
 	g.GetXaxis().SetTickLength(0.08)
 	g.GetYaxis().SetTickLength(0.015)
 #	g.SetMarkerStyle(20)
 #	g.SetMarkerColor(kBlack)
-	g.SetMarkerSize(1.25)
+	g.SetMarkerSize(1.1) #1.25
 	return g
 
 def markerStyle(tag,smarker):
@@ -418,7 +418,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			ratioplots[group] = ratio(stacks['JetMon']['effis'].e,stacks[group]['effis'].e)
 			ratioplots[group].SetMarkerStyle(markerStyle(group,stacks[group]['markers']))
 			ratioplots[group].SetMarkerColor(markerColour(group,stacks[group]['colours']))
-			ratioplots[group].SetMarkerSize(1.5)
+			ratioplots[group].SetMarkerSize(1.0)
 			
 	cutsjson = json.loads(filecontent(opts.jsoncuts))
 	if not ratioplots=={}:

@@ -227,8 +227,8 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	left   = 1-gPad.GetRightMargin()+0.01
 	right  = 1-0.02
 	top    = 1-gPad.GetTopMargin()-0.58
-	bottom = 1-gPad.GetTopMargin()-0.58 - (0.03*rows) # n rows size 0.03
-	selleg = getSelLegend(left,bottom,right,top)
+	bottom = 1-gPad.GetTopMargin()-0.58 - (0.028*rows) # n rows size 0.03
+	selleg = getSelLegend(left,bottom,right,top,None,0,0,1,0.018)
 	for iline,line in enumerate(sorted([x.strip() for x in sel])): selleg.AddText('%s %s'%('sel:' if iline==0 else ' '*4,line))
 	selleg.AddText('trg: %s (MC)'%(','.join(trg)))
 	selleg.AddText('     %s (data)'%(','.join(opts.datatrigger[opts.trigger.index(trg)] if opts.datatrigger else trg)))
@@ -349,7 +349,9 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		for i in range(ratioshifted.GetNbinsX()): ratioshifted.SetBinContent(i,-1.0)
 		ratioshifted.Add(ratio,1.0)
 		setStyleTH1Fratio(ratioshifted)
-		ratioshifted.Draw('e')
+		for i in range(ratioshifted.GetNbinsX()): ratioshifted.SetBinError(i,0.00001)
+
+		ratioshifted.Draw('PE')
 		gPad.Update()
 		mcErrorUp.Draw("same,hist")
 		mcErrorDown.Draw("same,hist")
