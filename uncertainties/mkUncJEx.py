@@ -13,6 +13,11 @@ import main
 import ROOT
 from ROOT import *
 
+variables = ["mbbReg[0]","jetPt[0]","jetPt[1]","jetPtUnsmeared[0]","jetPtUnsmeared[1]","mvaNOM","mvaVBF"]
+min = [0,0,0,0,0,-1,-1]
+max = [300,400,400,400,400,1,1]
+bin = [30,40,40,40,40,20,20]
+set = [None,None,None,None,None,array('f',[-1.001,0.0,0.25,0.70,0.88,1.001]),array('f',[-1.001,0.0,0.3,0.65,1.001])]
 
 ##################################################
 def parser(mp=None):
@@ -44,9 +49,10 @@ def style01(h,color=kBlack,fill=None,line=1):
 		h.SetFillColor(fill)
 		h.SetFillStyle(4030)
 	return h
-	
+
+
 ##################################################
-def struct01(c,h,hp,hm):
+def func01(c,h,hp,hm):
 	c.cd()
 	p1 = TPad("ptop","ptop",0.0,0.30,1.0,1.0)
 	p2 = TPad("pbot","pbot",0.0,0.0,1.0,0.30)
@@ -58,10 +64,6 @@ def struct01(c,h,hp,hm):
 	p2.Draw()
 
 	c.Update()
-
-	h.Scale(1./h.Integral())
-	hp.Scale(1./hp.Integral())
-	hm.Scale(1./hm.Integral())
 
 	p2.cd()
 	rhp = hp.Clone("rhp")
@@ -93,7 +95,7 @@ def mkUncJEx():
 	##################################################	
 	# initialising
 	opts,fout = main.main(parser(),True)
-	fout.cd()
+	gDirectory.cd("%s:/"%fout.GetName())
 
 	jsoninfo = json.loads(filecontent(opts.jsoninfo))
 	jsonsamp = json.loads(filecontent(opts.jsonsamp))
@@ -102,7 +104,7 @@ def mkUncJEx():
 	##################################################	
 	# some ROOT settings
 	gStyle.SetOptStat(0)
-	gROOT.SetBatch(1)
+	gROOT.SetBatch(0)
 	ROOT.gErrorIgnoreLevel = kWarning
 	gROOT.ProcessLine("TH1::SetDefaultSumw2(1);")
 	#gStyle.SetLabelFont(43,"XYZ")
@@ -131,14 +133,10 @@ def mkUncJEx():
 			sprops['ttree'] = sprops['tfile'].Get("Hbb/events")
 			for f in friends: 
 				if sprops['tfile'].Get("%s/events"%f): sprops['ttree'].AddFriend("events%s = %s/events"%(f.lstrip("Hbb"),f))
-		min = [0,0,0,-1,-1]
-		max = [300,400,400,1,1]
-		bin = [30,40,40,20,20]
-		set = [None,None,None,array('f',[-1.001,0.0,0.25,0.70,0.88,1.001]),array('f',[-1.001,0.0,0.3,0.65,1.001])]
 
 		for ncat in ["%s"%x for x in ['Hbb']+friends]:
 			sprops[ncat] = {}
-			for inh,nh in enumerate(['mbbReg','jetPt','jetPtUnsmeared','mvaNOM','mvaVBF']):
+			for inh,nh in enumerate(variables):
 				if set[inh]: sprops[ncat][nh] = TH1F("h_%s_%s_%s"%(s,ncat,nh),"h_%s_%s_%s;%s;N"%(s,ncat,nh,nh),len(set[inh])-1,set[inh])
 				else: sprops[ncat][nh] = TH1F("h_%s_%s_%s"%(s,ncat,nh),"h_%s_%s_%s;%s;N"%(s,ncat,nh,nh),bin[inh],min[inh],max[inh])
 
@@ -163,7 +161,7 @@ def mkUncJEx():
 	for isp,sp in enumerate(sampleproperties.itervalues()):
 		c["JES"][sp['tag']] = {}
 		c["JER"][sp['tag']] = {}
-		for inh,nh in enumerate(['mbbReg','jetPt','jetPtUnsmeared','mvaNOM','mvaVBF']):
+		for inh,nh in enumerate(variables):
 			c["JES"][sp['tag']][nh] = TCanvas("c_JES_%s_%s"%(sp['tag'],nh),"c_JES_%s_%s"%(sp['tag'],nh),1800,1800)
 			c["JER"][sp['tag']][nh] = TCanvas("c_JER_%s_%s"%(sp['tag'],nh),"c_JER_%s_%s"%(sp['tag'],nh),1800,1800)
 
@@ -174,32 +172,34 @@ def mkUncJEx():
 		treedraw = tree.Draw
 		tarray = []
 
-		for incat,ncat in enumerate(["Hbb"]+friends):
+		for incat,ncat in enumerate(["%s"%x for x in ["Hbb"]+friends]):
 			l2("Category %s"%ncat)
-			for inh,nh in enumerate(['mbbReg','jetPt','jetPtUnsmeared','mvaNOM','mvaVBF']):
+			for inh,nh in enumerate(variables):
 				tstart = time()
 				l3("%-40s %-40s"%("Variable %s"%nh,"(time expected %.fs + %d modules)"%(tarray[-1]*((5-inh)+(4-incat)*5) if len(tarray)>0 else -999,len(sampleproperties)-isp-1)))
+				
+				if "JES" in ncat: c["JES"][sp['tag']][nh].cd()
+				elif "JER" in ncat: c["JER"][sp['tag']][nh].cd()
+				else: c["JES"][sp['tag']][nh].cd()
 	
-				h = sp[ncat][nh]
-				h.Reset()
-				if not ncat=="Hbb": treedraw("%s.%s>>%s"%(ncat.replace("Hbb","events"),nh,h.GetName()),"")
-				else: treedraw("%s>>%s"%(nh,h.GetName()),"")
+				if not ncat=="Hbb": treedraw("%s.%s>>%s"%(ncat.replace("Hbb","events"),nh,sp[ncat][nh].GetName()))
+				else: treedraw("%s>>%s"%(nh,sp[ncat][nh].GetName()))
 				tnow = time()
 				tarray += [time01(tstart,tnow,tarray)]
 
-		for inh,nh in enumerate(['mbbReg','jetPt','jetPtUnsmeared','mvaNOM','mvaVBF']):
+		for inh,nh in enumerate(variables):
 			# JES Up/Dn
 			sp["Hbb"][nh] = style01(sp["Hbb"][nh],kBlack,kGray)
 			sp["HbbJESUp"][nh] = style01(sp["HbbJESUp"][nh],kBlue+1,None,1)#7
 			sp["HbbJESDn"][nh] = style01(sp["HbbJESDn"][nh],kRed+1,None,1)#10
-			c["JES"][sp['tag']][nh] = struct01(c["JES"][sp['tag']][nh],sp["Hbb"][nh],sp["HbbJESUp"][nh],sp["HbbJESDn"][nh])
+
+			c["JES"][sp['tag']][nh] = func01(c["JES"][sp['tag']][nh],sp["Hbb"][nh],sp["HbbJESUp"][nh],sp["HbbJESDn"][nh])
 	
 			# JER Up/Dn
 			npad = 1 + inh + isp*5
-			#sp["Hbb"][nh] = style01(sp["Hbb"][nh],kBlack,kGray)
 			sp["HbbJERUp"][nh] = style01(sp["HbbJERUp"][nh],kBlue+1,None,1)#7
 			sp["HbbJERDn"][nh] = style01(sp["HbbJERDn"][nh],kRed+1,None,1)#10
-			c["JER"][sp['tag']][nh] = struct01(c["JER"][sp['tag']][nh],sp["Hbb"][nh],sp["HbbJERUp"][nh],sp["HbbJERDn"][nh])
+			c["JER"][sp['tag']][nh] = func01(c["JER"][sp['tag']][nh],sp["Hbb"][nh],sp["HbbJERUp"][nh],sp["HbbJERDn"][nh])
 			
 			c["JES"][sp['tag']][nh].Update()
 			c["JES"][sp['tag']][nh].SaveAs("plots/uncertainties/%s.png"%c["JES"][sp['tag']][nh].GetName())
