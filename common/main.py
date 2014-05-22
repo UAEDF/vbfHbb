@@ -280,7 +280,7 @@ def printYieldTableLatex(opts,yieldarchive,keys):
 
 
 # MAIN #############################################################################################
-def main(mp=None,parseronly=None):
+def main(mp=None,parseronly=False,variables=True,samples=True):
 	l1("Parsing options:")
 	mp = parser(mp)
 	opts,args = mp.parse_args() 
@@ -308,38 +308,43 @@ def main(mp=None,parseronly=None):
 	inroot('.x %s'%(os.path.join(basepath,'../common/styleCMS.C+')))
 	inroot('gROOT->ForceStyle();')
 
-
+	
 # load sample info
-	samplesfull = json.loads(filecontent(opts.jsonsamp))
-	samples = samplesfull['files'] # dictionary
-	# all samples from file if nothing is specified in options
-	if not opts.sample: opts.sample = ','.join([y['tag'] for (x,y) in samplesfull['files'].iteritems()])
-	# veto/accept according to opts.nosample and opts.sample
-	for key in samples.keys():
-		if any([x in samples[key]['tag'] for x in opts.nosample]): del samples[key] 
-		elif not any([x in samples[key]['tag'] for x in opts.sample]): del samples[key]
+	if samples:
+		samplesfull = json.loads(filecontent(opts.jsonsamp))
+		samples = samplesfull['files'] # dictionary
+		# all samples from file if nothing is specified in options
+		if not opts.sample: opts.sample = ','.join([y['tag'] for (x,y) in samplesfull['files'].iteritems()])
+		# veto/accept according to opts.nosample and opts.sample
+		for key in samples.keys():
+			if any([x in samples[key]['tag'] for x in opts.nosample]): del samples[key] 
+			elif not any([x in samples[key]['tag'] for x in opts.sample]): del samples[key]
 
 # load variable info
-	variablesfull = json.loads(filecontent(opts.jsonvars))
-	variables = variablesfull['variables'] # dictionary
-	# get variables in ROOT
-	inroot("vector<TString> variables; variables.clear();")
-	for v in [x['bare'] for x in variables.itervalues()]: 
-		for vsplit in v.strip().split(','): inroot('variables.push_back("%s");'%vsplit)
-	# also add trigger results
-	inroot('variables.push_back("%s");'%"triggerResult")
-	# veto/accept according top opts.novariable and opts.variable
-	if not opts.variable: opts.variable = ','.join([y['var'] for (x,y) in variablesfull['variables'].iteritems() if not y['var'] in opts.novariable])
-	# override binning if requested
-	if opts.binning: 
-		for v,b,x1,x2 in opts.binning:
-			if v in variables: 
-				variables[v]['nbins_x'] = b
-				variables[v]['xmin'] = x1
-				variables[v]['xmax'] = x2
-				#print x1,x2,b,v
-				variables[v]['title_y'] = 'Events / %.2f'%((float(x2)-float(x1))/float(b))
+	if variables:
+		variablesfull = json.loads(filecontent(opts.jsonvars))
+		variables = variablesfull['variables'] # dictionary
+		# get variables in ROOT
+		inroot("vector<TString> variables; variables.clear();")
+		for v in [x['bare'] for x in variables.itervalues()]: 
+			for vsplit in v.strip().split(','): inroot('variables.push_back("%s");'%vsplit)
+		# also add trigger results
+		inroot('variables.push_back("%s");'%"triggerResult")
+		# veto/accept according top opts.novariable and opts.variable
+		if not opts.variable: opts.variable = ','.join([y['var'] for (x,y) in variablesfull['variables'].iteritems() if not y['var'] in opts.novariable])
+		# override binning if requested
+		if opts.binning: 
+			for v,b,x1,x2 in opts.binning:
+				if v in variables: 
+					variables[v]['nbins_x'] = b
+					variables[v]['xmin'] = x1
+					variables[v]['xmax'] = x2
+					#print x1,x2,b,v
+					variables[v]['title_y'] = 'Events / %.2f'%((float(x2)-float(x1))/float(b))
 
+	if samples and variables: return opts,fout,samples,variables
+	elif samples: return opts,fout,samples
+	elif variables: return opts,fout,variables
 
 # convert samples
 	if not (opts.usebool and not opts.preselect): convertSamples(opts,samples)

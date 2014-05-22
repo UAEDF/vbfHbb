@@ -20,6 +20,8 @@ def l2(text):
 	print purple+'  ++ %s'%(text)+plain
 def l3(text):
 	print plain+'  ++++ %s'%(text)+plain
+def l4(text):
+	print plain+'  ++++++ %s'%(text)+plain
 
 # COLORS ########################################################################################## 
 red 	= "\033[0;31m"
@@ -34,6 +36,8 @@ Yellow	= "\033[1;33m"
 Blue	= "\033[1;34m"
 Purple	= "\033[1;35m"
 Cyan	= "\033[1;36m"
+grey    = "\033[38;5;243m"
+Black   = "\033[1m"
 plain	= "\033[m"
 
 
