@@ -1,0 +1,402 @@
+#!/usr/bin/env python
+
+import os,sys,re,json
+from optparse import OptionParser,OptionGroup
+from array import array
+from time import time
+
+sys.path.append("../common")
+sys.path.append("../fitbias")
+
+from toolkit import *
+from write_cuts import *
+import main
+
+import ROOT
+from ROOT import *
+
+lines = []
+legends = []
+texts = []
+
+SEL = {}
+TRG = {}
+CUT = {}
+LAB = {}
+
+##################################################
+def parser(mp=None):
+	if mp==None: mp = OptionParser()
+	mu1 = OptionGroup(mp,"Extra options:")
+	mu1.add_option("--tag",help="Tags for selection/trigger set.",default=[],type="str",action="callback",callback=optsplit,dest="tag")
+	#mu1.add_option('-c','--categories',help=blue+'Pick for categories.'+plain,dest='categories',type="str",default=[],action='callback',callback=optsplit)
+	mu1.add_option('-B','--categoryboundaries',help=blue+'Boundaries for categories.'+plain,dest='categoryboundaries',type="str",default=[[-1.001,0.0,0.25,0.70,0.88,1.001],[-1.001,0.0,0.3,0.65,1.001]],action='callback',callback=optsplitlist)
+	mp.add_option_group(mu1)
+	return mp 
+
+##################################################
+def catveto(cat,var):
+	if cat=="NOM" and any(x in var for x in ["mvaVBF","mbbReg2","mqq2"]): return True
+	elif cat=="VBF" and any(x in var for x in ["mvaNOM","mbbReg1","mqq1"]): return True
+	else: return False
+
+##################################################
+def estimate(ientry,nentries,tstart,tnow):
+	tdelta   = tnow - tstart
+	taverage = tdelta / float(ientry)
+	nleft    = float(nentries - ientry) * taverage
+	percdone = 100 - float(nentries - ientry) / float(nentries) * 100
+	return floor(nleft/60.), nleft%60, percdone
+
+##################################################
+def time01(tstart,tnow,previous=[]):
+	tdelta    = tnow - tstart
+	previous += [tdelta]
+	taverage  = sum(previous)/float(len(previous)) 
+	return taverage
+
+##################################################
+def style01(h,color=kBlack,fill=None,line=1):
+	h.SetLineColor(color)
+	h.SetLineStyle(line)
+	if fill==None: h.SetLineWidth(3)
+	if not fill==None: 
+		h.SetFillColor(fill)
+		h.SetFillStyle(4030)
+	return h
+
+
+##################################################
+def func01(c,h,hp,hm,hc=None,cat="",sel="",trg=""):
+	c.SetTitle("")
+	tag = "JES" if "JES" in c.GetName() else "JER"
+	sample = c.GetName().split('_')[3]
+	h.SetTitle(";%s;%s"%(h.GetXaxis().GetTitle(),h.GetYaxis().GetTitle()))
+	hp.SetTitle(";%s;%s"%(h.GetXaxis().GetTitle(),h.GetYaxis().GetTitle()))
+	hm.SetTitle(";%s;%s"%(h.GetXaxis().GetTitle(),h.GetYaxis().GetTitle()))
+	if hc: hc.SetTitle(";%s;%s"%(h.GetXaxis().GetTitle(),h.GetYaxis().GetTitle()))
+	h.GetYaxis().SetTickLength(0.015)
+	global lines
+	global legends
+	global texts
+	c.cd()
+	p1 = TPad("ptop","ptop",0.0,0.30,1.0,1.0)
+	p2 = TPad("pbot","pbot",0.0,0.0,1.0,0.30)
+	p1.SetRightMargin(0.22)
+	p1.SetBottomMargin(0)
+	p1.SetTicks(1,1)
+	p2.SetRightMargin(0.22)
+	p2.SetTopMargin(0)
+	p2.SetTicks(1,1)
+	p1.Draw()
+	p2.Draw()
+	
+	c.Update()
+
+	p2.cd()
+	p2.SetGrid(1)
+	rhp = hp.Clone("rhp")
+	rhp.Add(h,-1.)
+	rhp.Divide(h)
+	rhp.GetYaxis().SetRangeUser(-0.15,0.15)
+	if tag == "JES": rhp.SetFillStyle(3003)
+	if tag == "JES": rhp.SetFillColor(rhp.GetLineColor())
+	rhp.GetXaxis().SetTickLength(0.06)
+	rhp.GetYaxis().SetTickLength(0.015)
+	#rhp.GetYaxis().SetNdivisions(-506)
+	rhp.GetYaxis().SetTitle("(shifted - central) / central")
+	rhp.GetYaxis().SetTitleSize(30)
+	rhp.GetYaxis().SetTitleOffset(rhp.GetYaxis().GetTitleOffset()*1.2)
+	rhm = hm.Clone("rhm")
+	rhm.Add(h,-1.)
+	rhm.Divide(h)
+	if tag == "JES": rhm.SetFillStyle(3003)
+	if tag == "JES": rhm.SetFillColor(rhm.GetLineColor())
+	if hc:
+		rhc = hc.Clone("rhc")
+		rhc.Add(h,-1.)
+		rhc.Divide(h)
+	
+	#thresh = ceil(sorted([rhp.GetBinContent(rhp.GetMaximumBin()),rhm.GetBinContent(rhm.GetMaximumBin()),rhc.GetBinContent(rhc.GetMaximumBin()) if hc else 0.0,abs(rhp.GetBinContent(rhp.GetMinimumBin())),abs(rhm.GetBinContent(rhm.GetMinimumBin())),abs(rhc.GetBinContent(rhc.GetMinimumBin())) if hc else 0.0])[-1]*1.1/0.05)*0.05
+	#rhp.GetYaxis().SetRangeUser(-thresh,thresh)
+	rhp.GetYaxis().SetRangeUser(-0.3,0.3)
+	rhp.DrawCopy("hist")
+	rhm.DrawCopy("hist,same")
+	if hc: rhc.DrawCopy("hist,same")
+
+	p2.Update()
+	lines += [TLine(p2.GetUxmin(),0.,p2.GetUxmax(),0.)]
+	lines[-1].SetLineWidth(2)
+	lines[-1].SetLineColor(kBlack)
+	lines[-1].Draw()
+	gPad.Update()
+	gPad.WaitPrimitive()
+
+	p1.cd()
+
+	#thresh = ceil(sorted([hp.GetBinContent(hp.GetMaximumBin()),hm.GetBinContent(hm.GetMaximumBin()),hc.GetBinContent(hc.GetMaximumBin()) if hc else 0.0])[-1]*1.1/1000)*1000
+	#hp.GetYaxis().SetRangeUser(0,thresh)
+	m = sorted([(h,h.GetBinContent(h.GetMaximumBin())),(hp,hp.GetBinContent(hp.GetMaximumBin())),(hm,hm.GetBinContent(hm.GetMaximumBin()))],key=lambda (x,y):y)
+	m[-1][0].Draw("hist")
+	h.Draw("same,hist")
+	hp.Draw("same,hist")
+	hm.Draw("same,hist")
+	if hc: hc.Draw("same,hist")
+	
+	legends += [TLegend(0.79,0.74-(4 if tag=="JES" else 5)*0.035,0.985,0.74,"%s variation"%(tag))]
+	leg = legends[-1]
+	leg.SetTextSize(0.025)
+	leg.SetFillColor(0)
+	leg.SetBorderSize(1)
+	leg.AddEntry(h,"central","LF")
+	if tag == "JER":
+		leg.AddEntry(rhp,"%s smear_max"%tag,"LF")
+		leg.AddEntry(rhm,"%s smear_min"%tag,"LF")
+		if hc: leg.AddEntry(rhc,"%s smear"%tag,"LF")
+	else:
+		leg.AddEntry(rhp,"%s up"%tag,"L")
+		leg.AddEntry(rhm,"%s down"%tag,"L")
+	leg.Draw()
+	
+	left,bottom,right,top = 0.79,0.96-0.035*5,0.99,0.96
+	t1 = TPaveText(left,bottom,right,top,"NDC")
+	t1.SetFillColor(0)
+	t1.SetFillStyle(0)
+	t1.SetBorderSize(0)
+	t1.SetTextSize(0.025)
+	t1.SetTextColor(kBlack)
+	t1.SetTextAlign(11)
+	t1.AddText("CMS preliminary")
+	t1.AddText("VBF H#rightarrow b#bar{b}")
+	t1.AddText("L = %.1f fb^{-1}"%(19800./1000. if cat=="NOM" else 18300./1000. if cat=="VBF" else "???"))
+	t1.AddText("%s selection"%cat)
+	t1.AddText("sample: %s"%sample)
+	t1.Draw()
+
+	nrows = sum([1 for x in sel])+1
+	t2 = getSelLegend(left,0.5-nrows*0.03,right,0.5,None,0,0,1,0.022)
+	for iline,line in enumerate(sorted([x.strip() for x in sel])): t2.AddText('%s %s'%('sel:' if iline==0 else ' '*4, line))
+	t2.AddText('trg: %s (MC)'%(','.join(trg)))
+	t2.Draw()
+
+	texts += [t1,t2]
+	c.Update()
+	return c
+
+##################################################
+def mkUncJEx():
+	##################################################	
+	# initialising
+	#print gSystem.Load("../fitbias/fitTF1")
+	print gSystem.AddIncludePath("-I/opt/Software/include")
+	print gROOT.ProcessLine(".L ../fitbias/fitTF1.C++")
+	opts,fout,variables = main.main(parser(),False,True,False)
+	gDirectory.cd("%s:/"%fout.GetName())
+
+	jsoninfo = json.loads(filecontent(opts.jsoninfo))
+	jsonsamp = json.loads(filecontent(opts.jsonsamp))
+	jsonvars = json.loads(filecontent(opts.jsonvars))
+	jsoncuts = json.loads(filecontent(opts.jsoncuts))
+
+	global SEL
+	global TRG
+	global CUT
+	global LAB
+	catbounds = {}
+	for tag in opts.tag: catbounds[tag] = array('f',opts.categoryboundaries[0]) if tag=="NOM" else array('f',opts.categoryboundaries[1])
+	
+	if (not len(opts.selection) == len(opts.trigger)) or (not len(opts.selection) == len(opts.tag)): sys.exit("Selection/trigger/tag options are broken. Exiting.")
+	for i in range(len(opts.selection)):
+		s = opts.selection[i]
+		t = opts.trigger[i]
+		tag = opts.tag[i]
+		SEL[tag] = s
+		TRG[tag] = t
+		CUT[tag],LAB[tag] = write_cuts(s,t,reftrig=["None"],sample="VBF125",jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.weight,trigequal='1')
+
+	##################################################	
+	# some ROOT settings
+	gStyle.SetOptStat(0)
+	gROOT.SetBatch(1)
+	TH1.SetDefaultSumw2(1)
+	ROOT.gErrorIgnoreLevel = kWarning
+	gROOT.ProcessLine("TH1::SetDefaultSumw2(1);")
+	gStyle.SetPadTopMargin(0.02)
+	gStyle.SetPadBottomMargin(0.18)
+	gStyle.SetLabelFont(43,"XYZ")
+	gStyle.SetLabelSize(35,"XYZ")
+	gStyle.SetTitleFont(43,"XYZ")
+	gStyle.SetTitleSize(40,"XYZ")
+	gStyle.SetTitleOffset(3.2,"X")
+	gStyle.SetTitleOffset(2.0,"Y")
+	gStyle.SetLabelOffset(0.020,"X")
+	gStyle.SetTitleColor(kBlue+2)
+	gStyle.SetTickLength(0.02)
+	
+	##################################################	
+	# reading sample properties
+	friends = ["HbbJESUp","HbbJESDn","HbbJERUp","HbbJERDn","HbbJERCl"] 
+	sampleproperties = {}
+	for s in opts.sample:
+		sampleproperties[s] = {}
+		sprops = sampleproperties[s]
+		# load sample properties
+		sprops['tag']    = s
+		sprops['group']  = jsoninfo['groups'][s]
+		sprops['file']   = [k for (k,v) in jsonsamp['files'].iteritems() if v['tag']==s][0]
+		sprops['scale']  = jsonsamp['files'][sprops['file']]['scale']
+		sprops['colour'] = jsonsamp['files'][sprops['file']]['colour']
+		sprops['tfile']  = TFile(opts.globalpath+'/'+sprops['file'],"read")
+		sprops['ttree'] = {}
+		for f in ["%s"%x for x in ['Hbb']+friends]: 
+			if sprops['tfile'].Get("%s/events"%f): sprops['ttree'][f] = sprops['tfile'].Get("%s/events"%f)
+			else: sprops['ttree'][f] = None
+
+		sprops['th1f'] = {}
+		sprops['tf1all'] = {}
+		sprops['tf1bkg'] = {}
+		for tag in opts.tag:
+			sprops['th1f'][tag] = {}
+			sprops['tf1all'][tag] = {}
+			sprops['tf1bkg'][tag] = {}
+			for ncat in ["%s"%x for x in ['Hbb']+friends]:
+				sprops['th1f'][tag][ncat] = {}
+				sprops['tf1all'][tag][ncat] = None
+				sprops['tf1bkg'][tag][ncat] = None
+				for inh,nh in enumerate(opts.variable):
+					if catveto(tag,nh): continue
+					v = variables[nh]['root']
+					n = variables[nh]['var']
+					xmin = float(variables[nh]['xmin'])
+					xmax = float(variables[nh]['xmax'])
+					bins = int(variables[nh]['nbins_x'])
+					tx = variables[nh]['title_x']
+					ty = variables[nh]['title_y']
+					if "mva" in v: sprops['th1f'][tag][ncat][nh] = TH1F("h_%s_%s_%s_%s"%(tag,s,ncat,n),"h_%s_%s_%s_%s;%s;%s"%(tag,s,ncat,n,tx,ty),len(catbounds[tag])-1,catbounds[tag])
+					else: sprops['th1f'][tag][ncat][nh] = TH1F("h_%s_%s_%s_%s"%(tag,s,ncat,n),"h_%s_%s_%s_%s;%s;%s"%(tag,s,ncat,n,tx,ty),bins,xmin,xmax)
+					sprops['th1f'][tag][ncat][nh].Sumw2()
+
+	# summarize load block
+	l1("Loaded properties for:")
+	print "%s%12s | %12s | %8s | %15s | %40s | %15s | %15s | %55s |%s"%(blue,"tag","group","colour","scale","file","tree name","object type","alternatives",plain)
+	print "-"*(15*2 + 11 + 18 + 43 + 36 + 58 - 1)
+	for sp in sampleproperties.itervalues():
+		print "%12s | %12s | %8s | %15s | %40s | %15s | %15s | %55s |"%( \
+				sp["tag"],sp["group"],sp["colour"],sp["scale"],sp["file"], \
+				sp["ttree"]["Hbb"].GetName() if not sp["ttree"]["Hbb"]==None else "%s%15s%s"%(Red,"None",plain), \
+				sp["ttree"]["Hbb"].IsA().GetName() if not sp["ttree"]["Hbb"]==None else "%s%15s%s"%(Red,"None",plain), \
+				", ".join([x for x in sprops["ttree"].keys()]) if len(sprops["ttree"].keys())>0 else "%s%30s%s"%(Red,"None",plain) \
+				)
+	
+	# summarize selections & triggers:
+	l1("Running these selections:")
+	for tag in opts.tag:
+		print "%s%s%s: %s\n\t%s%s%s"%(Black,tag,plain,LAB[tag],grey,CUT[tag],plain)
+	
+	##################################################	
+	# loop
+	makeDirs("plots/uncertainties")
+	c = {}
+	c["JES"] = {}
+	c["JER"] = {}
+	for tag in ['NOM','VBF']:
+		c["JES"][tag] = {}
+		c["JER"][tag] = {}
+		for isp,sp in enumerate(sampleproperties.itervalues()):
+			c["JES"][tag][sp['tag']] = {}
+			c["JER"][tag][sp['tag']] = {}
+			for inh,nh in enumerate([variables[x]['var'] for x in opts.variable]):
+				if catveto(tag,nh): continue
+				c["JES"][tag][sp['tag']][nh] = TCanvas("c_JES_%s_%s_%s"%(tag,sp['tag'],nh),"c_JES_%s_%s_%s"%(tag,sp['tag'],nh),1800,1800)
+				c["JER"][tag][sp['tag']][nh] = TCanvas("c_JER_%s_%s_%s"%(tag,sp['tag'],nh),"c_JER_%s_%s_%s"%(tag,sp['tag'],nh),1800,1800)
+
+	for isp,sp in enumerate(sampleproperties.itervalues()):
+		# start
+		l1("Working with sample: %s"%sp['tag'])
+		sp['tfile'].cd()
+		tarray = []
+
+		for tag in ["NOM","VBF"]:
+			for incat,ncat in enumerate(["%s"%x for x in ["Hbb"]+friends]):
+				l2("Category %s (%s)"%(ncat,tag))
+				tree = sp['ttree'][ncat]
+				treedraw = tree.Draw
+				for inh,(nhr,nh) in enumerate([(variables[x]['root'],variables[x]['var']) for x in opts.variable]):
+					sp['tfile'].cd()
+					if catveto(tag,nh): continue
+					tstart = time()
+					if (isp==0 and incat==len(["%s"%x for x in ["Hbb"]+friends])-1 and inh==len(variables)-1): average = tarray[-1]
+					l3("%-40s %-40s"%("Variable %s"%nh,"(time expected %.fs + %d modules)"%(tarray[-1]*((5-inh)+(4-incat)*5) if len(tarray)>0 else -999,len(sampleproperties)-isp-1)))
+					
+					if "JES" in ncat: c["JES"][tag][sp['tag']][nh].cd()
+					elif "JER" in ncat: c["JER"][tag][sp['tag']][nh].cd()
+					else: c["JES"][tag][sp['tag']][nh].cd()
+		
+					treedraw("%s>>%s"%(nhr,sp['th1f'][tag][ncat][nh].GetName()),CUT[tag])
+					tnow = time()
+					tarray += [time01(tstart,tnow,tarray)]
+
+					if ncat=="Hbb" and tag=="NOM":
+						gROOT.ProcessLineSync('TH1F h = (TH1F)gDirectory->FindObjectAny("%s")'%sp['th1f'][tag][ncat][nh].GetName())
+						gROOT.ProcessLineSync('TCanvas *can = (TCanvas*)fitTF1(h,%.2f,%.2f)'%(115.,135.))
+						count = 0
+						for i in ROOT.can.GetListOfPrimitives():
+							print i.GetName(), i 
+							if i.IsA().GetName() == "RooCurve" and count==0:
+								sp['tf1all'][tag][ncat] = i.Clone()
+								count += 1
+							elif i.IsA().GetName() == "RooCurve" and count==1:
+								sp['tf1bkg'][tag][ncat] = i.Clone()
+								count += 1
+								#break
+					
+			for inh,nh in enumerate([variables[x]['var'] for x in opts.variable]):
+				if catveto(tag,nh): continue
+	
+				# JES Up/Dn
+				sp['th1f'][tag]["Hbb"][nh] = style01(sp['th1f'][tag]["Hbb"][nh],kBlack,kGray)
+				sp['th1f'][tag]["HbbJESUp"][nh] = style01(sp['th1f'][tag]["HbbJESUp"][nh],kBlue+1,None,1)#7
+				sp['th1f'][tag]["HbbJESDn"][nh] = style01(sp['th1f'][tag]["HbbJESDn"][nh],kRed+1,None,1)#10
+				c["JES"][tag][sp['tag']][nh] = func01(c["JES"][tag][sp['tag']][nh],sp['th1f'][tag],sp['tf1'][tag],None,tag,SEL[tag],TRG[tag])
+		
+				# JER Up/Dn
+				sp['th1f'][tag]["HbbJERUp"][nh] = style01(sp['th1f'][tag]["HbbJERUp"][nh],kViolet+1,None,1)#7
+				sp['th1f'][tag]["HbbJERCl"][nh] = style01(sp['th1f'][tag]["HbbJERCl"][nh],kSpring-1,None,1)#7
+				sp['th1f'][tag]["HbbJERDn"][nh] = style01(sp['th1f'][tag]["HbbJERDn"][nh],kMagenta+1,None,9)#10
+				c["JER"][tag][sp['tag']][nh] = func01(c["JER"][tag][sp['tag']][nh],sp['th1f'][tag]["Hbb"][nh],sp['th1f'][tag]["HbbJERUp"][nh],sp['th1f'][tag]["HbbJERDn"][nh],sp['th1f'][tag]["HbbJERCl"][nh],tag,SEL[tag],TRG[tag])
+				
+				gDirectory.cd("%s:/"%fout.GetName())
+				makeDirsRoot(fout,"histos/%s"%sp['tag'])
+				gDirectory.cd("%s:/histos/%s"%(fout.GetName(),sp['tag']))
+				for ncat in ["%s"%x for x in ["Hbb"]+friends]: sp['th1f'][tag][ncat][nh].Write("%s"%(sp['th1f'][tag][ncat][nh].GetName()),TH1.kOverwrite)
+
+				gDirectory.cd("%s:/"%fout.GetName())
+				makeDirsRoot(fout,"canvas/%s"%sp['tag'])
+				gDirectory.cd("%s:/canvas/%s"%(fout.GetName(),sp['tag']))
+				c["JES"][tag][sp['tag']][nh].Update()
+				c["JES"][tag][sp['tag']][nh].Write("%s"%(c["JES"][tag][sp['tag']][nh].GetName()),TH1.kOverwrite)
+				c["JER"][tag][sp['tag']][nh].Update()
+				c["JER"][tag][sp['tag']][nh].Write("%s"%(c["JER"][tag][sp['tag']][nh].GetName()),TH1.kOverwrite)
+
+				c["JES"][tag][sp['tag']][nh].Update()
+				c["JES"][tag][sp['tag']][nh].SaveAs("plots/uncertainties/%s.png"%c["JES"][tag][sp['tag']][nh].GetName())
+				c["JES"][tag][sp['tag']][nh].Close()
+				c["JER"][tag][sp['tag']][nh].Update()
+				c["JER"][tag][sp['tag']][nh].SaveAs("plots/uncertainties/%s.png"%c["JER"][tag][sp['tag']][nh].GetName())
+				c["JER"][tag][sp['tag']][nh].Close()
+				
+		c2 = TCanvas("c2","c2",1800,1200)
+		c2.cd()
+		sp['th1f']['NOM']['Hbb']['mbbReg1'].Draw('hist')
+		sp['tf1all']['NOM']['Hbb'].Draw("same")
+		sp['tf1bkg']['NOM']['Hbb'].Draw("same")
+		c2.Update()
+		c2.SaveAs("testnew.pdf")
+
+	##################################################	
+	l1("Main Done.")
+	fout.Close()
+
+##################################################
+if __name__=="__main__":
+	mkUncJEx()

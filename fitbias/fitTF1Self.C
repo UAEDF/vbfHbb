@@ -13,6 +13,7 @@
 #include <TCanvas.h>
 #include <TF1.h>
 #include <TH1.h>
+#include <TFile.h>
 #include <TString.h>
 #include <TROOT.h>
 #include <TSystem.h>
@@ -73,7 +74,7 @@ void fitTF1(TCanvas *canvas, TH1F h, double XMIN_, double XMAX_, double dX_, dou
 	RooPlot *frame = x.frame();
 // no scale
 	RooHistFit->plotOn(frame);
-	model->plotOn(frame,RooFit::LineColor(LC_),RooFit::LineWidth(2),RooFit::LineStyle(kDotted));
+	model->plotOn(frame,RooFit::LineColor(LC_),RooFit::LineWidth(2));//,RooFit::LineStyle(kDotted));
 	model->plotOn(frame,RooFit::Components(bkg),RooFit::LineColor(LC_),RooFit::LineWidth(2),RooFit::LineStyle(kDashed));
 // with scale
 //	RooHistFit->plotOn(frame,RooFit::Normalization(HSCALE_,RooAbsReal::NumEvent));
@@ -120,7 +121,7 @@ void fitTF1(TCanvas *canvas, TH1F h, double XMIN_, double XMAX_, double dX_, dou
 	ln.Draw();
 	
 	canvas->Update();
-	//canvas->SaveAs("testpre.pdf");
+	canvas->SaveAs("testC.png");
 	
 //	tmp->Delete();
 //	frame->Delete();
@@ -146,4 +147,13 @@ void fitTF1(TCanvas *canvas, TH1F h, double XMIN_, double XMAX_, double dX_, dou
 	//delete res;
 
 //	return canvas;
+}
+
+void fitTF1Self() {
+	TFile *f = TFile::Open("plainHisto.root","read");
+	TH1F *h = (TH1F*)f->Get("mbbReg;1");
+	h->Print();
+	TCanvas *c = new TCanvas("c1","c1");
+	double params[7];
+	fitTF1(c,*h,110,140,2.5,params,kRed);
 }

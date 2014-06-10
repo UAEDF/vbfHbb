@@ -11,6 +11,7 @@ sys.path.append("../fitbias")
 
 from toolkit import *
 from write_cuts import *
+from fitTF1 import fitTF1
 import main
 
 import ROOT
@@ -20,7 +21,7 @@ lines = []
 legends = []
 texts = []
 colours = {'Hbb':kBlack,'HbbJESUp':kBlue+1,'HbbJESDn':kRed+1,'HbbJERUp':kViolet+1,'HbbJERCl':kSpring-1,'HbbJERDn':kMagenta+1}
-offset = {'Hbb':0,'HbbJESUp':5,'HbbJESDn':-5,'HbbJERUp':-10,'HbbJERCl':-7.5,'HbbJERDn':-5}
+offset = {'Hbb':0,'HbbJESUp':5,'HbbJESDn':-5,'HbbJERUp':0,'HbbJERCl':0,'HbbJERDn':0}
 
 SEL = {}
 TRG = {}
@@ -51,8 +52,8 @@ def gethname(weight,var,group,sample,SEL,TRG,DTRG,REF):
 
 ##################################################
 def catveto(cat,var):
-	if cat=="NOM" and any(x in var for x in ["mvaVBF","mbbReg2","mqq2"]): return True
-	elif cat=="VBF" and any(x in var for x in ["mvaNOM","mbbReg1","mqq1"]): return True
+	if cat=="NOM" and any(x in var for x in ["mvaVBF","mbb2","mqq2"]): return True
+	elif cat=="VBF" and any(x in var for x in ["mvaNOM","mbb1","mqq1"]): return True
 	else: return False
 
 ##################################################
@@ -82,7 +83,7 @@ def style01(h,color=kBlack,fill=None,line=1):
 
 
 ##################################################
-def func01(tag,c,d,sel="",trg=""):
+def func01(opts,tag,c,d,sel="",trg=""):
 	sample = d['Hbb'][0].GetName().split('_')[3]
 	nh     = d['Hbb'][0].GetName().split('_')[1].split('-')[0]
 	ncat = "Hbb"	
@@ -91,7 +92,7 @@ def func01(tag,c,d,sel="",trg=""):
 
 	tit,xtit,ytit = "",d[ncat][0].GetXaxis().GetTitle(),d[ncat][0].GetYaxis().GetTitle()
 	#for (incat,ncat) in [(ix,x.GetName().split('_')[3]) for x in enumerate(h)]:
-	for hi,fi in d.itervalues(): 
+	for hi,fi,h2i in d.itervalues(): 
 		hi.SetTitle("%s;%s;%s"%(tit,xtit,ytit))
 		hi.GetYaxis().SetTickLength(0.015)
 		#hi.GetXaxis().SetLimits(50,200)
@@ -102,66 +103,180 @@ def func01(tag,c,d,sel="",trg=""):
 	c.cd()
 	p1 = TPad("ptop","ptop",0.0,0.30,1.0,1.0)
 	p2 = TPad("pbot","pbot",0.0,0.0,1.0,0.30)
+	p3a = TPad("pmod1","pmod1",0.0,0.0,0.78,0.18)
+	p3b = TPad("pmod2","pmod2",0.0,0.18,0.78,0.30)
+	p3c = TPad("pmod3","pmod3",0.79,0.0,1.0,0.30)
 	p1.SetRightMargin(0.22)
 	p1.SetBottomMargin(0)
 	p1.SetTicks(1,1)
 	p2.SetRightMargin(0.22)
-	p2.SetTopMargin(0)
+	p2.SetTopMargin(0.0)
 	p2.SetTicks(1,1)
+	p2.SetGrid(1)
+	p3a.SetRightMargin(0.0)
+	p3a.SetLeftMargin(p3a.GetLeftMargin()/0.78)
+	p3a.SetBottomMargin(p3a.GetBottomMargin()*2.)
+	p3a.SetTopMargin(0)
+	p3a.SetTicks(1,1)
+	p3a.SetGrid(1)
+	p3b.SetRightMargin(0.0)
+	p3b.SetLeftMargin(p3b.GetLeftMargin()/0.78)
+	p3b.SetTopMargin(0)
+	p3b.SetBottomMargin(0)
+	p3b.SetTicks(1,1)
+	p3b.SetGrid(1)
+	p3c.SetFillColor(kWhite)
+	p3c.SetFillStyle(3001)
+	#p2.SetFillColor(0)
+	#p2.SetFillStyle(0)
 	p1.Draw()
-	p2.Draw()
+	if not (('mva' in nh) and 'JER' in group): p2.Draw()
+	else:
+		p3a.Draw()
+		p3b.Draw()
+		p3c.Draw()
 	
 	c.Update()
 
-	p2.cd()
-	p2.SetGrid(1)
 	r = {}
-	for key in d.keys():
+	eps = 0.001
+	for key in sorted(d.keys(),key=lambda x:('Up' in x,'Cl' in x)):
 		if key=="Hbb": continue
-		r[key] = d[key][0].Clone("r%s"%key)
-		r[key].Add(d["Hbb"][0],-1.)
-		r[key].Divide(d["Hbb"][0])
-		r[key].GetYaxis().SetRangeUser(-0.15,0.15)
-		if group == "JES": r[key].SetFillStyle(3003)
-		if group == "JES": r[key].SetFillColor(r[key].GetLineColor())
-		r[key].GetXaxis().SetTickLength(0.06)
-		r[key].GetYaxis().SetTickLength(0.015)
+		if not ((('mva' in nh) and 'JER' in key) or ('jetUnsPt' in nh)):
+			p2.cd()
+			r[key] = d[key][0].Clone("r%s"%key)
+			r[key].Add(d["Hbb"][0],-1.)
+			r[key].Divide(d["Hbb"][0])
+			if key in ['HbbJESUp','HbbJESDn','HbbJERCl']: 
+				r[key].SetFillStyle(3003)
+				r[key].SetFillColor(r[key].GetLineColor())
+			r[key].GetYaxis().SetTitle("(shifted - central) / central")
+			r[key].GetYaxis().SetRangeUser(-0.2+eps,0.2-eps)
+			r[key].GetXaxis().SetTickLength(0.06)
+			r[key].GetYaxis().SetTickLength(0.015)
+		elif 'jetUnsPt' in nh:
+			p2.cd()
+			r[key] = d[key][0].Clone("r%s"%key)
+			r[key].GetYaxis().SetRangeUser(0.9+eps,1.1-eps)
+			r[key].GetYaxis().SetTitle("None")
+			for i in range(1,r[key].GetNbinsX()+1): r[key].SetBinContent(i,1)
+		elif 'mva' in nh:
+			if 'JERCl' in key:											# JER Centr / JER Smeared
+				p3b.cd()
+				r[key] = d["Hbb"][0].Clone("r%s"%key)
+				r[key].SetLineColor(colours[key])
+				#r[key].Scale(-1)
+				#r[key].Add(d["Hbb"][0],1.)
+				r[key].Divide(d[key][0])
+				eps = 0.001
+				r[key].GetYaxis().SetRangeUser(-0.2+eps,0.2-eps)
+				r[key].GetXaxis().SetTickLength(0.06)
+				r[key].GetYaxis().SetTickLength(0.017)
+				r[key].GetYaxis().SetTitle("cent./sm.")
+			else:														# band (JER smeared extra - JER smeared) / JER smeared
+				p3a.cd()
+				r[key] = d["HbbJERCl"][0].Clone("r%s"%key)
+				r[key].Divide(d["HbbJERCl"][0])
+				rtemp1 = d["HbbJERCl"][0].Clone()
+				rtemp2 = d[key][0].Clone()
+				rtemp1.Scale(-1)
+				rtemp2.Add(rtemp1)
+				rtemp2.Divide(d["Hbb"][0])
+				for i in range(1,r[key].GetNbinsX()):
+					r[key].SetBinError(i,rtemp2.GetBinContent(i))
+				r[key].GetXaxis().SetTickLength(0.06)
+				r[key].GetYaxis().SetTickLength(0.027)
+				r[key].GetYaxis().SetTitle("(sm. extra - sm.)/sm.")
 		#r[key].GetYaxis().SetNdivisions(-506)
-		r[key].GetYaxis().SetTitle("(shifted - central) / central")
 		r[key].GetYaxis().SetTitleSize(30)
 		r[key].GetYaxis().SetTitleOffset(r[key].GetYaxis().GetTitleOffset()*1.2)
-		r[key].GetYaxis().SetRangeUser(-0.3,0.3)
+		#if 'JER' in key: r[key].GetYaxis().SetRangeUser(-0.15,0.15)
 		#r[key].GetXaxis().SetLimits(50,200)
 
 	for i,ri in enumerate(sorted(r.itervalues(),key=lambda x:('Up' in x.GetName(),'Cl' in x.GetName(),'Dn' in x.GetName()))):
-		if i==0: ri.DrawCopy('hist')
-		else: ri.DrawCopy('hist,same')
+		if not ("JER" in ri.GetName() and ('mva' in nh)):
+			if i==0: 
+				ri.GetXaxis().SetTitleSize(ri.GetXaxis().GetTitleSize()*0.9)
+				ri.GetYaxis().SetTitleSize(ri.GetYaxis().GetTitleSize()*0.9)
+				ri.GetYaxis().SetTitleOffset(ri.GetYaxis().GetTitleOffset()*0.9)
+				ri.DrawCopy('hist')
+			else: ri.DrawCopy('hist,same')
+		elif ('mva' in nh):	
+			ri.GetXaxis().SetTitleSize(ri.GetXaxis().GetTitleSize()*0.9)
+			ri.GetYaxis().SetTitleSize(ri.GetYaxis().GetTitleSize()*0.7)
+			ri.GetXaxis().SetLabelSize(ri.GetXaxis().GetLabelSize()*0.9)
+			ri.GetYaxis().SetLabelSize(ri.GetYaxis().GetLabelSize()*0.9)
+			if 'mva' in nh:
+				if "JERUp" in ri.GetName(): 
+					p3a.cd()
+					ri.GetYaxis().SetRangeUser(0.9+eps,1.1-eps)
+					ri.GetYaxis().SetNdivisions(504)
+					ri.GetXaxis().SetTitleOffset(r[key].GetXaxis().GetTitleOffset()*1.8)
+					ri.GetYaxis().SetTitleOffset(r[key].GetYaxis().GetTitleOffset()*1.43)
+					ri.DrawCopy("hist")
+					ri.SetFillColor(colours['HbbJERUp'])
+					ri.SetFillStyle(3002)
+					ri.SetMarkerStyle(0)
+					ri.DrawCopy("e2,same")
+				else:
+					p3b.cd()
+					ri.GetYaxis().SetRangeUser(0.90+eps,1.10-eps)
+					ri.GetYaxis().SetNdivisions(504)
+					ri.GetYaxis().SetTitleOffset(r[key].GetYaxis().GetTitleOffset()*1.5)
+					ri.DrawCopy("hist")
+					gPad.Update()
+					l1 = TLine(gPad.GetUxmin(),1.0,gPad.GetUxmax(),1.0)
+					l1.SetLineWidth(2)
+					l1.SetLineColor(kBlack)
+					l1.Draw()
+					lines += [l1]
 
 	gPad.Update()
-	left,right = 0.79,0.99
-	nrows = sum([1 for x in sel])+1
-	t2 = getSelLegend(left,0.96-nrows*(0.03/0.3*0.7),right,0.96,None,0,0,1,0.022/0.3*0.7)
+	if (('mva' in nh) and 'JER' in group): 
+		p3c.cd() 
+		left,right = 0.02,0.95
+		font = 0.24
+	else:
+		left,right = 0.79,0.99
+		font = 0.3
+	nrows = sum([1 for x in sel+trg])+len([x for x in opts.weight[1] if any([x in ['PU','TNOM','TVBF']])])+1
+	t2 = getSelLegend(left,0.96-nrows*(0.03/0.3*0.7),right,0.96,None,0,0,1,0.020/font*0.7)
 	t2.SetTextFont(82)
-	for iline,line in enumerate(sorted([x.strip() for x in sel])): t2.AddText('%s %s'%('sel:' if iline==0 else ' '*4, line))
-	t2.AddText('trg: %s (MC)'%(','.join(trg)))
+	for iline,line in enumerate(sorted([x.strip() for x in sel])): t2.AddText('%s %s'%(' sel:' if iline==0 else ' '*5, line))
+	t2.AddText(' trg: %s (MC)'%(','.join(trg)))
+	if any([('PU' in x or 'TNOM' in x or 'TVBF' in x) for x in opts.weight[1]]):
+		labels = {'PU':'PU reweighted','TNOM':'TRG-NOM reweighted','TVBF':'TRG-VBF reweighted'}
+		wght = [z for (y,z) in labels.iteritems() if any([y in x for x in opts.weight[1]])]
+		for iw,w in enumerate(sorted(wght)):
+			if iw==0: t2.AddText('wght: %s'%(w))
+			else: t2.AddText('      %s'%(w))
 	t2.Draw()
 
-	p2.Update()
-	lines += [TLine(p2.GetUxmin(),0.,p2.GetUxmax(),0.)]
-	lines[-1].SetLineWidth(2)
-	lines[-1].SetLineColor(kBlack)
-	lines[-1].Draw()
+	if not ("JER" in ri.GetName() and ('mva' in nh)):
+		p2.Update()
+		lines += [TLine(p2.GetUxmin(),0.,p2.GetUxmax(),0.)]
+		lines[-1].SetLineWidth(2)
+		lines[-1].SetLineColor(kBlack)
+		lines[-1].Draw()
+	else:
+		p3a.Update()
+		p3b.Update()
 	gPad.Update()
-	gPad.WaitPrimitive()
 
 	p1.cd()
 
 	x = sorted([(d[key][0],d[key][0].GetBinContent(d[key][0].GetMaximumBin())) for key in d.keys()],key=lambda (x,y):y)
+	#if nh[0:3]=='mbb': p1.SetLogy(1)
+	if 'jetUns' in nh: p1.SetLogy(1)
+	x[-1][0].GetXaxis().SetLabelSize(0)
+	x[-1][0].GetXaxis().SetTitleSize(0)
 	x[-1][0].Draw("hist")
-	for (hi,fi) in sorted(d.itervalues(),key=lambda x:(not "Hbb_" in x[0].GetName())):
+	for (hi,fi,h2i) in sorted(d.itervalues(),key=lambda x:(not "Hbb_" in x[0].GetName())):
 		hi.Draw('hist,same')
 		if fi['ful']: 
 			fi['ful'].Draw('same')
+		if fi['bkg']: 
+			fi['bkg'].Draw('same')
 	
 	left,bottom,right,top = 0.79,0.96-0.035*5,0.99,0.96
 	t1 = TPaveText(left,bottom,right,top,"NDC")
@@ -178,20 +293,20 @@ def func01(tag,c,d,sel="",trg=""):
 	t1.AddText("sample: %s"%sample)
 	t1.Draw()
 
-	legends += [TLegend(0.79,0.76-(4 if group=="JES" else 5)*0.035,0.985,0.76,"%s variation"%(group))]
+	legends += [TLegend(0.79,0.76-(4 if group=="JES" else 4)*0.035,0.985,0.76,"%s variation"%(group))]
 	leg = legends[-1]
 	leg.SetTextSize(0.025)
 	leg.SetFillColor(0)
 	leg.SetBorderSize(1)
 	leg.AddEntry(d['Hbb'][0],"central","LF")
 	if group == "JER":
-		for ri in r.itervalues(): leg.AddEntry(ri,"%s smear%s"%(group,'_max' if 'Up' in ri.GetName() else '_min' if 'Dn' in ri.GetName() else ''),"LF")
+		for ri in sorted(r.itervalues(),key=lambda x:('Up' in x.GetName(),'Cl' in x.GetName())): leg.AddEntry(ri,"%s smear%s"%(group,'_max' if 'Up' in ri.GetName() else '_min' if 'Dn' in ri.GetName() else ''),"LF")
 	else:
 		for ri in r.itervalues(): leg.AddEntry(ri,"%s %s"%(group,'up' if 'Up' in ri.GetName() else 'down' if 'Dn' in ri.GetName() else '?'),"L")
 	leg.Draw()
 	
-	nlines = 3 if group=='JES' else 4
-	left,bottom,right,top = 0.79,0.5-0.025*(nlines*2+0.5 if 'mbbReg' in nh else nlines),0.99,0.5
+	nlines = 5 if group=='JES' else 5
+	left,bottom,right,top = 0.79,0.55-0.025*(nlines*4+0.5 if 'mbb' in nh else nlines*2),0.99,0.55
 	t3 = TPaveText(left,bottom,right,top,"NDC")
 	t3.SetFillColor(0)
 	t3.SetFillStyle(0)
@@ -200,30 +315,83 @@ def func01(tag,c,d,sel="",trg=""):
 	t3.SetTextSize(0.018)
 	t3.SetTextColor(kBlack)
 	t3.SetTextAlign(13)
-	if 'mbbReg' in nh:
-	# Get centers
-		t3.AddText("Hbb      x0: %.2f"%d['Hbb'][1]['params'][0])
-		if group=='JER': 
-			l = t3.AddText("Hbb%sCl x0: %.2f (%.1f%%)"%(group,d['Hbb%sCl'%group][1]['params'][0],abs(d['Hbb%sCl'%group][1]['params'][0]-d['Hbb'][1]['params'][0])*100/d['Hbb'][1]['params'][0]))
-			l.SetTextColor(d['Hbb%sCl'%group][0].GetLineColor())
-		l = t3.AddText("Hbb%sUp x0: %.2f (%.1f%%)"%(group,d['Hbb%sUp'%group][1]['params'][0],abs(d['Hbb%sUp'%group][1]['params'][0]-d['Hbb'][1]['params'][0])*100/d['Hbb'][1]['params'][0]))
-		l.SetTextColor(d['Hbb%sUp'%group][0].GetLineColor())
-		l = t3.AddText("Hbb%sDn x0: %.2f (%.1f%%)"%(group,d['Hbb%sDn'%group][1]['params'][0],abs(d['Hbb%sDn'%group][1]['params'][0]-d['Hbb'][1]['params'][0])*100/d['Hbb'][1]['params'][0]))
-		l.SetTextColor(d['Hbb%sDn'%group][0].GetLineColor())
+	# Get N, centers and widths
+	l = t3.AddText("Hbb")
+	l.SetTextFont(102)
+	t3.AddText("     N: %d"%d['Hbb'][0].GetEntries())
+	if 'mbb' in nh: t3.AddText("    x0: %.2f"%d['Hbb'][1]['params'][0])
+	if 'mbb' in nh: t3.AddText("  FWHM: %.2f"%d['Hbb'][1]['params'][5])
+	if 'mbb' in nh: t3.AddText(" sigma: %.2f"%d['Hbb'][1]['params'][8])
+	if 'mbb' in nh: t3.AddText("   int: %.2f"%d['Hbb'][0].Integral())
+	if group=='JER': 
 		l = t3.AddText("")
 		l.SetTextSize(l.GetTextSize()*0.5)
-	# Get Ns
-	t3.AddText("Hbb      N: %d"%d['Hbb'][0].GetEntries())
-	if group=='JER': 
-		l = t3.AddText("Hbb%sCl N: %d (%.3f)"%(group,d['Hbb%sCl'%group][0].GetEntries(),d['Hbb%sCl'%group][0].GetEntries()/d['Hbb'][0].GetEntries()))
+		l = t3.AddText("Hbb%sCl"%group)
 		l.SetTextColor(d['Hbb%sCl'%group][0].GetLineColor())
-	l = t3.AddText("Hbb%sUp N: %d (%.3f)"%(group,d['Hbb%sUp'%group][0].GetEntries(),d['Hbb%sUp'%group][0].GetEntries()/d['Hbb'][0].GetEntries()))
+		l.SetTextFont(102)
+		l = t3.AddText("     N: %d (%.3f)"%(d['Hbb%sCl'%group][0].GetEntries(),d['Hbb%sCl'%group][0].GetEntries()/d['Hbb'][0].GetEntries()))
+		l.SetTextColor(d['Hbb%sCl'%group][0].GetLineColor())
+		if 'mbb' in nh:
+			l = t3.AddText("    x0: %.2f (%.1f%%)"%(d['Hbb%sCl'%group][1]['params'][0],abs(d['Hbb%sCl'%group][1]['params'][0]-d['Hbb'][1]['params'][0])*100/d['Hbb'][1]['params'][0]))
+			l.SetTextColor(d['Hbb%sCl'%group][0].GetLineColor())
+			l = t3.AddText("  FWHM: %.2f"%(d['Hbb%sCl'%group][1]['params'][5]))
+			l.SetTextColor(d['Hbb%sCl'%group][0].GetLineColor())
+			l = t3.AddText(" sigma: %.2f"%(d['Hbb%sCl'%group][1]['params'][8]))
+			l.SetTextColor(d['Hbb%sCl'%group][0].GetLineColor())
+			l = t3.AddText("   int: %.2f"%d['Hbb%sCl'%group][0].Integral())
+			l.SetTextColor(d['Hbb%sCl'%group][0].GetLineColor())
+	l = t3.AddText("")
+	l.SetTextSize(l.GetTextSize()*0.5)
+	l = t3.AddText("Hbb%sUp"%(group))
 	l.SetTextColor(d['Hbb%sUp'%group][0].GetLineColor())
-	l = t3.AddText("Hbb%sDn N: %d (%.3f)"%(group,d['Hbb%sDn'%group][0].GetEntries(),d['Hbb%sDn'%group][0].GetEntries()/d['Hbb'][0].GetEntries()))
-	l.SetTextColor(d['Hbb%sDn'%group][0].GetLineColor())
+	l.SetTextFont(102)
+	l = t3.AddText("     N: %d (%.3f)"%(d['Hbb%sUp'%group][0].GetEntries(),d['Hbb%sUp'%group][0].GetEntries()/d['Hbb'][0].GetEntries()))
+	l.SetTextColor(d['Hbb%sUp'%group][0].GetLineColor())
+	if 'mbb' in nh:
+		l = t3.AddText("    x0: %.2f (%.1f%%)"%(d['Hbb%sUp'%group][1]['params'][0],abs(d['Hbb%sUp'%group][1]['params'][0]-d['Hbb'][1]['params'][0])*100/d['Hbb'][1]['params'][0]))
+		l.SetTextColor(d['Hbb%sUp'%group][0].GetLineColor())
+		l = t3.AddText("  FWHM: %.2f"%(d['Hbb%sUp'%group][1]['params'][5]))
+		l.SetTextColor(d['Hbb%sUp'%group][0].GetLineColor())
+		l = t3.AddText(" sigma: %.2f"%(d['Hbb%sUp'%group][1]['params'][8]))
+		l.SetTextColor(d['Hbb%sUp'%group][0].GetLineColor())
+		l = t3.AddText("   int: %.2f"%d['Hbb%sUp'%group][0].Integral())
+		l.SetTextColor(d['Hbb%sUp'%group][0].GetLineColor())
+	if 'Hbb%sDn'%group in d.keys():
+		l = t3.AddText("")
+		l.SetTextSize(l.GetTextSize()*0.5)
+		l = t3.AddText("Hbb%sDn"%(group))
+		l.SetTextColor(d['Hbb%sDn'%group][0].GetLineColor())
+		l.SetTextFont(102)
+		l = t3.AddText("     N: %d (%.3f)"%(d['Hbb%sDn'%group][0].GetEntries(),d['Hbb%sDn'%group][0].GetEntries()/d['Hbb'][0].GetEntries()))
+		l.SetTextColor(d['Hbb%sDn'%group][0].GetLineColor())
+		if 'mbb' in nh:
+			l = t3.AddText("    x0: %.2f (%.1f%%)"%(d['Hbb%sDn'%group][1]['params'][0],abs(d['Hbb%sDn'%group][1]['params'][0]-d['Hbb'][1]['params'][0])*100/d['Hbb'][1]['params'][0]))
+			l.SetTextColor(d['Hbb%sDn'%group][0].GetLineColor())
+			l = t3.AddText("  FWHM: %.2f"%(d['Hbb%sDn'%group][1]['params'][5]))
+			l.SetTextColor(d['Hbb%sDn'%group][0].GetLineColor())
+			l = t3.AddText(" sigma: %.2f"%(d['Hbb%sDn'%group][1]['params'][8]))
+			l.SetTextColor(d['Hbb%sDn'%group][0].GetLineColor())
+			l = t3.AddText("   int: %.2f"%d['Hbb%sDn'%group][0].Integral())
+			l.SetTextColor(d['Hbb%sDn'%group][0].GetLineColor())
+	l = t3.AddText("")
+	l.SetTextSize(l.GetTextSize()*0.5)
 	t3.Draw()
 
-	texts += [t1,t2,t3]
+	p1.cd()
+	t4 = TPaveText(0.0,0.0,0.099,0.05,"NDC")
+	t4.SetBorderSize(0)
+	t4.SetFillColor(kWhite)
+	t4#.SetFillStyle(1001)
+	t4.Draw()
+	if not ('JER' in group and ('mva' in nh)): p2.cd()
+	else: p3b.cd()
+	t5 = TPaveText(0.045,0.95,0.099,1.0,"NDC")
+	t5.SetBorderSize(0)
+	t5.SetFillColor(kWhite)
+	t5.SetFillStyle(1001)
+	t5.Draw()
+
+	texts += [t1,t2,t3,t4,t5]
 	c.Update()
 	return c
 
@@ -232,8 +400,8 @@ def mkUncJEx():
 	##################################################	
 	# initialising
 	#print gSystem.Load("../fitbias/fitTF1")
-	gSystem.AddIncludePath("-I/opt/Software/include")
-	gROOT.ProcessLine(".L ../fitbias/fitTF1.C++")
+#	gSystem.AddIncludePath("-I/opt/Software/include")
+#	gROOT.ProcessLine(".L ../fitbias/fitTF1.C++")
 	opts,fout,variables = main.main(parser(),False,True,False)
 	gDirectory.cd("%s:/"%fout.GetName())
 
@@ -278,18 +446,18 @@ def mkUncJEx():
 	gStyle.SetPadTopMargin(0.02)
 	gStyle.SetPadBottomMargin(0.18)
 	gStyle.SetLabelFont(43,"XYZ")
-	gStyle.SetLabelSize(35,"XYZ")
+	gStyle.SetLabelSize(25,"XYZ")
 	gStyle.SetTitleFont(43,"XYZ")
-	gStyle.SetTitleSize(40,"XYZ")
-	gStyle.SetTitleOffset(3.2,"X")
-	gStyle.SetTitleOffset(2.0,"Y")
-	gStyle.SetLabelOffset(0.020,"X")
+	gStyle.SetTitleSize(30,"XYZ")
+	gStyle.SetTitleOffset(3.0,"X")
+	gStyle.SetTitleOffset(1.8,"Y")
+	gStyle.SetLabelOffset(0.015,"X")
 	gStyle.SetTitleColor(kBlue+2)
 	gStyle.SetTickLength(0.02)
 	
 	##################################################	
 	# reading sample properties
-	friends = ["HbbJESUp","HbbJESDn","HbbJERUp","HbbJERDn","HbbJERCl"] 
+	friends = ["HbbJERUp","HbbJERCl"]#HbbJERDn,#"HbbJESUp","HbbJESDn", 
 	sampleproperties = {}
 	for s in opts.sample:
 		sampleproperties[s] = {}
@@ -320,6 +488,10 @@ def mkUncJEx():
 					
 					if catveto(tag,nh): continue
 					
+					if 'jetUnsPt' in nh:
+						variables[nh]['xmin'] = '-0.4'
+						variables[nh]['xmax'] = '0.4'
+						variables[nh]['nbins_x'] = '41'
 					v = variables[nh]['root']
 					n = variables[nh]['var']
 					xmin = float(variables[nh]['xmin'])
@@ -335,8 +507,8 @@ def mkUncJEx():
 					else: sprops[key]['th1'] = TH1F(hname,"%s;%s;%s"%(hname,tx,ty),bins,xmin,xmax)
 					sprops[key]['th1'].Sumw2()
 					if incat==0: 
-						sprops[(tag,'JES',nh)]['tca'] = TCanvas(hname.replace('h%s'%ncat,'cJES'),hname.replace('h%s'%ncat,'cJES'),1800,1800)
-						sprops[(tag,'JER',nh)]['tca'] = TCanvas(hname.replace('h%s'%ncat,'cJER'),hname.replace('h%s'%ncat,'cJER'),1800,1800)
+						sprops[(tag,'JES',nh)]['tca'] = TCanvas(hname.replace('h%s'%ncat,'cJES'),hname.replace('h%s'%ncat,'cJES'),1200,1200)
+						sprops[(tag,'JER',nh)]['tca'] = TCanvas(hname.replace('h%s'%ncat,'cJER'),hname.replace('h%s'%ncat,'cJER'),1200,1200)
 
 	# summarize load block
 	l1("Loaded properties for:")
@@ -375,6 +547,7 @@ def mkUncJEx():
 				for inh,(nhf,nhr,nh) in enumerate([(variables[x],variables[x]['root'],variables[x]['var']) for x in opts.variable]):
 					f1,f2,f3,hname = gethname(WGT[tag],nhf,sp['group'],sp['tag'],SEL[tag],TRG[tag],DTG[tag],REF[tag])
 					hname = hname.replace('hNum','h%s'%ncat)
+					makeDirs("plots/uncertainties/%s"%f1)
 					makeDirsRoot(fout,'%s/%s/%s/%s'%(f0,f1,f2,f3))
 
 					sp['tfile'].cd()
@@ -394,7 +567,8 @@ def mkUncJEx():
 #						sp[(tag,ncat,nh)]['th1'].Sumw2()	
 					else:
 						l4('%sCreating%s: %s \n%s%s(%s/%s/%s/%s)%s'%(red,plain,hname,grey,' '*9,f0,f1,f2,f3,plain))
-						treedraw("%s>>%s"%(nhr,sp[(tag,ncat,nh)]['th1'].GetName()),CUT[tag])
+						if not 'jetUnsPt' in nh: treedraw("%s>>%s"%(nhr,sp[(tag,ncat,nh)]['th1'].GetName()),CUT[tag])
+						else: treedraw("((%s - %s)/(%s))>>%s"%(nhr.replace('Uns',''),nhr,nhr.replace('Uns',''),sp[(tag,ncat,nh)]['th1'].GetName()),CUT[tag])
 						oldwd = gDirectory.GetPath()
 						gDirectory.cd("%s:/%s/%s/%s/%s/"%(fout.GetName(),f0,f1,f2,f3))
 						sp[(tag,ncat,nh)]['th1'].Write(sp[(tag,ncat,nh)]['th1'].GetName(),TH1.kOverwrite)
@@ -402,14 +576,31 @@ def mkUncJEx():
 					#tnow = time()
 					#tarray += [time01(tstart,tnow,tarray)]
 
-					if 'mbbReg' in nh:
-						gROOT.ProcessLineSync('TCanvas *can = new TCanvas("%s","%s",1800,1800)'%(sp[(tag,ncat,nh)]['th1'].GetName()[:100],sp[(tag,ncat,nh)]['th1'].GetName()[:100]))
-						gROOT.ProcessLineSync('TH1F hroot = (TH1F)gDirectory->FindObjectAny("%s").Clone("%s")'%(sp[(tag,ncat,nh)]['th1'].GetName(),sp[(tag,ncat,nh)]['th1'].GetName()[:100]))
-						gROOT.ProcessLineSync('double params[8] = {0.,0.,0.,0.,0.,0.,0.,0.}')
-						gROOT.ProcessLineSync('fitTF1(can,hroot,%.2f,%.2f,%.2f,params,%i)'%(110.+offset[ncat],140.+offset[ncat],(float(variables[nh]['xmax'])-float(variables[nh]['xmin']))/float(variables[nh]['nbins_x']),colours[ncat]))
-						sp[(tag,ncat,nh)]['tf1']['params'] = dc(list(ROOT.params))
+					if 'mbb' in nh:
+					#	gROOT.ProcessLineSync('TCanvas *can = new TCanvas("%s","%s",1800,1800)'%(sp[(tag,ncat,nh)]['th1'].GetName()[:100],sp[(tag,ncat,nh)]['th1'].GetName()[:100]))
+					#	gROOT.ProcessLineSync('TH1F hroot = (TH1F)gDirectory->FindObjectAny("%s").Clone("%s")'%(sp[(tag,ncat,nh)]['th1'].GetName(),sp[(tag,ncat,nh)]['th1'].GetName()[:100]))
+					#	gROOT.ProcessLineSync('double params[8] = {0.,0.,0.,0.,0.,0.,0.,0.}')
+					#	gROOT.ProcessLineSync('fitTF1(can,hroot,%.2f,%.2f,%.2f,params,%i)'%(90.+offset[ncat],160.+offset[ncat],(float(variables[nh]['xmax'])-float(variables[nh]['xmin']))/float(variables[nh]['nbins_x']),colours[ncat]))
+					#	sp[(tag,ncat,nh)]['tf1']['params'] = dc(list(ROOT.params))
+					#	count = 0
+					#	for i in ROOT.can.GetListOfPrimitives():
+					#		if i.IsA().GetName() == "RooCurve" and count==0:
+					#			sp[(tag,ncat,nh)]['tf1']['ful'] = i.Clone()
+					#			count += 1
+					#		elif i.IsA().GetName() == "RooCurve" and count==1:
+					#			sp[(tag,ncat,nh)]['tf1']['bkg'] = i.Clone()
+					#			count += 1
+					#			break
+					#	gROOT.ProcessLineSync('can.Close()')
+						sp[(tag,ncat,nh)]['th1'].Scale(1./float(sp[(tag,ncat,nh)]['th1'].Integral()))
+						c = TCanvas("%s"%(sp[(tag,ncat,nh)]['th1'].GetName()[:100]),"%s"%(sp[(tag,ncat,nh)]['th1'].GetName()[:100]),1800,1800)
+						h = sp[(tag,ncat,nh)]['th1'].Clone(sp[(tag,ncat,nh)]['th1'].GetName()[:100])
+						params = [0.]*9
+						fitTF1(c,h,50,200,(float(variables[nh]['xmax'])-float(variables[nh]['xmin']))/float(variables[nh]['nbins_x']),params,colours[ncat])
+						#print params
+						sp[(tag,ncat,nh)]['tf1']['params'] = dc(list(params))
 						count = 0
-						for i in ROOT.can.GetListOfPrimitives():
+						for i in c.GetListOfPrimitives():
 							if i.IsA().GetName() == "RooCurve" and count==0:
 								sp[(tag,ncat,nh)]['tf1']['ful'] = i.Clone()
 								count += 1
@@ -417,23 +608,24 @@ def mkUncJEx():
 								sp[(tag,ncat,nh)]['tf1']['bkg'] = i.Clone()
 								count += 1
 								break
-						gROOT.ProcessLineSync('can.Close()')
-
+						c.Close()
 					
 			for inh,nh in enumerate([variables[x]['var'] for x in opts.variable]):
 				if catveto(tag,nh): continue
 	
 				# JES Up/Dn
-				sp[(tag,'Hbb',nh)]['th1']      = style01(sp[(tag,'Hbb',nh)]['th1'],kBlack,kGray)
-				sp[(tag,'HbbJESUp',nh)]['th1'] = style01(sp[(tag,'HbbJESUp',nh)]['th1'],kBlue+1,None,1)#7
-				sp[(tag,'HbbJESDn',nh)]['th1'] = style01(sp[(tag,'HbbJESDn',nh)]['th1'],kRed+1,None,1)#10
-				sp[(tag,'JES',nh)]['tca']      = func01(tag,sp[(tag,'JES',nh)]['tca'],dict((y,(sp[(tag,y,nh)]['th1'],sp[(tag,y,nh)]['tf1'])) for y in ['Hbb','HbbJESUp','HbbJESDn']),SEL[tag],TRG[tag]) 
+				if 'HbbJESUp' in friends:
+					sp[(tag,'Hbb',nh)]['th1']      = style01(sp[(tag,'Hbb',nh)]['th1'],kBlack,kGray)
+					sp[(tag,'HbbJESUp',nh)]['th1'] = style01(sp[(tag,'HbbJESUp',nh)]['th1'],kBlue+1,None,1)#7
+					sp[(tag,'HbbJESDn',nh)]['th1'] = style01(sp[(tag,'HbbJESDn',nh)]['th1'],kRed+1,None,1)#10
+					sp[(tag,'JES',nh)]['tca']      = func01(opts,tag,sp[(tag,'JES',nh)]['tca'],dict((y,(sp[(tag,y,nh)]['th1'],sp[(tag,y,nh)]['tf1'])) for y in ['Hbb','HbbJESUp','HbbJESDn']),SEL[tag],TRG[tag]) 
 
 				# JER Up/Dn
-				sp[(tag,'HbbJERUp',nh)]['th1'] = style01(sp[(tag,'HbbJERUp',nh)]['th1'],kViolet+1,None,1)#7
-				sp[(tag,'HbbJERCl',nh)]['th1'] = style01(sp[(tag,'HbbJERCl',nh)]['th1'],kSpring-1,None,1)#7
-				sp[(tag,'HbbJERDn',nh)]['th1'] = style01(sp[(tag,'HbbJERDn',nh)]['th1'],kMagenta+1,None,9)#10
-				sp[(tag,'JER',nh)]['tca']      = func01(tag,sp[(tag,'JER',nh)]['tca'],dict((y,(sp[(tag,y,nh)]['th1'],sp[(tag,y,nh)]['tf1'])) for y in ['Hbb','HbbJERUp','HbbJERCl','HbbJERDn']),SEL[tag],TRG[tag]) 
+				if 'HbbJERCl' in friends:
+					sp[(tag,'HbbJERUp',nh)]['th1'] = style01(sp[(tag,'HbbJERUp',nh)]['th1'],kViolet+1,None,1)#7
+					sp[(tag,'HbbJERCl',nh)]['th1'] = style01(sp[(tag,'HbbJERCl',nh)]['th1'],kSpring-1,None,1)#7
+					#sp[(tag,'HbbJERDn',nh)]['th1'] = style01(sp[(tag,'HbbJERDn',nh)]['th1'],kMagenta+1,None,9)#10
+					sp[(tag,'JER',nh)]['tca']      = func01(opts,tag,sp[(tag,'JER',nh)]['tca'],dict((y,(sp[(tag,y,nh)]['th1'],sp[(tag,y,nh)]['tf1'],sp[(tag,y,nh[0:3]+'Uns'+nh[3:])]['th1'] if 'jetPt' in nh else None)) for y in ['Hbb','HbbJERUp','HbbJERCl']),SEL[tag],TRG[tag]) #,'HbbJERDn'
 
 				#gDirectory.cd("%s:/"%fout.GetName())
 				#makeDirsRoot(fout,"histos/%s"%stag)
@@ -443,17 +635,24 @@ def mkUncJEx():
 				gDirectory.cd("%s:/"%fout.GetName())
 				makeDirsRoot(fout,"canvas/%s"%stag)
 				gDirectory.cd("%s:/canvas/%s"%(fout.GetName(),stag))
-				sp[(tag,'JES',nh)]['tca'].Update()
-				sp[(tag,'JES',nh)]['tca'].Write("%s"%(sp[(tag,'JES',nh)]['tca'].GetName()),TH1.kOverwrite)
-				sp[(tag,'JER',nh)]['tca'].Update()
-				sp[(tag,'JER',nh)]['tca'].Write("%s"%(sp[(tag,'JER',nh)]['tca'].GetName()),TH1.kOverwrite)
+				if 'HbbJESUp' in friends:
+					sp[(tag,'JES',nh)]['tca'].Update()
+					sp[(tag,'JES',nh)]['tca'].Write("%s"%(sp[(tag,'JES',nh)]['tca'].GetName()),TH1.kOverwrite)
+				if 'HbbJERUp' in friends:
+					sp[(tag,'JER',nh)]['tca'].Update()
+					sp[(tag,'JER',nh)]['tca'].Write("%s"%(sp[(tag,'JER',nh)]['tca'].GetName()),TH1.kOverwrite)
 
-				sp[(tag,'JES',nh)]['tca'].Update()
-				sp[(tag,'JES',nh)]['tca'].SaveAs("plots/uncertainties/%s.pdf"%sp[(tag,'JES',nh)]['tca'].GetName())
-				sp[(tag,'JES',nh)]['tca'].Close()
-				sp[(tag,'JER',nh)]['tca'].Update()
-				sp[(tag,'JER',nh)]['tca'].SaveAs("plots/uncertainties/%s.pdf"%sp[(tag,'JER',nh)]['tca'].GetName())
-				sp[(tag,'JER',nh)]['tca'].Close()
+				if 'HbbJESUp' in friends:
+					sp[(tag,'JES',nh)]['tca'].Update()
+					sp[(tag,'JES',nh)]['tca'].SaveAs("plots/uncertainties/%s/%s.pdf"%(f1,sp[(tag,'JES',nh)]['tca'].GetName()))
+					sp[(tag,'JES',nh)]['tca'].SaveAs("plots/uncertainties/%s/%s.png"%(f1,sp[(tag,'JES',nh)]['tca'].GetName()))
+					sp[(tag,'JES',nh)]['tca'].Close()
+				if 'HbbJERUp' in friends:
+					sp[(tag,'JER',nh)]['tca'].Update()
+					sp[(tag,'JER',nh)]['tca'].SaveAs("plots/uncertainties/%s/%s.pdf"%(f1,sp[(tag,'JER',nh)]['tca'].GetName()))
+					sp[(tag,'JER',nh)]['tca'].SaveAs("plots/uncertainties/%s/%s.png"%(f1,sp[(tag,'JER',nh)]['tca'].GetName()))
+					sp[(tag,'JER',nh)]['tca'].Close()
+
 				
 		sp['tfile'].Close()
 

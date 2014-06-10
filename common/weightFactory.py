@@ -24,6 +24,8 @@ class weightFactory:
 			if iWght == 'LUMI' : self.addLUWght(sample_tag)
 			if iWght == 'KFAC' : self.addKFWght(sample_tag)
 			if iWght == 'TRSF' : self.addTRWght(sample_tag)
+			if iWght == 'TNOM' : self.addTNWght(sample_tag)
+			if iWght == 'TVBF' : self.addTVWght(sample_tag)
 			if iWght[0:3] == 'COR'  : self.add1DWght(sample_tag,iWght.split('#')[1:])
 			if iWght[0:3] == 'MAP'  : self.add2DWght(sample_tag,iWght.split('#')[1:])
 		return self.wOut
@@ -47,6 +49,14 @@ class weightFactory:
 	def addTRWght(self,tag):
 		for iFile in self.samples["files"]:
 			if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 : self.wOut += '*0.85'
+
+	def addTNWght(self,tag):
+		for iFile in self.samples["files"]:
+			if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 : self.wOut += '*trigWtNOM[1]'
+
+	def addTVWght(self,tag):
+		for iFile in self.samples["files"]:
+			if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 : self.wOut += '*trigWtVBF'
 
 	def add1DWght(self,tag,variables):
 		for iFile in self.samples["files"]:
