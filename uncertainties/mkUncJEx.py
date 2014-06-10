@@ -38,6 +38,7 @@ def parser(mp=None):
 	mu1.add_option("--tag",help="Tags for selection/trigger set.",default=[],type="str",action="callback",callback=optsplit,dest="tag")
 	#mu1.add_option('-c','--categories',help=blue+'Pick for categories.'+plain,dest='categories',type="str",default=[],action='callback',callback=optsplit)
 	mu1.add_option('-B','--categoryboundaries',help=blue+'Boundaries for categories.'+plain,dest='categoryboundaries',type="str",default=[[-1.001,0.0,0.25,0.70,0.88,1.001],[-1.001,0.0,0.3,0.65,1.001]],action='callback',callback=optsplitlist)
+	mu1.add_option('--noleg',help='No legend border on the right. Essentials on the plot.',default=False,action='store_true')
 	mp.add_option_group(mu1)
 	return mp 
 
@@ -100,42 +101,36 @@ def func01(opts,tag,c,d,sel="",trg=""):
 	global lines
 	global legends
 	global texts
+	right = 0.78 if not opts.noleg else 0.9
 	c.cd()
 	p1 = TPad("ptop","ptop",0.0,0.30,1.0,1.0)
 	p2 = TPad("pbot","pbot",0.0,0.0,1.0,0.30)
-	p3a = TPad("pmod1","pmod1",0.0,0.0,0.78,0.18)
-	p3b = TPad("pmod2","pmod2",0.0,0.18,0.78,0.30)
-	p3c = TPad("pmod3","pmod3",0.79,0.0,1.0,0.30)
-	p1.SetRightMargin(0.22)
+	p3a = TPad("pmod1","pmod1",0.0,0.0,right,0.18)
+	p3b = TPad("pmod2","pmod2",0.0,0.18,right,0.30)
+	p3c = TPad("pmod3","pmod3",right,0.0,1.0,0.30)
+	if not opts.noleg:
+		for p in [p1,p2]: p.SetRightMargin(0.22)
+	for p in [p1,p2,p3a,p3b]: p.SetTicks(1,1)
 	p1.SetBottomMargin(0)
-	p1.SetTicks(1,1)
-	p2.SetRightMargin(0.22)
 	p2.SetTopMargin(0.0)
-	p2.SetTicks(1,1)
 	p2.SetGrid(1)
-	p3a.SetRightMargin(0.0)
-	p3a.SetLeftMargin(p3a.GetLeftMargin()/0.78)
+	
+	for p in [p3a,p3b]: 
+		p.SetRightMargin(0)
+		p.SetLeftMargin(p.GetLeftMargin()/right)
 	p3a.SetBottomMargin(p3a.GetBottomMargin()*2.)
 	p3a.SetTopMargin(0)
-	p3a.SetTicks(1,1)
 	p3a.SetGrid(1)
-	p3b.SetRightMargin(0.0)
-	p3b.SetLeftMargin(p3b.GetLeftMargin()/0.78)
 	p3b.SetTopMargin(0)
 	p3b.SetBottomMargin(0)
-	p3b.SetTicks(1,1)
 	p3b.SetGrid(1)
 	p3c.SetFillColor(kWhite)
 	p3c.SetFillStyle(3001)
-	#p2.SetFillColor(0)
-	#p2.SetFillStyle(0)
+	
 	p1.Draw()
 	if not (('mva' in nh) and 'JER' in group): p2.Draw()
 	else:
-		p3a.Draw()
-		p3b.Draw()
-		p3c.Draw()
-	
+		for p in [p3a,p3b,p3c]: p.Draw()
 	c.Update()
 
 	r = {}
@@ -163,16 +158,16 @@ def func01(opts,tag,c,d,sel="",trg=""):
 		elif 'mva' in nh:
 			if 'JERCl' in key:											# JER Centr / JER Smeared
 				p3b.cd()
-				r[key] = d["Hbb"][0].Clone("r%s"%key)
+				r[key] = d[key][0].Clone("r%s"%key)
 				r[key].SetLineColor(colours[key])
 				#r[key].Scale(-1)
 				#r[key].Add(d["Hbb"][0],1.)
-				r[key].Divide(d[key][0])
+				r[key].Divide(d["Hbb"][0])
 				eps = 0.001
 				r[key].GetYaxis().SetRangeUser(-0.2+eps,0.2-eps)
 				r[key].GetXaxis().SetTickLength(0.06)
 				r[key].GetYaxis().SetTickLength(0.017)
-				r[key].GetYaxis().SetTitle("cent./sm.")
+				r[key].GetYaxis().SetTitle("sm./cent.")
 			else:														# band (JER smeared extra - JER smeared) / JER smeared
 				p3a.cd()
 				r[key] = d["HbbJERCl"][0].Clone("r%s"%key)
@@ -250,7 +245,7 @@ def func01(opts,tag,c,d,sel="",trg=""):
 		for iw,w in enumerate(sorted(wght)):
 			if iw==0: t2.AddText('wght: %s'%(w))
 			else: t2.AddText('      %s'%(w))
-	t2.Draw()
+	if not opts.noleg: t2.Draw()
 
 	if not ("JER" in ri.GetName() and ('mva' in nh)):
 		p2.Update()
@@ -286,12 +281,19 @@ def func01(opts,tag,c,d,sel="",trg=""):
 	t1.SetTextSize(0.025)
 	t1.SetTextColor(kBlack)
 	t1.SetTextAlign(11)
-	t1.AddText("CMS preliminary")
-	t1.AddText("VBF H#rightarrow b#bar{b}")
-	t1.AddText("L = %.1f fb^{-1}"%(19800./1000. if tag=="NOM" else 18300./1000. if tag=="VBF" else -1.))
+	if not opts.noleg:
+		t1.AddText("CMS preliminary")
+		t1.AddText("VBF H#rightarrow b#bar{b}")
+		t1.AddText("L = %.1f fb^{-1}"%(19800./1000. if tag=="NOM" else 18300./1000. if tag=="VBF" else -1.))
 	t1.AddText("%s selection"%tag)
 	t1.AddText("sample: %s"%sample)
-	t1.Draw()
+	if not opts.noleg: t1.Draw()
+	else: 
+		t1.SetX1NDC(0.12)
+		t1.SetX2NDC(0.32)
+		t1.SetY2NDC(0.95)
+		t1.SetY1NDC(0.95 - 2.*0.035)
+		t1.Draw()
 
 	legends += [TLegend(0.79,0.76-(4 if group=="JES" else 4)*0.035,0.985,0.76,"%s variation"%(group))]
 	leg = legends[-1]
@@ -303,7 +305,12 @@ def func01(opts,tag,c,d,sel="",trg=""):
 		for ri in sorted(r.itervalues(),key=lambda x:('Up' in x.GetName(),'Cl' in x.GetName())): leg.AddEntry(ri,"%s smear%s"%(group,'_max' if 'Up' in ri.GetName() else '_min' if 'Dn' in ri.GetName() else ''),"LF")
 	else:
 		for ri in r.itervalues(): leg.AddEntry(ri,"%s %s"%(group,'up' if 'Up' in ri.GetName() else 'down' if 'Dn' in ri.GetName() else '?'),"L")
-	leg.Draw()
+	if not opts.noleg: leg.Draw()
+	else: 
+		leg.SetX1NDC(0.12)
+		leg.SetX2NDC(0.32)
+		leg.SetY2NDC(0.85)
+		leg.SetY1NDC(0.85 - 4.*0.035)
 	
 	nlines = 5 if group=='JES' else 5
 	left,bottom,right,top = 0.79,0.55-0.025*(nlines*4+0.5 if 'mbb' in nh else nlines*2),0.99,0.55
@@ -375,13 +382,13 @@ def func01(opts,tag,c,d,sel="",trg=""):
 			l.SetTextColor(d['Hbb%sDn'%group][0].GetLineColor())
 	l = t3.AddText("")
 	l.SetTextSize(l.GetTextSize()*0.5)
-	t3.Draw()
+	if not opts.noleg: t3.Draw()
 
 	p1.cd()
 	t4 = TPaveText(0.0,0.0,0.099,0.05,"NDC")
 	t4.SetBorderSize(0)
 	t4.SetFillColor(kWhite)
-	t4#.SetFillStyle(1001)
+	t4.SetFillStyle(1001)
 	t4.Draw()
 	if not ('JER' in group and ('mva' in nh)): p2.cd()
 	else: p3b.cd()
@@ -452,7 +459,8 @@ def mkUncJEx():
 	gStyle.SetTitleOffset(3.0,"X")
 	gStyle.SetTitleOffset(1.8,"Y")
 	gStyle.SetLabelOffset(0.015,"X")
-	gStyle.SetTitleColor(kBlue+2)
+	gStyle.SetTitleColor(kBlack)#kBlue+2
+	gStyle.SetLabelColor(kBlack)
 	gStyle.SetTickLength(0.02)
 	
 	##################################################	
