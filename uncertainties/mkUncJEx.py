@@ -101,15 +101,16 @@ def func01(opts,tag,c,d,sel="",trg=""):
 	global lines
 	global legends
 	global texts
-	right = 0.78 if not opts.noleg else 0.9
+	right = 0.78 if not opts.noleg else 0.95
 	c.cd()
 	p1 = TPad("ptop","ptop",0.0,0.30,1.0,1.0)
 	p2 = TPad("pbot","pbot",0.0,0.0,1.0,0.30)
 	p3a = TPad("pmod1","pmod1",0.0,0.0,right,0.18)
 	p3b = TPad("pmod2","pmod2",0.0,0.18,right,0.30)
 	p3c = TPad("pmod3","pmod3",right,0.0,1.0,0.30)
-	if not opts.noleg:
-		for p in [p1,p2]: p.SetRightMargin(0.22)
+	for p in [p1,p2]:
+		if not opts.noleg: p.SetRightMargin(0.22)
+		else: p.SetRightMargin(0.05)
 	for p in [p1,p2,p3a,p3b]: p.SetTicks(1,1)
 	p1.SetBottomMargin(0)
 	p2.SetTopMargin(0.0)
@@ -130,7 +131,8 @@ def func01(opts,tag,c,d,sel="",trg=""):
 	p1.Draw()
 	if not (('mva' in nh) and 'JER' in group): p2.Draw()
 	else:
-		for p in [p3a,p3b,p3c]: p.Draw()
+		for p in [p3a,p3b]: p.Draw()
+		if not opts.noleg: p3c.Draw()
 	c.Update()
 
 	r = {}
@@ -207,7 +209,7 @@ def func01(opts,tag,c,d,sel="",trg=""):
 					ri.GetYaxis().SetRangeUser(0.9+eps,1.1-eps)
 					ri.GetYaxis().SetNdivisions(504)
 					ri.GetXaxis().SetTitleOffset(r[key].GetXaxis().GetTitleOffset()*1.8)
-					ri.GetYaxis().SetTitleOffset(r[key].GetYaxis().GetTitleOffset()*1.43)
+					ri.GetYaxis().SetTitleOffset(r[key].GetYaxis().GetTitleOffset()*1.25)#1.43)
 					ri.DrawCopy("hist")
 					ri.SetFillColor(colours['HbbJERUp'])
 					ri.SetFillStyle(3002)
@@ -217,7 +219,9 @@ def func01(opts,tag,c,d,sel="",trg=""):
 					p3b.cd()
 					ri.GetYaxis().SetRangeUser(0.90+eps,1.10-eps)
 					ri.GetYaxis().SetNdivisions(504)
-					ri.GetYaxis().SetTitleOffset(r[key].GetYaxis().GetTitleOffset()*1.5)
+					ri.GetYaxis().SetTitleOffset(r[key].GetYaxis().GetTitleOffset()*1.30)#1.5)
+					ri.GetXaxis().SetTitleSize(0)
+					ri.GetXaxis().SetLabelSize(0)
 					ri.DrawCopy("hist")
 					gPad.Update()
 					l1 = TLine(gPad.GetUxmin(),1.0,gPad.GetUxmax(),1.0)
@@ -289,10 +293,10 @@ def func01(opts,tag,c,d,sel="",trg=""):
 	t1.AddText("sample: %s"%sample)
 	if not opts.noleg: t1.Draw()
 	else: 
-		t1.SetX1NDC(0.12)
-		t1.SetX2NDC(0.32)
-		t1.SetY2NDC(0.95)
-		t1.SetY1NDC(0.95 - 2.*0.035)
+		t1.SetX1(0.135)
+		t1.SetX2(0.335)
+		t1.SetY2(0.93)
+		t1.SetY1(0.93 - 2.*0.035)
 		t1.Draw()
 
 	legends += [TLegend(0.79,0.76-(4 if group=="JES" else 4)*0.035,0.985,0.76,"%s variation"%(group))]
@@ -307,10 +311,11 @@ def func01(opts,tag,c,d,sel="",trg=""):
 		for ri in r.itervalues(): leg.AddEntry(ri,"%s %s"%(group,'up' if 'Up' in ri.GetName() else 'down' if 'Dn' in ri.GetName() else '?'),"L")
 	if not opts.noleg: leg.Draw()
 	else: 
-		leg.SetX1NDC(0.12)
-		leg.SetX2NDC(0.32)
-		leg.SetY2NDC(0.85)
-		leg.SetY1NDC(0.85 - 4.*0.035)
+		leg.SetX1(0.135)
+		leg.SetX2(0.335)
+		leg.SetY2(0.85)
+		leg.SetY1(0.85 - 4.*0.035)
+		leg.Draw()
 	
 	nlines = 5 if group=='JES' else 5
 	left,bottom,right,top = 0.79,0.55-0.025*(nlines*4+0.5 if 'mbb' in nh else nlines*2),0.99,0.55
@@ -459,13 +464,13 @@ def mkUncJEx():
 	gStyle.SetTitleOffset(3.0,"X")
 	gStyle.SetTitleOffset(1.8,"Y")
 	gStyle.SetLabelOffset(0.015,"X")
-	gStyle.SetTitleColor(kBlack)#kBlue+2
-	gStyle.SetLabelColor(kBlack)
+	gStyle.SetTitleColor(kBlack,"XYZ")#kBlue+2
+	gStyle.SetLabelColor(kBlack,"XYZ")
 	gStyle.SetTickLength(0.02)
 	
 	##################################################	
 	# reading sample properties
-	friends = ["HbbJERUp","HbbJERCl"]#HbbJERDn,#"HbbJESUp","HbbJESDn", 
+	friends = ["HbbJERUp","HbbJERCl","HbbJESDn","HbbJESUp"]#HbbJERDn,#"HbbJESUp","HbbJESDn", 
 	sampleproperties = {}
 	for s in opts.sample:
 		sampleproperties[s] = {}
@@ -553,9 +558,10 @@ def mkUncJEx():
 				tree = sp['ttree'][ncat]
 				treedraw = tree.Draw
 				for inh,(nhf,nhr,nh) in enumerate([(variables[x],variables[x]['root'],variables[x]['var']) for x in opts.variable]):
+					if 'jetUnsPt' in nh and 'JES' in ncat: continue
 					f1,f2,f3,hname = gethname(WGT[tag],nhf,sp['group'],sp['tag'],SEL[tag],TRG[tag],DTG[tag],REF[tag])
 					hname = hname.replace('hNum','h%s'%ncat)
-					makeDirs("plots/uncertainties/%s"%f1)
+					makeDirs("plots/uncertainties/%s%s"%(f1,'' if not opts.noleg else '_noleg'))
 					makeDirsRoot(fout,'%s/%s/%s/%s'%(f0,f1,f2,f3))
 
 					sp['tfile'].cd()
@@ -626,7 +632,7 @@ def mkUncJEx():
 					sp[(tag,'Hbb',nh)]['th1']      = style01(sp[(tag,'Hbb',nh)]['th1'],kBlack,kGray)
 					sp[(tag,'HbbJESUp',nh)]['th1'] = style01(sp[(tag,'HbbJESUp',nh)]['th1'],kBlue+1,None,1)#7
 					sp[(tag,'HbbJESDn',nh)]['th1'] = style01(sp[(tag,'HbbJESDn',nh)]['th1'],kRed+1,None,1)#10
-					sp[(tag,'JES',nh)]['tca']      = func01(opts,tag,sp[(tag,'JES',nh)]['tca'],dict((y,(sp[(tag,y,nh)]['th1'],sp[(tag,y,nh)]['tf1'])) for y in ['Hbb','HbbJESUp','HbbJESDn']),SEL[tag],TRG[tag]) 
+					sp[(tag,'JES',nh)]['tca']      = func01(opts,tag,sp[(tag,'JES',nh)]['tca'],dict((y,(sp[(tag,y,nh)]['th1'],sp[(tag,y,nh)]['tf1'],None)) for y in ['Hbb','HbbJESUp','HbbJESDn']),SEL[tag],TRG[tag]) 
 
 				# JER Up/Dn
 				if 'HbbJERCl' in friends:
@@ -652,13 +658,13 @@ def mkUncJEx():
 
 				if 'HbbJESUp' in friends:
 					sp[(tag,'JES',nh)]['tca'].Update()
-					sp[(tag,'JES',nh)]['tca'].SaveAs("plots/uncertainties/%s/%s.pdf"%(f1,sp[(tag,'JES',nh)]['tca'].GetName()))
-					sp[(tag,'JES',nh)]['tca'].SaveAs("plots/uncertainties/%s/%s.png"%(f1,sp[(tag,'JES',nh)]['tca'].GetName()))
+					sp[(tag,'JES',nh)]['tca'].SaveAs("plots/uncertainties/%s%s/%s.pdf"%(f1,'' if not opts.noleg else '_noleg',sp[(tag,'JES',nh)]['tca'].GetName()))
+					sp[(tag,'JES',nh)]['tca'].SaveAs("plots/uncertainties/%s%s/%s.png"%(f1,'' if not opts.noleg else '_noleg',sp[(tag,'JES',nh)]['tca'].GetName()))
 					sp[(tag,'JES',nh)]['tca'].Close()
 				if 'HbbJERUp' in friends:
 					sp[(tag,'JER',nh)]['tca'].Update()
-					sp[(tag,'JER',nh)]['tca'].SaveAs("plots/uncertainties/%s/%s.pdf"%(f1,sp[(tag,'JER',nh)]['tca'].GetName()))
-					sp[(tag,'JER',nh)]['tca'].SaveAs("plots/uncertainties/%s/%s.png"%(f1,sp[(tag,'JER',nh)]['tca'].GetName()))
+					sp[(tag,'JER',nh)]['tca'].SaveAs("plots/uncertainties/%s%s/%s.pdf"%(f1,'' if not opts.noleg else '_noleg',sp[(tag,'JER',nh)]['tca'].GetName()))
+					sp[(tag,'JER',nh)]['tca'].SaveAs("plots/uncertainties/%s%s/%s.png"%(f1,'' if not opts.noleg else '_noleg',sp[(tag,'JER',nh)]['tca'].GetName()))
 					sp[(tag,'JER',nh)]['tca'].Close()
 
 				

@@ -36,9 +36,11 @@ output1="rootfiles/vbfHbb_uncertainties_JEx.root"
 # NOM + VBF ######################################
 if [ "$1" == "" ] || [ "$1" == "1" ]; then
 	./mkUncJEx.py -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpath" -V "${jsonvar}" -o "$output1" -s "$samples" -p "$preselselNOM" -t "NOMMC" --tag "NOM" --weight "${lumiNOM},${weightNOM}" -v "$varsNOM" --binning "$bins"
+	./mkUncJEx.py -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpath" -V "${jsonvar}" -o "$output1" -s "$samples" -p "$preselselNOM" -t "NOMMC" --tag "NOM" --weight "${lumiNOM},${weightNOM}" -v "$varsNOM" --binning "$bins" --noleg
 fi
 if [ "$1" == "" ] || [ "$1" == "2" ]; then
 	./mkUncJEx.py -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpath" -V "${jsonvar}" -o "$output1" -s "$samples" -p "$preselselVBF" -t "VBF" --tag "VBF" --weight "${lumiVBF},${weightVBF}" -v "$varsVBF" --binning "$bins"
+	./mkUncJEx.py -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpath" -V "${jsonvar}" -o "$output1" -s "$samples" -p "$preselselVBF" -t "VBF" --tag "VBF" --weight "${lumiVBF},${weightVBF}" -v "$varsVBF" --binning "$bins" --noleg
 fi
 
 ##################################################

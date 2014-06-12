@@ -342,9 +342,9 @@ def main(mp=None,parseronly=False,variables=None,samples=None):
 					#print x1,x2,b,v
 					variables[v]['title_y'] = 'Events / %.2f'%((float(x2)-float(x1))/float(b))
 
-	if samples==True and variables==True: return opts,fout,samples,variables
-	elif samples==True: return opts,fout,samples
-	elif variables==True: return opts,fout,variables
+	if (not samples==False and not variables==False): return opts,fout,samples,variables
+	elif not samples==False: return opts,fout,samples
+	elif not variables==False: return opts,fout,variables
 
 # convert samples
 	if not (opts.usebool and not opts.preselect): convertSamples(opts,samples)
