@@ -162,6 +162,7 @@ def extractPaves(canvas):
 	paves = {}
 	labels = ["sampleinfo","selinfo"]
 	index = 0
+	if len(canvas.GetListOfPrimitives())<10: sys.exit("mkTriggerUncertainty canvases have to be created WITHOUT option noleg for this!")
 	for ikey,key in enumerate(canvas.GetListOfPrimitives()):
 		keyname = key.GetName()
 		if "TLine" in keyname: tag=True

@@ -2,7 +2,7 @@
 
 if [ "$1" == "all" ]; then
 ### TRIGGER
-./trigger/mkTurnonCurves.sh 1			# MAPS
+./trigger/mkTurnonCurves.sh 1				# MAPS
 ./trigger/mkTurnonCurves.sh 2 1			# bias NOM
 ./trigger/mkTurnonCurves.sh 2 2			# bias VBF
 ./trigger/mkTurnonCurves.sh 3 1			# NOM map1
@@ -24,6 +24,10 @@ if [ "$1" == "all" ]; then
 ./plots/mkHist.sh 2 5					# VBF map3
 ./plots/mkHist.sh 2 6					# VBF      NOMveto
 ./plots/mkHist.sh 2 7					# VBF map3 NOMveto
+
+### JEx
+./uncertainties/mkUncJEx.sh 			# NOM (1) & VBF (2)
+#./uncertainties/mkUncJEx.sh 999     # other selections
 fi
 
 ### WEBPAGE
@@ -35,7 +39,8 @@ if [ "$1" == "cpweb" ]; then
 # prepare
 	basefolders=(\
 	"/afs/cern.ch/user/s/salderwe/www/vbfhbb/trigger" \
-	"/afs/cern.ch/user/s/salderwe/www/vbfhbb/plots" 
+	"/afs/cern.ch/user/s/salderwe/www/vbfhbb/plots" \
+	"/afs/cern.ch/user/s/salderwe/www/vbfhbb/systematics" 
 	)
 	sources=(\
 	"trigger/plots/trigger_Nmin1_NOM_bias" \
@@ -43,39 +48,41 @@ if [ "$1" == "cpweb" ]; then
 	"trigger/plots/trigger_Nmin1_NOM_jetBtag00-jetBtag10" \
 	"trigger/plots/trigger_Nmin1_NOM_jetBtag00-mqq1" \
 	"trigger/plots/trigger_Nmin1_VBF_mqq2-dEtaqq2" \
-	"trigger/plots/trigger_Nmin1_VBF_mqq2-dEtaqq2_bins2" \
-	"trigger/plots/trigger_Nmin1_VBF_NOMveto_mqq2-dEtaqq2_bins2" \
-	"trigger/plots/trigger_Nmin1_VBF_NOMvetoNoBtag_mqq2-dEtaqq2_bins2" \
-	"trigger/plots/trigger_Nmin1_VBF_NOMvetoSelNoBtag_mqq2-dEtaqq2_bins2" \
-	"trigger/plots/trigger_Nmin1_VBF_mqq2-dEtaqq2_LL" \
-	"trigger/plots/trigger_Nmin1_VBF_mqq2-dEtaqq2_corrected" \
 	"trigger/plots/trigger_2DMaps_NOM_jetBtag00-jetBtag10" \
 	"trigger/plots/trigger_2DMaps_NOM_jetBtag00-mqq1" \
 	"trigger/plots/trigger_2DMaps_VBF_mqq2-dEtaqq2" \
-	"trigger/plots/trigger_2DMaps_VBF_mqq2-dEtaqq2_bins2" \
-	"trigger/plots/trigger_2DMaps_VBF_mqq2-dEtaqq2_corrected" \
-	"trigger/plots/trigger_2DMaps_VBF_NOMveto_mqq2-dEtaqq2_bins2" \
-	"trigger/plots/trigger_2DMaps_VBF_NOMvetoNoBtag_mqq2-dEtaqq2_bins2" \
-	"trigger/plots/trigger_2DMaps_VBF_NOMvetoSelNoBtag_mqq2-dEtaqq2_bins2" \
-	"trigger/plots/trigger_2DMaps_VBF_mqq2-dEtaqq2_LL" \
-	"plots/plots/control_NOM" \
-	"plots/plots/control_NOM_jetBtag00-jetBtag10" \
-	"plots/plots/control_NOM_jetBtag00-mqq1" \
-	"plots/plots/control_VBF" \
-	"plots/plots/control_VBF_mqq2-dEtaqq2" \
-	"plots/plots/control_VBF_mqq2-dEtaqq2_bins2" \
-	"plots/plots/control_VBF_mqq2-dEtaqq2_corrected" \
-	"plots/plots/control_VBF_NOMveto" \
-	"plots/plots/control_VBF_NOMveto_mqq2-dEtaqq2_bins2" \
-	"plots/plots/control_VBF_NOMvetoNoBtag" \
-	"plots/plots/control_VBF_NOMvetoNoBtag_mqq2-dEtaqq2_bins2" \
-	"plots/plots/control_VBF_NOMvetoSelNoBtag" \
-	"plots/plots/control_VBF_NOMvetoSelNoBtag_mqq2-dEtaqq2_bins2" \
-#	"trigger/plots/trigger_ScaleFactors_NOM_jetBtag00-jetBtag10" \
-#	"trigger/plots/trigger_ScaleFactors_NOM_jetBtag00-mqq1" \
-#	"trigger/plots/trigger_ScaleFactors_VBF_mqq2-dEtaqq2" \
-#	"trigger/plots/trigger_ScaleFactors_NOM_all" \
-#	"trigger/plots/trigger_ScaleFactors_VBF_all" \
+#	"plots/plots/control_NOM" \
+#	"plots/plots/control_NOM_jetBtag00-jetBtag10" \
+#	"plots/plots/control_NOM_jetBtag00-mqq1" \
+#	"plots/plots/control_VBF" \
+#	"plots/plots/control_VBF_mqq2-dEtaqq2" \
+#	"plots/plots/control_VBF_mqq2-dEtaqq2_bins2" \
+#	"plots/plots/control_VBF_mqq2-dEtaqq2_corrected" \
+#	"plots/plots/control_VBF_NOMveto" \
+#	"plots/plots/control_VBF_NOMveto_mqq2-dEtaqq2_bins2" \
+#	"plots/plots/control_VBF_NOMvetoNoBtag" \
+#	"plots/plots/control_VBF_NOMvetoNoBtag_mqq2-dEtaqq2_bins2" \
+#	"plots/plots/control_VBF_NOMvetoSelNoBtag" \
+#	"plots/plots/control_VBF_NOMvetoSelNoBtag_mqq2-dEtaqq2_bins2" \
+	"trigger/plots/trigger_ScaleFactors_NOM_jetBtag00-jetBtag10" \
+	"trigger/plots/trigger_ScaleFactors_NOM_jetBtag00-mqq1" \
+	"trigger/plots/trigger_ScaleFactors_VBF_mqq2-dEtaqq2" \
+	"trigger/plots/trigger_ScaleFactors_NOM_all" \
+	"trigger/plots/trigger_ScaleFactors_VBF_all" \
+#	"trigger/plots/trigger_Nmin1_VBF_mqq2-dEtaqq2_bins2" \
+#	"trigger/plots/trigger_Nmin1_VBF_NOMveto_mqq2-dEtaqq2_bins2" \
+#	"trigger/plots/trigger_Nmin1_VBF_NOMvetoNoBtag_mqq2-dEtaqq2_bins2" \
+#	"trigger/plots/trigger_Nmin1_VBF_NOMvetoSelNoBtag_mqq2-dEtaqq2_bins2" \
+#	"trigger/plots/trigger_Nmin1_VBF_mqq2-dEtaqq2_LL" \
+#	"trigger/plots/trigger_Nmin1_VBF_mqq2-dEtaqq2_corrected" \
+#	"trigger/plots/trigger_2DMaps_VBF_mqq2-dEtaqq2_bins2" \
+#	"trigger/plots/trigger_2DMaps_VBF_mqq2-dEtaqq2_corrected" \
+#	"trigger/plots/trigger_2DMaps_VBF_NOMveto_mqq2-dEtaqq2_bins2" \
+#	"trigger/plots/trigger_2DMaps_VBF_NOMvetoNoBtag_mqq2-dEtaqq2_bins2" \
+#	"trigger/plots/trigger_2DMaps_VBF_NOMvetoSelNoBtag_mqq2-dEtaqq2_bins2" \
+#	"trigger/plots/trigger_2DMaps_VBF_mqq2-dEtaqq2_LL" \
+	"uncertainties/plots/uncertainties/LUMI-PU.0-TNOM-XSEC_noleg" \
+	"uncertainties/plots/uncertainties/LUMI-PU.0-TVBF-XSEC_noleg" \
 	)
 	folders=()
 	for s in ${sources[@]}; do
@@ -93,6 +100,12 @@ if [ "$1" == "cpweb" ]; then
 		elif [[ $s == *ScaleFactors* ]]; then
 			suffix=${s/plots\//};
 			suffix=${suffix/trigger/trigger\/ScaleFactors};
+		elif [[ $s == *uncertainties* ]]; then
+			suffix=${s/plots\//};
+			if [[ $s == *TNOM* ]]; then suffix=${suffix/uncertainties*/systematics\/JEx\/NOM};
+			elif [[ $s == *TVBF* ]]; then suffix=${suffix/uncertainties*/systematics\/JEx\/VBF};
+			else suffix=${suffix/uncertainties*/JEx\/other};
+			fi
 		else
 			suffix="";
 		fi
@@ -114,19 +127,21 @@ if [ "$1" == "cpweb" ]; then
 			map0=$f
 			map1=${f/\/$(basename $f)/}
 			map2=${map1/\/$(basename $map1)/}
-			if [[ $f == *control* ]] || [[ $f == *Nmin1* ]] || [[ $f == *2DMaps* ]] || [[ $f == *ScaleFactors* ]]; then 
+			if [[ $f == *control* ]] || [[ $f == *Nmin1* ]] || [[ $f == *2DMaps* ]] || [[ $f == *ScaleFactors* ]] || [[ $f == *JEx* ]]; then 
 				[ ! -d $map1 ] && mkdir $map1;
 				cp $indexphp "$map1/index.php";
 				[ ! -d $map0 ] && mkdir $map0;
 				cp $indexphp "$map0/index.php";
 			fi
 		fi
-		if [[ $f == *2DMaps* ]];then
+		if [[ $f == *2DMaps* ]]; then
 			source=$s/*/*/*.png;
-		elif [[ $f == *ScaleFactors* ]];then
+		elif [[ $f == *ScaleFactors* ]]; then
 			source=$s/*/ScaleFactors1D_*.png;
 		elif [[ $f == *Nmin1* ]] || [[ $f == *control* ]]; then
-		   	source=$s/*/*/*/*/*.png;
+		   source=$s/*/*/*/*/*.png;
+		elif [[ $f == *JEx* ]]; then
+			source=$s/*.png;
 		else
 			echo -e "${red}Empty:${plain} $s";
 			continue;#break;	

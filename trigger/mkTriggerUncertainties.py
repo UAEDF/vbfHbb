@@ -33,6 +33,7 @@ def parser(mp=None):
 	mgtc.add_option('-s','--samples',help=blue+'List of samples (distmap).'+plain,dest='samples',type="str",default=[],action='callback',callback=optsplit)
 	mgtc.add_option('-c','--categories',help=blue+'Pick for categories.'+plain,dest='categories',type="str",default=[],action='callback',callback=optsplit)
 	mgtc.add_option('-b','--categoryboundaries',help=blue+'Boundaries for categories.'+plain,dest='categoryboundaries',type="str",default=[0.0,0.25,0.70,0.88,1.001],action='callback',callback=optsplit)
+	mgtc.add_option('--noleg',help='No right margin legends.',default=False,action='store_true')
 
 	mp.add_option_group(mgm)
 	mp.add_option_group(mgtc)
@@ -76,7 +77,7 @@ def getDistMaps(opts,fout):
 		for j in gDirectory.GetListOfKeys():
 			if info==None: info = [x.split("-") for x in re.search("_s(.*)-t(.*)-r(.*)-d(.*)_(.*)",j.GetName()).groups()]
 			if '%s-Num'%i in j.GetName(): 
-				try: cat = re.search("(mvaNOMC|CAT)([0-9]{1})",j.GetName()).group(2)
+				try: cat = re.search("(mvaVBFC|mvaNOMC|CAT)([0-9]{1})",j.GetName()).group(2)
 				except: cat = "N"
 				if opts.categories and not cat in opts.categories: continue
 				#print cat
@@ -127,7 +128,6 @@ def getConvolutions(opts,fout,info):
 				integral = convolution.IntegralAndError(0,convolution.GetNbinsX(),0,convolution.GetNbinsY(),error)
 				eff[(i,j,c)] = integral
 				efferr[(i,j,c)] = error
-
 
 	print "%12s |"%"E",
 	for c in ["N"]+["%d"%x for x in range(len(opts.categoryboundaries)-1)]:
@@ -207,10 +207,10 @@ def getCanvases(opts,fout,info):
 	gStyle.SetPaintTextFormat(".3f")
 
 	gDirectory.cd("%s:/ScaleFactors"%fout.GetName())
-	c = TCanvas("c","",1800,1200)
+	c = TCanvas("c","",1800 if not opts.noleg else 1600,1200)
 	for i in gDirectory.GetListOfKeys():
 		gPad.SetRightMargin(0.25)
-		text = printText(1-0.1,1-0.15,i.GetName().split('_')[1],"NOM" if "NOM_" in fout.GetName() else ("VBF" if "VBF" in fout.GetName() else "???"),info[4])#,0.020,kBlue-2)
+		text = printText(opts,1-0.1,1-0.15,i.GetName().split('_')[1],"NOM" if "NOM_" in fout.GetName() else ("VBF" if "VBF" in fout.GetName() else "???"),info[4])#,0.020,kBlue-2)
 		h = fout.Get("ScaleFactors/%s"%(i.GetName()))
 		h.SetTitle("")
 		th2f = (h.IsA().GetName() == "TH2F")
@@ -226,7 +226,7 @@ def getCanvases(opts,fout,info):
 		selleg = printSelleg(text.GetY1()-0.1,1-0.15,info[0],info[1])
 		if th2f: h.Draw("colz,error,text")
 		else: 
-			gPad.SetRightMargin(0.20)
+			gPad.SetRightMargin(0.20 if not opts.noleg else 0.05)
 			text.SetX1(text.GetX1()-0.04)
 			selleg.SetX1(selleg.GetX1()-0.04)
 			h.GetYaxis().SetRangeUser(0,1.2)#round(h.GetMaximum()*1.5,1))
@@ -247,13 +247,13 @@ def getCanvases(opts,fout,info):
 		line.SetLineWidth(4)
 		line.Draw("same")
 		text.Draw("same")
-		selleg.Draw("same")
+		if not opts.noleg: selleg.Draw("same")
 		gPad.Update()
 		gDirectory.cd("%s:/Canvases"%(fout.GetName()))
 		c.Update()
 		c.Write(c.GetName(),TH1.kOverwrite)
-		c.SaveAs("plots/%s/TriggerUncertainty/%s.pdf"%(os.path.split(fout.GetName())[1][:-5],c.GetName()))
-		c.SaveAs("plots/%s/TriggerUncertainty/%s.png"%(os.path.split(fout.GetName())[1][:-5],c.GetName()))
+		c.SaveAs("plots/%s/TriggerUncertainty/%s%s.pdf"%(os.path.split(fout.GetName())[1][:-5],c.GetName(),'' if not opts.noleg else '_noleg'))
+		c.SaveAs("plots/%s/TriggerUncertainty/%s%s.png"%(os.path.split(fout.GetName())[1][:-5],c.GetName(),'' if not opts.noleg else '_noleg'))
 		c.Update()
 	print purple+"Scale factor plots at: plots/%s/TriggerUncertainty/*ScaleFactor*.png"%(os.path.split(fout.GetName())[1][:-5])+plain
 	c.Close()
@@ -270,8 +270,13 @@ def extraText(hcenter,vcenter,line,fontSize=0.027,fontColor=kBlack):
 	theline.SetTextAngle(70)
 	return text
 
-def printText(top,left,sample,selection,mapvars,fontSize=0.020,fontColor=kBlack):
-	nlines = 6
+def printText(opts,top,left,sample,selection,mapvars,fontSize=0.020,fontColor=kBlack):
+	varnames = {'jetBtag00':'bjet0 CSV','jetBtag10':'bjet1 CSV','mqq1':'m_{q#bar{q}}','mqq2':'m_{q#bar{q}}','dEtaqq1':'#Delta#eta_{q#bar{q}}','dEtaqq2':'#Delta#eta_{q#bar{q}}'}
+	nlines = 6 if not opts.noleg else 3
+	if opts.noleg: 
+		left = 0.20
+		top = 0.30
+		fontSize = fontSize*1.4
 	right = left + 0.13
 	bottom = top - nlines*(fontSize+0.018)
 	text = TPaveText(left,bottom,right,top,"NDC")
@@ -281,14 +286,16 @@ def printText(top,left,sample,selection,mapvars,fontSize=0.020,fontColor=kBlack)
 	text.SetTextSize(fontSize)
 	text.SetTextColor(fontColor)
 	text.SetTextAlign(11)
-	text.AddText("CMS preliminary")
-	text.AddText("VBF H#rightarrow b#bar{b}")
-	text.AddText("L = %.1f fb^{-1}"%(19800./1000. if selection=="NOM" else 18300./1000. if selection=="VBF" else "???"))
+	if not opts.noleg:
+		text.AddText("CMS preliminary")
+		text.AddText("VBF H#rightarrow b#bar{b}")
+		text.AddText("L = %.1f fb^{-1}"%(19800./1000. if selection=="NOM" else 18300./1000. if selection=="VBF" else "???"))
 	text.AddText("%s selection"%selection)
 	text.AddText("sample: %s"%sample)
-	text.AddText("2D map: %s"%(' & '.join(mapvars)))
-	thisline = text.AddText("#varepsilon = #frac{#varepsilon_{%s #times data}}{#varepsilon_{%s #times qcd}}"%(sample,sample))
-	thisline.SetTextAlign(13)
+	text.AddText("2D map: %s"%(' & '.join([(varnames[x] if x in varnames else x) for x in mapvars])))
+	if not opts.noleg: 
+		thisline = text.AddText("#varepsilon = #frac{#varepsilon_{%s #times data}}{#varepsilon_{%s #times qcd}}"%(sample,sample))
+		thisline.SetTextAlign(13)
 	return text
 
 def printSelleg(top,left,selection,trigger,fontSize=0.020,fontColor=kBlack):

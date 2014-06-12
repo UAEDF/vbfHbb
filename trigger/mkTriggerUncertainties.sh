@@ -59,8 +59,8 @@ if [ "$1" == "" ] || [ "$1" == "2" ];then
 	# NOM DISTMAPS - jetBtag00-mqq
 	for i in `seq 0 4`; do echo $i; ./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "NOMMC" --datatrigger "NOM" --sample "$samples" -p "$preselsel2;mvaNOMC$i" -r "None" -w "19800.,PU#0;XSEC;LUMI" -o "$dist2" -m "$limits2" --numonly --usebool; done
 	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "NOMMC" --datatrigger "NOM" --sample "$samples" -p "$preselsel2" -r "None" -w "19800.,PU#0;XSEC;LUMI" -o "$dist2" -m "$limits2" --numonly --usebool
-	
-	elif [ "$2" == "" ] || [ "$2" == "2" ]; then
+	fi	
+	if [ "$2" == "" ] || [ "$2" == "2" ]; then
 	# VBF DISTMAPS - mqq2-dEtaqq2
 	for i in `seq 0 3`; do echo $i; ./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "VBF" --datatrigger "VBF" --sample "$samples" -p "$preselsel3;mvaVBFC$i" -r "None" -w "18300.,PU#0;XSEC;LUMI" -o "$dist3" -m "$limits3" --numonly --usebool; done
 	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "VBF" --datatrigger "VBF" --sample "$samples" -p "$preselsel3" -r "None" -w "18300.,PU#0;XSEC;LUMI" -o "$dist3" -m "$limits3" --numonly --usebool
@@ -73,17 +73,24 @@ fi
 
 ##################################################
 if [ "$1" == "" ] || [ "$1" == "3" ];then
+	if [ "$2" == "" ] || [ "$2" == "1" ]; then
 	# NOM SCALEFACTORS - jetBtag00-jetBtag10
+	./mkTriggerUncertainties.py -o $output1 --ftwodmaps $maps1 --fdistmaps $dist1 -s "$groups" -b -1.0,0.0,0.25,0.70,0.88,1.001 --noleg
 	./mkTriggerUncertainties.py -o $output1 --ftwodmaps $maps1 --fdistmaps $dist1 -s "$groups" -b -1.0,0.0,0.25,0.70,0.88,1.001
 	
 	# NOM SCALEFACTORS - jetBtag00-mqq1
+	./mkTriggerUncertainties.py -o $output2 --ftwodmaps $maps2 --fdistmaps $dist2 -s "$groups" -b -1.0,0.0,0.25,0.70,0.88,1.001 --noleg
 	./mkTriggerUncertainties.py -o $output2 --ftwodmaps $maps2 --fdistmaps $dist2 -s "$groups" -b -1.0,0.0,0.25,0.70,0.88,1.001
-	
+	fi
+	if [ "$2" == "" ] || [ "$2" == "2" ]; then
 	# VBF SCALEFACTORS - mqq2-dEtaqq2 
+	./mkTriggerUncertainties.py -o $output3 --ftwodmaps $maps3 --fdistmaps $dist3 -s "$groups" -b -1.0,0.0,0.3,0.65,1.001 --noleg
 	./mkTriggerUncertainties.py -o $output3 --ftwodmaps $maps3 --fdistmaps $dist3 -s "$groups" -b -1.0,0.0,0.3,0.65,1.001
 	
 	# VBF SCALEFACTORS - mqq2-dEtaqq2 - EXCLUSIVE
+	./mkTriggerUncertainties.py -o $output4 --ftwodmaps $maps4 --fdistmaps $dist4 -s "$groups" -b -1.0,0.0,0.3,0.65,1.001 --noleg
 	./mkTriggerUncertainties.py -o $output4 --ftwodmaps $maps4 --fdistmaps $dist4 -s "$groups" -b -1.0,0.0,0.3,0.65,1.001
+	fi
 fi
 
 ##################################################
