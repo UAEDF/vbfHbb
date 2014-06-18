@@ -332,7 +332,7 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 	cuts = {}
 	inroot('TTree *t = 0;')
 # To Save
-	if opts.notext: canvas = TCanvas("cmap","cmap",1500,1200)
+	if opts.notext: canvas = TCanvas("cmap","cmap",1800,1200)
 	else: canvas = TCanvas("cmap","cmap",1800,1200)
 	canvas.cd()
 	gPad.SetGrid(0,0)
@@ -396,12 +396,13 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		for tag in ['Num','Den','Rat']:
 			if opts.numonly and not tag=='Num': continue
 			if not tag in maps[group]: continue
-			maps[group][tag].Write(maps[group][tag].GetName(),TH1.kOverwrite)
 #$			if tag=='Rat': 
 #$				maps[group][tag].Paint("colz,text90,error")
 #$				maps[group][tag].GetPaintedHistogram().SetTitleOffset(1.0,"Y")
 #$			else: maps[group][tag].SetTitleOffset(1.0,"Y")
-			maps[group][tag].SetTitleOffset(1.0 if not opts.notext else 1.2,"Y")
+			#maps[group][tag].GetXaxis().SetTitle(variables[vx[0]]['title_x'])
+			#maps[group][tag].GetYaxis().SetTitle(variables[vy[0]]['title_x'])
+			maps[group][tag].SetTitleOffset(maps[group][tag].GetTitleOffset()*1.0 if not opts.notext else maps[group][tag].GetTitleOffset()*1.2,"XY")
 			maps[group][tag].SetMarkerSize(maps[group][tag].GetMarkerSize()*0.75)
 			maps[group][tag].SetTitle("")
 			if 'VBF' in trg:
@@ -415,6 +416,7 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 				text.Draw("same")
 				selleg.Draw("same")
 
+			maps[group][tag].Write(maps[group][tag].GetName(),TH1.kOverwrite)
 			canvas.SaveAs('%s/%s%s.png'%(path,maps[group][tag].GetName(),'' if not opts.notext else '_noleg'))
 			canvas.SaveAs('%s/%s%s.pdf'%(path,maps[group][tag].GetName(),'' if not opts.notext else '_noleg'))
 			l3("Written %s map to (eog %s/%s%s.png)"%(tag,path,maps[group][tag].GetName(),'' if not opts.notext else '_noleg'))
@@ -450,8 +452,10 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 
 		# plot
 		canvas.cd()
-		maps[ratio]['Rat'].SetTitleOffset(1.0 if not opts.notext else 1.2,"Y")
-		maps[ratio]['Rat'].SetTitleOffset(1.2,"X")
+		#maps[ratio]['Rat'].GetXaxis().SetTitle(variables[vx[0]]['title_x'])
+		#maps[ratio]['Rat'].GetYaxis().SetTitle(variables[vy[0]]['title_x'])
+		maps[ratio]['Rat'].SetTitleOffset(maps[ratio]['Rat'].GetTitleOffset()*1.0 if not opts.notext else maps[ratio]['Rat'].GetTitleOffset()*1.2,"XY")
+		#maps[ratio]['Rat'].SetTitleOffset(1.2,"X")
 		maps[ratio]['Rat'].GetZaxis().SetRangeUser(0,1.4)
 		if 'VBF' in trg:
 			gPad.SetLogx(1)
