@@ -92,52 +92,61 @@ binningVBF1="mvaVBF;10;-1;1,mbbReg2;15;0;300,jetBtag00;20;0;1,jetBtag10;20;0;1,j
 ###        8                   VBF mqq2 dEtaqq2    bins2	LL
 
 
+# turning on/off legends
+if [ "$3" == "0" ]; then 
+	notext="--notext"
+else
+	notext=""
+fi
 
+##################################################
+for i in `seq 0 1`; do
+	if [ "$notext" == "" ] && [ "$i" == "0" ]; then continue; fi
 ##################################################
 if [ "$1" == "" ] || [ "$1" == "1" ];then
 	if [ "$2" == "" ] || [ "$2" == "1" ]; then
 	# NOM MAPS - jetBtag00-jetBtag10
-	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -s "$samples" -p "$preselNOM" -r "AV80" -w "$weightNOMtrg" -o "$maps1" -m "$limits1" $usebool
+	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -s "$samples" -p "$preselNOM" -r "AV80" -w "$weightNOMtrg" -o "$maps1" -m "$limits1" $usebool $notext 
 	fi
 	
 	if [ "$2" == "" ] || [ "$2" == "2" ]; then
 	# NOM MAPS - jetBtag00-mqq1
-	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -s "$samples" -p "$preselNOM" -r "AV80" -w "$weightNOMtrg" -o "$maps2" -m "$limits2" $usebool
+	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -s "$samples" -p "$preselNOM" -r "AV80" -w "$weightNOMtrg" -o "$maps2" -m "$limits2" $usebool $notext
 	fi
 	
     if [ "$2" == "" ] || [ "$2" == "3" ]; then
 	# VBF MAPS - mqq2-dEtaqq2 
-	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg" -o "$maps3" -m "$limits3" $usebool
+	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg" -o "$maps3" -m "$limits3" $usebool $notext
 	fi
 	
     if [ "$2" == "" ] || [ "$2" == "9" ]; then
 	# VBF MAPS - mqq2-dEtaqq2 
-	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg" -o "$maps9" -m "$limits3" $usebool
+	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg" -o "$maps9" -m "$limits3" $usebool $notext
 	fi
 
     if [ "$2" == "" ] || [ "$2" == "4" ]; then
     # VBF MAPS - mqq2-dEtaqq2 - bins2
-    $basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg" -o "$maps4" -m "$limits4" $usebool
+    $basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg" -o "$maps4" -m "$limits4" $usebool $notext
 	fi
    
     if [ "$2" == "" ] || [ "$2" == "5" ]; then
     # VBF MAPS - mqq2-dEtaqq2 - bins2 - NOMveto
-    $basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBFNOMveto" -r "AV80" -w "$weightVBFtrg" -o "$maps5" -m "$limits4" $usebool
+    $basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBFNOMveto" -r "AV80" -w "$weightVBFtrg" -o "$maps5" -m "$limits4" $usebool $notext
 	fi
    
     if [ "$2" == "" ] || [ "$2" == "6" ]; then
     # VBF MAPS - mqq2-dEtaqq2 - bins2 - NOMvetoNoBtag
-    $basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBFNOMvetoNoBtag" -r "AV80" -w "$weightVBFtrg" -o "$maps6" -m "$limits4" $usebool
+    $basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBFNOMvetoNoBtag" -r "AV80" -w "$weightVBFtrg" -o "$maps6" -m "$limits4" $usebool $notext
 	fi
    
 	if [ "$2" == "" ] || [ "$2" == "7" ]; then
     # VBF MAPS - mqq2-dEtaqq2 - bins2 - NOMvetoSelNoBtag
-    $basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBFNOMvetoSelNoBtag" -r "AV80" -w "$weightVBFtrg" -o "$maps7" -m "$limits4" $usebool
+    $basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBFNOMvetoSelNoBtag" -r "AV80" -w "$weightVBFtrg" -o "$maps7" -m "$limits4" $usebool $notext
 	fi
    
     if [ "$2" == "" ] || [ "$2" == "8" ]; then
 	# VBF MAPS - mqq2-dEtaqq2 - LL
-	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBFLL" -r "AV80" -w "$weightVBFtrg" -o "$maps8" -m "$limits4" $usebool
+	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "$samples" -p "$preselVBFLL" -r "AV80" -w "$weightVBFtrg" -o "$maps8" -m "$limits4" $usebool $notext
 	fi
 fi
 
@@ -145,11 +154,11 @@ fi
 if [ "$1" == "" ] || [ "$1" == "2" ];then
 	if [ "$2" == "" ] || [ "$2" == "1" ]; then
 	# NOM Nmin1 - no map correction - bias reftrig
-	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -v "$variablesNOM" -s "$samples" -p "$preselNOM" -r "AV80" -w "$weightNOMtrg" $usebool --binning "$binningNOM1" -o $biasNOM --drawstack --closure --shade
+	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -v "$variablesNOM" -s "$samples" -p "$preselNOM" -r "AV80" -w "$weightNOMtrg" $usebool $notext --binning "$binningNOM1" -o $biasNOM --drawstack --closure --shade
 	fi
 	if [ "$2" == "" ] || [ "$2" == "2" ]; then
 	# VBF Nmin1 - no map correction - bias reftrig
-	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg" $usebool --binning "$binningVBF1" -o $biasVBF --drawstack --closure --shade
+	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg" $usebool $notext --binning "$binningVBF1" -o $biasVBF --drawstack --closure --shade
 	fi
 fi
 
@@ -157,38 +166,42 @@ fi
 if [ "$1" == "" ] || [ "$1" == "3" ];then
 	if [ "$2" == "" ] || [ "$2" == "1" ]; then
 	# NOM Nmin1 - jetBtag00-jetBtag10
-	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -v "$variablesNOM" -s "$samples" -p "$preselNOM" -r "AV80" -w "$weightNOMtrg;MAP#jetBtag[b1[0]]#jetBtag[b2[0]],,$maps1;$map1" $usebool --binning "$binningNOM1" -o $Nmin11 --drawstack --overlay --shade
+	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -v "$variablesNOM" -s "$samples" -p "$preselNOM" -r "AV80" -w "$weightNOMtrg;MAP#jetBtag[b1[0]]#jetBtag[b2[0]],,$maps1;$map1" $usebool $notext --binning "$binningNOM1" -o $Nmin11 --drawstack --overlay --shade
 	fi	
 	if [ "$2" == "" ] || [ "$2" == "2" ]; then
 	# NOM Nmin1 - jetBtag00-mqq1
-	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -v "$variablesNOM" -s "$samples" -p "$preselNOM" -r "AV80" -w "$weightNOMtrg;MAP#jetBtag[b1[0]]#mqq[1],,$maps2;$map2" $usebool --binning "$binningNOM1" -o $Nmin12 --drawstack --overlay --shade
+	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -v "$variablesNOM" -s "$samples" -p "$preselNOM" -r "AV80" -w "$weightNOMtrg;MAP#jetBtag[b1[0]]#mqq[1],,$maps2;$map2" $usebool $notext --binning "$binningNOM1" -o $Nmin12 --drawstack --overlay --shade
 	fi	
 	if [ "$2" == "" ] || [ "$2" == "3" ]; then
 	# VBF Nmin1 - mqq2-dEtaqq2 
-	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps3;$map3" $usebool --binning "$binningVBF1" -o $Nmin13 --drawstack --overlay --shade
+	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps3;$map3" $usebool $notext --binning "$binningVBF1" -o $Nmin13 --drawstack --overlay --shade
 	fi
 	if [ "$2" == "" ] || [ "$2" == "4" ]; then
 	# VBF Nmin1 - mqq2-dEtaqq2 - bins2
-	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps4;$map3" $usebool --binning "$binningVBF1" -o $Nmin14 --drawstack --overlay --shade
+	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps4;$map3" $usebool $notext --binning "$binningVBF1" -o $Nmin14 --drawstack --overlay --shade
 	fi
 	if [ "$2" == "" ] || [ "$2" == "5" ]; then
 	# VBF Nmin1 - mqq2-dEtaqq2 - bins2 - NOMveto
-	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBFNOMveto" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps5;$map5" $usebool --binning "$binningVBF1" -o $Nmin15 --drawstack --overlay --shade
+	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBFNOMveto" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps5;$map5" $usebool $notext --binning "$binningVBF1" -o $Nmin15 --drawstack --overlay --shade
 	fi
 	if [ "$2" == "" ] || [ "$2" == "6" ]; then
 	# VBF Nmin1 - mqq2-dEtaqq2 - bins2 - NOMvetoNoBtag
-	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBFNOMvetoNoBtag" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps6;$map6" $usebool --binning "$binningVBF1" -o $Nmin16 --drawstack --overlay --shade
+	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBFNOMvetoNoBtag" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps6;$map6" $usebool $notext --binning "$binningVBF1" -o $Nmin16 --drawstack --overlay --shade
 	fi
 	if [ "$2" == "" ] || [ "$2" == "7" ]; then
 	# VBF Nmin1 - mqq2-dEtaqq2 - bins2 - NOMvetoNoBtag
-	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBFNOMvetoSelNoBtag" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps7;$map7" $usebool --binning "$binningVBF1" -o $Nmin17 --drawstack --overlay --shade
+	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBFNOMvetoSelNoBtag" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps7;$map7" $usebool $notext --binning "$binningVBF1" -o $Nmin17 --drawstack --overlay --shade
 	fi
 #	if [ "$2" == "" ] || [ "$2" == "8" ]; then
 #	# VBF Nmin1 - mqq2-dEtaqq2 - LL 
-#	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBFLL" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps8;$map8" $usebool --binning "$binningVBF1" -o $Nmin111 --drawstack --overlay --shade
+#	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBFLL" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps8;$map8" $usebool $notext --binning "$binningVBF1" -o $Nmin111 --drawstack --overlay --shade
 #	fi
 	if [ "$2" == "" ] || [ "$2" == "9" ]; then
 	# VBF Nmin1 - mqq2-dEtaqq2 - corrected
-	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps9;$map3" $usebool --binning "$binningVBF1" -o $Nmin19 --drawstack --overlay --shade
+	$basepath/mkTurnonCurves.py -d -D "$defaultopts" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -v "$variablesVBF" -s "$samples" -p "$preselVBF" -r "AV80" -w "$weightVBFtrg;MAP#mqq[2]#dEtaqq[2],,$maps9;$map3" $usebool $notext --binning "$binningVBF1" -o $Nmin19 --drawstack --overlay --shade
 	fi
 fi
+
+##################################################
+notext=""
+done

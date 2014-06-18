@@ -150,7 +150,9 @@ if [ "$1" == "cpweb" ]; then
 			echo -e "${red}Empty:${plain} $s";
 			continue;#break; 
 		fi
+		[ ! -d $f/noleg ] && mkdir $f/noleg && cp $indexphp $f/noleg/;
 		cp $source $f/;
+		if [ ! "`ls $f/*noleg.png 2> /dev/null`" == "" ]; then mv $f/*noleg.png $f/noleg/; fi;
 		tar -cjf $f/$(basename $f)_pdf.tar.bz2 ${source//png/pdf};
 		tar -cjf $f/$(basename $f)_png.tar.bz2 ${source};
 	done

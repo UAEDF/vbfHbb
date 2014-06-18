@@ -94,7 +94,7 @@ void styleCMS() {
   tdrStyle->SetOptTitle(1);
   tdrStyle->SetTitleFont(43);
   tdrStyle->SetTitleColor(1);
-  tdrStyle->SetTitleTextColor(kBlue-2);
+  tdrStyle->SetTitleTextColor(1);//kBlue-2);
   tdrStyle->SetTitleFillColor(10);
   tdrStyle->SetTitleFontSize(0.035); // 0.050
   //tdrStyle->SetTitleFontSize(10);
@@ -107,7 +107,7 @@ void styleCMS() {
 
 // For the axis titles:
 
-  tdrStyle->SetTitleColor(kBlue-2, "XYZ");
+  tdrStyle->SetTitleColor(1,"XYZ");//"kBlue-2, "XYZ");
   tdrStyle->SetTitleFont(43, "XYZ");
   //tdrStyle->SetTitleSize(0.035, "XYZ"); // 0.04
   tdrStyle->SetTitleSize(0.025*tdrStyle->GetCanvasDefW(), "XYZ"); // 0.04
@@ -120,7 +120,7 @@ void styleCMS() {
 
 // For the axis labels:
 
-  tdrStyle->SetLabelColor(kBlue-2, "XYZ");
+  tdrStyle->SetLabelColor(1,"XYZ");//kBlue-2, "XYZ");
   tdrStyle->SetLabelFont(43, "XYZ");
   tdrStyle->SetLabelOffset(0.007, "XYZ");
   //tdrStyle->SetLabelSize(0.035, "XYZ"); // 0.04

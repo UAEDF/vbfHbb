@@ -280,7 +280,7 @@ def printYieldTableLatex(opts,yieldarchive,keys):
 
 
 # MAIN #############################################################################################
-def main(mp=None,parseronly=False,variables=None,samples=None):
+def main(mp=None,parseronly=False,variablesBool=None,samplesBool=None):
 	l1("Parsing options:")
 	mp = parser(mp)
 	opts,args = mp.parse_args() 
@@ -310,7 +310,7 @@ def main(mp=None,parseronly=False,variables=None,samples=None):
 
 	
 # load sample info
-	if not samples==False:
+	if not samplesBool==False:
 		samplesfull = json.loads(filecontent(opts.jsonsamp))
 		samples = samplesfull['files'] # dictionary
 		# all samples from file if nothing is specified in options
@@ -321,7 +321,7 @@ def main(mp=None,parseronly=False,variables=None,samples=None):
 			elif not any([x in samples[key]['tag'] for x in opts.sample]): del samples[key]
 
 # load variable info
-	if not variables==False:
+	if not variablesBool==False:
 		variablesfull = json.loads(filecontent(opts.jsonvars))
 		variables = variablesfull['variables'] # dictionary
 		# get variables in ROOT
@@ -342,9 +342,9 @@ def main(mp=None,parseronly=False,variables=None,samples=None):
 					#print x1,x2,b,v
 					variables[v]['title_y'] = 'Events / %.2f'%((float(x2)-float(x1))/float(b))
 
-	if (not samples==False and not variables==False): return opts,fout,samples,variables
-	elif not samples==False: return opts,fout,samples
-	elif not variables==False: return opts,fout,variables
+	if (samplesBool==True and variablesBool==True): return opts,fout,samples,variables
+	elif samplesBool==True: return opts,fout,samples
+	elif variablesBool==True: return opts,fout,variables
 
 # convert samples
 	if not (opts.usebool and not opts.preselect): convertSamples(opts,samples)

@@ -218,7 +218,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	jsoncuts = json.loads(filecontent(opts.jsoncuts))
 
 	# containers
-	canvas = TCanvas('cdrawstack','cdrawstack',1200,1000)
+	canvas = TCanvas('cdrawstack','cdrawstack',1200 if not opts.notext else 1000,1000)
 	canvas.cd()
 
 	# legend
@@ -239,6 +239,12 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	bottom  = 1 - gPad.GetTopMargin() - 0.25 - 0.02 - (0.045*rows) 
 	top     = 1 - gPad.GetTopMargin() - 0.25 - 0.02 
 	legend  = getTLegend(left,bottom,right,top,columns,"(N-1) cut trg effi.",3001,1,0.030)
+	if opts.notext: 
+		legend.SetTextSize(0.028)
+		legend.SetX1(0.45 if not 'jetPt' in v['var'] else 0.25)
+		legend.SetX2(0.75 if not 'jetPt' in v['var'] else 0.55)
+		legend.SetY1(0.77)
+		legend.SetY2(0.90)
 
 	# info text
 	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','LUMI']]),sum([(x[0:2]=='PU' or x[0:3] in ['MAP','COR']) for x in opts.weight[1]]),1]) # counting lines about weights + 1 for vbfHbb tag 
@@ -258,6 +264,9 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	if not opts.weight==[[''],['']] and 'PU'  in [x[0:2] for x in opts.weight[1]]: text.AddText("PU reweighted")
 	if not opts.weight==[[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: text.AddText("1DMap reweighted")
 	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")
+	textalt = getTPave(0.44 if not 'jetPt' in v['var'] else 0.24,0.91,0.75 if not 'jetPt' in v['var'] else 0.55,0.92,None,0,0,1,0.028)
+	l = textalt.AddText("%s selection"%('NOM' if any(['NOM' in x for x in trg]) else ('VBF' if any(['VBF' in x for x in trg]) else '???')))
+	l.SetTextFont(62)
 	# layout scaling
 	ymin=0
 	ymax=0
@@ -334,7 +343,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			l3("%sStack group: %s (sample: %s)%s"%(blue,group,s['tag'],plain))
 	
 			if not group in stacks:
-				print group
+				#print group
 				stacks[group] = {}
 				stacks[group]['effis']    = TEffiType(v) 
 				stacks[group]['names']    = names
@@ -432,7 +441,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		for istack,tagNstack in enumerate([(g,stacks[g]['effis']) for g in stacks.keys()]):
 			tag = tagNstack[0]
 			stack = tagNstack[1]
-			if any(['NOM' in x for x in trg]): ymax = 0.7 if not any([x in stack.e.GetPaintedGraph().GetXaxis().GetTitle() for x in ['mva','Bjet']]) else 0.7 #0.14
+			if any(['NOM' in x for x in trg]): ymax = 0.75 if not any([x in stack.e.GetPaintedGraph().GetXaxis().GetTitle() for x in ['mva','Bjet']]) else 0.755 #0.14
 			elif any(['VBF' in x for x in trg]): ymax = 1.2
 			else: ymax = 1.0
 			#stack.e.SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
@@ -443,13 +452,16 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			stack.e.GetPaintedGraph().GetXaxis().SetTitleColor(0);
 			stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,ymax)
 			#stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,1.4)#5*stack.e.GetPaintedGraph().GetHistogram().GetMaximum())
-			stack.e.GetPaintedGraph().GetYaxis().SetTitleOffset(1.1)
+			stack.e.GetPaintedGraph().GetYaxis().SetTitleOffset(1.1 if not opts.notext else 1.3)
 			stack.e.GetPaintedGraph().GetXaxis().SetTickLength(0.025)
 			stack.e.GetPaintedGraph().GetYaxis().SetTickLength(0.015)
-			stack.e.GetPaintedGraph().GetYaxis().SetLabelSize(stack.e.GetPaintedGraph().GetYaxis().GetLabelSize()*1.2)
-			stack.e.GetPaintedGraph().GetYaxis().SetLabelOffset(stack.e.GetPaintedGraph().GetYaxis().GetLabelOffset()/1.4)
+			stack.e.GetPaintedGraph().GetYaxis().SetLabelSize(stack.e.GetPaintedGraph().GetYaxis().GetLabelSize()*(1.2 if not opts.notext else 1.1))
+			stack.e.GetPaintedGraph().GetYaxis().SetLabelOffset(stack.e.GetPaintedGraph().GetYaxis().GetLabelOffset()/(1.4 if not opts.notext else 1.2))
 			if istack==0: stack.e.GetPaintedGraph().Draw("ap")
 			stack.e.GetPaintedGraph().Draw("e,p,same")
+			if opts.notext:
+				c1.SetLeftMargin(0.10)
+				c1.SetRightMargin(0.07)
 			c1.Update()
 			c1.Modified()
 			if istack==0: 
@@ -504,8 +516,12 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			ratioplot.GetYaxis().SetNdivisions(505)
 			ratioplot.GetXaxis().SetLimits(float(v['xmin']),float(v['xmax']))
 			ratioplot.GetXaxis().SetTitleOffset(4.4)
-			ratioplot.GetYaxis().SetTitleOffset(1.2)
+			ratioplot.GetYaxis().SetTitleOffset(1.2 if not opts.notext else 1.4)
 			ratioplot.GetYaxis().SetTitleSize(ratioplot.GetYaxis().GetTitleSize()*0.9)
+			ratioplot.GetYaxis().SetLabelSize(ratioplot.GetYaxis().GetLabelSize()*(1.0 if not opts.notext else 0.95))
+			if opts.notext:
+				c2.SetLeftMargin(0.10)
+				c2.SetRightMargin(0.07)
 			gPad.SetGridy(1)
 			if iratioplot==0: 
 				ratioplot.Draw('e')
@@ -549,18 +565,21 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	# write plot to file
 	canvas.cd()
 	legend.Draw()
-	text.Draw()
-	selleg.Draw()
+	if not opts.notext: 
+		text.Draw()
+		selleg.Draw()
+	else:
+		textalt.Draw()
 
 	path = '%s/../trigger/%s/%s/%s/%s/%s'%(basepath,'plots',os.path.split(fout.GetName())[1][:-5],wpars,'turnonCurves',namesGlobal['path-turnon'])
 	makeDirs(path)
 	canvas.SetName(namesGlobal['turnon'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon'])
 	canvas.SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
 	canvas.Update()
-	canvas.SaveAs('%s/%s.png'%(path, canvas.GetName()))
-	canvas.SaveAs('%s/%s.pdf'%(path, canvas.GetName()))
+	canvas.SaveAs('%s/%s%s.png'%(path, canvas.GetName(),'' if not opts.notext else "_noleg"))
+	canvas.SaveAs('%s/%s%s.pdf'%(path, canvas.GetName(),'' if not opts.notext else "_noleg"))
 	print
-	if opts.debug: l3("%sWritten plots to: (eog %s)%s"%(yellow,'%s/%s.png'%(path, canvas.GetName()),plain))
+	if opts.debug: l3("%sWritten plots to: (eog %s)%s"%(yellow,'%s/%s%s.png'%(path, canvas.GetName(),'' if not opts.notext else '_noleg'),plain))
 	gDirectory.cd('%s:/'%fout.GetName())
 	canvas.Close()
 
@@ -571,7 +590,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 ####################################################################################################
 def mkTurnonCurves():
 	# init main (including option parsing)
-	opts,samples,variables,loadedSamples,fout,KFWghts = main.main(parser())
+	opts,samples,variables,loadedSamples,fout,KFWghts = main.main(parser(),False,None,None)
 
 	# check actions
 	if not (opts.fill or opts.draw or opts.redraw or opts.drawstack or opts.redrawstack): sys.exit(red+"Specify either fill, draw, redraw, drawstack or redrawstack option to run. Exiting."+plain) 
