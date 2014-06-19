@@ -110,8 +110,8 @@ void styleCMS() {
   tdrStyle->SetTitleColor(1,"XYZ");//"kBlue-2, "XYZ");
   tdrStyle->SetTitleFont(43, "XYZ");
   //tdrStyle->SetTitleSize(0.035, "XYZ"); // 0.04
-  tdrStyle->SetTitleSize(0.025*tdrStyle->GetCanvasDefW(), "XYZ"); // 0.04
-  tdrStyle->SetTitleSize(0.025*1200, "XYZ"); // 0.04
+  tdrStyle->SetTitleSize(0.035*tdrStyle->GetCanvasDefW(), "XYZ"); // 0.04
+  tdrStyle->SetTitleSize(0.035*1200, "XYZ"); // 0.04
   // tdrStyle->SetTitleXSize(Float_t size = 0.02); // Another way to set the size?
   // tdrStyle->SetTitleYSize(Float_t size = 0.02);
   tdrStyle->SetTitleXOffset(1.05);
@@ -124,8 +124,8 @@ void styleCMS() {
   tdrStyle->SetLabelFont(43, "XYZ");
   tdrStyle->SetLabelOffset(0.007, "XYZ");
   //tdrStyle->SetLabelSize(0.035, "XYZ"); // 0.04
-  tdrStyle->SetLabelSize(0.022*tdrStyle->GetCanvasDefW(), "XYZ"); // 0.04
-  tdrStyle->SetLabelSize(0.022*1200, "XYZ"); // 0.04
+  tdrStyle->SetLabelSize(0.030*tdrStyle->GetCanvasDefW(), "XYZ"); // 0.04
+  tdrStyle->SetLabelSize(0.030*1200, "XYZ"); // 0.04
 
 // For the axis:
 

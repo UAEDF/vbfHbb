@@ -316,6 +316,7 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 	jsoninfo = json.loads(filecontent(opts.jsoninfo))
 	groups = list(set([jsoninfo['groups'][x['tag']] for x in samples]))
 	samplesbygroup = {}
+	paves = []
 	for group in groups:
 		samplesbygroup[group] = [sample for sample in samples if jsoninfo['groups'][sample['tag']]==group]
 	ratios = []
@@ -462,13 +463,13 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 			maps[ratio]['Rat'].GetXaxis().SetMoreLogLabels()
 			maps[ratio]['Rat'].SetMarkerSize(maps[ratio]['Rat'].GetMarkerSize()*0.75)
 		maps[ratio]['Rat'].Draw('colz,error,text')
-		paves = []
 		for ix in range(1,maps[ratio]['Rat'].GetNbinsX()+1):
 			for iy in range(1,maps[ratio]['Rat'].GetNbinsY()+1):
 				if maps[ratio]['Rat'].GetBinContent(ix,iy)==0: 
 					pave = TPave(maps[ratio]['Rat'].GetXaxis().GetBinCenter(ix)-0.033,maps[ratio]['Rat'].GetYaxis().GetBinCenter(iy)-0.03,maps[ratio]['Rat'].GetXaxis().GetBinCenter(ix)+0.033,maps[ratio]['Rat'].GetYaxis().GetBinCenter(iy)+0.03,0)
 					pave.SetFillColor(kWhite)
 					pave.SetFillStyle(1001)
+					canvas.cd()
 					pave.Draw()
 					paves += [pave]
 		if not opts.notext:

@@ -37,39 +37,53 @@ output4="rootfiles/trigger_ScaleFactors_VBF_NOMveto_mqq2-dEtaqq2.root"
 overlay1="rootfiles/trigger_ScaleFactors_NOM_all.root"
 overlay2="rootfiles/trigger_ScaleFactors_VBF_all.root"
 
+usebool="--usebool"
+
+# turning on/off legends
+if [ "$3" == "0" ]; then 
+	notext="--notext"
+else
+	notext=""
+fi
+
+##################################################
+for i in `seq 0 1`; do
+	if [ "$notext" == "" ] && [ "$i" == "0" ]; then continue; fi
 ##################################################
 if [ "$1" == "" ] || [ "$1" == "1" ];then
 	# NOM MAPS - jetBtag00-jetBtag10
-	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -s "JetMon,QCD" -p "$presel1" -r "AV80" -w "19800.,PU#3;XSEC;LUMI" -o "$maps1" -m "$limits1" --usebool
+	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -s "JetMon,QCD" -p "$presel1" -r "AV80" -w "19800.,PU#3;XSEC;LUMI" -o "$maps1" -m "$limits1" $usebool $notext
 	
 	# NOM MAPS - jetBtag00-mqq1
-	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -s "JetMon,QCD" -p "$presel2" -r "AV80" -w "19800.,PU#3;XSEC;LUMI" -o "$maps2" -m "$limits2" --usebool
+	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpathtrigger" -t "NOMMC" --datatrigger "NOMMC" -s "JetMon,QCD" -p "$presel2" -r "AV80" -w "19800.,PU#3;XSEC;LUMI" -o "$maps2" -m "$limits2" $usebool $notext
 	
 	# VBF MAPS - mqq2-dEtaqq2 
-	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "JetMon,QCD" -p "$presel3" -r "AV80" -w "18300.,PU#3;XSEC;LUMI" -o "$maps3" -m "$limits3" --usebool
+	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpathtrigger" -t "VBF" --datatrigger "VBF" -s "JetMon,QCD" -p "$presel3" -r "AV80" -w "18300.,PU#3;XSEC;LUMI" -o "$maps3" -m "$limits3" $usebool $notext
 fi
 
 ##################################################
 if [ "$1" == "" ] || [ "$1" == "2" ];then
 	if [ "$2" == "" ] || [ "$2" == "1" ]; then
 	# NOM DISTMAPS - jetBtag00-jetBtag10
-	for i in `seq 0 4`; do echo $i; ./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "NOMMC" --datatrigger "NOM" --sample "$samples" -p "$preselsel1;mvaNOMC$i" -r "None" -w "19800.,PU#0;XSEC;LUMI" -o "$dist1" -m "$limits1" --numonly --usebool ; done
-	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "NOMMC" --datatrigger "NOM" --sample "$samples" -p "$preselsel1" -r "None" -w "19800.,PU#0;XSEC;LUMI" -o "$dist1" -m "$limits1" --numonly --usebool
+	for i in `seq 0 4`; do echo $i; ./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "NOMMC" --datatrigger "NOM" --sample "$samples" -p "$preselsel1;mvaNOMC$i" -r "None" -w "19800.,PU#0;XSEC;LUMI" -o "$dist1" -m "$limits1" --numonly $usebool $notext ; done
+	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "NOMMC" --datatrigger "NOM" --sample "$samples" -p "$preselsel1" -r "None" -w "19800.,PU#0;XSEC;LUMI" -o "$dist1" -m "$limits1" --numonly $usebool $notext
 	
 	# NOM DISTMAPS - jetBtag00-mqq
-	for i in `seq 0 4`; do echo $i; ./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "NOMMC" --datatrigger "NOM" --sample "$samples" -p "$preselsel2;mvaNOMC$i" -r "None" -w "19800.,PU#0;XSEC;LUMI" -o "$dist2" -m "$limits2" --numonly --usebool; done
-	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "NOMMC" --datatrigger "NOM" --sample "$samples" -p "$preselsel2" -r "None" -w "19800.,PU#0;XSEC;LUMI" -o "$dist2" -m "$limits2" --numonly --usebool
+	for i in `seq 0 4`; do echo $i; ./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "NOMMC" --datatrigger "NOM" --sample "$samples" -p "$preselsel2;mvaNOMC$i" -r "None" -w "19800.,PU#0;XSEC;LUMI" -o "$dist2" -m "$limits2" --numonly $usebool $notext; done
+	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "NOMMC" --datatrigger "NOM" --sample "$samples" -p "$preselsel2" -r "None" -w "19800.,PU#0;XSEC;LUMI" -o "$dist2" -m "$limits2" --numonly $usebool $notext
 	fi	
 	if [ "$2" == "" ] || [ "$2" == "2" ]; then
 	# VBF DISTMAPS - mqq2-dEtaqq2
-	for i in `seq 0 3`; do echo $i; ./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "VBF" --datatrigger "VBF" --sample "$samples" -p "$preselsel3;mvaVBFC$i" -r "None" -w "18300.,PU#0;XSEC;LUMI" -o "$dist3" -m "$limits3" --numonly --usebool; done
-	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "VBF" --datatrigger "VBF" --sample "$samples" -p "$preselsel3" -r "None" -w "18300.,PU#0;XSEC;LUMI" -o "$dist3" -m "$limits3" --numonly --usebool
+	for i in `seq 0 3`; do echo $i; ./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "VBF" --datatrigger "VBF" --sample "$samples" -p "$preselsel3;mvaVBFC$i" -r "None" -w "18300.,PU#0;XSEC;LUMI" -o "$dist3" -m "$limits3" --numonly $usebool $notext; done
+	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "VBF" --datatrigger "VBF" --sample "$samples" -p "$preselsel3" -r "None" -w "18300.,PU#0;XSEC;LUMI" -o "$dist3" -m "$limits3" --numonly $usebool $notext
 	
 	# VBF DISTMAPS - mqq2-dEtaqq2 - EXCLUSIVE
-	for i in `seq 0 3`; do echo $i; ./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "VBF" --datatrigger "VBF" --sample "$samples" -p "$preselsel4;mvaVBFC$i" -r "None" -w "18300.,PU#0;XSEC;LUMI" -o "$dist4" -m "$limits4" --numonly --usebool; done
-	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "VBF" --datatrigger "VBF" --sample "$samples" -p "$preselsel4" -r "None" -w "18300.,PU#0;XSEC;LUMI" -o "$dist4" -m "$limits4" --numonly --usebool
+	for i in `seq 0 3`; do echo $i; ./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "VBF" --datatrigger "VBF" --sample "$samples" -p "$preselsel4;mvaVBFC$i" -r "None" -w "18300.,PU#0;XSEC;LUMI" -o "$dist4" -m "$limits4" --numonly $usebool $notext; done
+	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "VBF" --datatrigger "VBF" --sample "$samples" -p "$preselsel4" -r "None" -w "18300.,PU#0;XSEC;LUMI" -o "$dist4" -m "$limits4" --numonly $usebool $notext
 	fi
 fi
+notext=""
+done
 
 ##################################################
 if [ "$1" == "" ] || [ "$1" == "3" ];then
@@ -94,10 +108,21 @@ if [ "$1" == "" ] || [ "$1" == "3" ];then
 fi
 
 ##################################################
+# turning on/off legends
+if [ "$3" == "0" ]; then 
+	notext="--notext"
+else
+	notext=""
+fi
+for i in `seq 0 1`; do
+	if [ "$notext" == "" ] && [ "$i" == "0" ]; then continue; fi
 if [ "$1" == "" ] || [ "$1" == "4" ];then
 	# NOM SCALEFACTOR OVERLAYS - jetBtag00-jetBtag10 and jetBtag00-mqq1
-	./mkOverlay.py -o $overlay1 --files "$output1,$output2" --tags "2DMap bjet0-bjet1,2DMap bjet0-mqq1"
+	./mkOverlay.py -o $overlay1 --files "$output1,$output2" --tags "2DMap bjet0-bjet1,2DMap bjet0-mqq1" $notext
 
 	# VBF SCALEFACTOR OVERLAYS - inclusive/exclusive
-	./mkOverlay.py -o $overlay2 --files "$output3,$output4" --tags "inclusive selection,exclusive selection"
+	./mkOverlay.py -o $overlay2 --files "$output3,$output4" --tags "inclusive selection,exclusive selection" $notext
 fi
+
+notext=""
+done

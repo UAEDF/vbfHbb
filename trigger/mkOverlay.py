@@ -20,6 +20,7 @@ def parser(mp=None):
     mgtc = OptionGroup(mp,cyan+"Trigger uncertainty settings"+plain)
     mgtc.add_option('--files',help=blue+'Filenames for scalefactor plots (comma separated).'+plain,dest='files',default=[],type="str",action="callback",callback=optsplit)
     mgtc.add_option('--tags',help=blue+'Tags for the different overlays (comma separated).'+plain,dest='tags',default=[],type="str",action="callback",callback=optsplit)
+    mgtc.add_option('--notext',help=blue+'No legend block at the right.'+plain,dest='notext',default=False,action="store_true")
 
     mp.add_option_group(mgm)
     mp.add_option_group(mgtc)
@@ -96,14 +97,26 @@ def plotMaps(opts,fout,maps,paves):
 					labels[-1].Draw("same")
 
 		sampleinfo = editPaves([paves[tag][x]["sampleinfo"] for x in paves[tag].keys()],colors,'#varepsilon')
-		sampleinfo.Draw("same")
+		if not opts.notext: sampleinfo.Draw("same")
+		else:
+			updated = []
+			for key in sampleinfo.GetListOfLines():
+				if any([x in key.GetTitle() for x in ['selection','2D map:','sample:']]): updated += [key.GetTitle()]
+			sampleinfo.Clear()
+			sampleinfo.SetTextSize(sampleinfo.GetTextSize()*1.4)
+			for u in updated: sampleinfo.AddText(u)
+			sampleinfo.SetX1NDC(0.20)
+			sampleinfo.SetX2NDC(0.50)
+			sampleinfo.SetY1NDC(0.15)
+			sampleinfo.SetY2NDC(0.30)
+			sampleinfo.Draw("same")
 		selinfo = editPaves([paves[tag][x]["selinfo"] for x in paves[tag].keys()],colors,'trg:')
 		y1samp = sampleinfo.GetY1NDC()
 		y1sel = selinfo.GetY1NDC()
 		y2sel = selinfo.GetY2NDC()
 		selinfo.SetY2NDC(y1samp-0.04)
 		selinfo.SetY1NDC(y1samp-0.04-abs(y1sel-y2sel))
-		selinfo.Draw("same")
+		if not opts.notext: selinfo.Draw("same")
 
 		x1,x2,y1,y2 = selinfo.GetX1NDC(),selinfo.GetX2NDC(),selinfo.GetY1NDC(),selinfo.GetY2NDC()
 		y2 = selinfo.GetY1NDC()-0.04
@@ -116,15 +129,20 @@ def plotMaps(opts,fout,maps,paves):
 		overlayinfo.SetBorderSize(0)
 
 		for ih,h in enumerate(content.itervalues()): overlayinfo.AddEntry(h,opts.tags[ih],"L")
+		if opts.notext: 
+			overlayinfo.SetX1(0.5)
+			overlayinfo.SetX2(0.65)
+			overlayinfo.SetY1(0.20)
+			overlayinfo.SetY2(0.30)
+			gPad.Update()
 		overlayinfo.Draw("same")
 
-		gPad.Update()
 		line = TLine(h.GetNbinsX()-1,0.0,h.GetNbinsX()-1,gPad.GetUymax())
 		line.SetLineWidth(4)
 		line.Draw("same")
 		c.Update()
-		c.SaveAs("%s/plots/%s/TriggerUncertainty/%s.pdf"%(basedir,fout.GetName().split('/')[-1][:-5],c.GetName()))	
-		c.SaveAs("%s/plots/%s/TriggerUncertainty/%s.png"%(basedir,fout.GetName().split('/')[-1][:-5],c.GetName()))	
+		c.SaveAs("%s/plots/%s/TriggerUncertainty/%s%s.pdf"%(basedir,fout.GetName().split('/')[-1][:-5],c.GetName(),'' if not opts.notext else '_noleg'))	
+		c.SaveAs("%s/plots/%s/TriggerUncertainty/%s%s.png"%(basedir,fout.GetName().split('/')[-1][:-5],c.GetName(),'' if not opts.notext else '_noleg'))	
 		c.Close()
 
 	return 0
