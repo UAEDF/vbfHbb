@@ -147,7 +147,8 @@ def getConvolutions(opts,fout,info):
 	sferr = {}
 	sfplots = {}
 	sfplots1d = {}
-	sfplot_labels = ["CAT%d"%x for x in range(len(opts.categoryboundaries)-1)]+["ALL"] #["CAT0","CAT1","CAT2","CAT3","CAT4","ALL"]
+	j = 4 if 'VBF' in '-'.join(info[3]) else 0 
+	sfplot_labels = ["CAT%d (%.2f,%.2f)"%(x,y,z) for (x,y,z) in [(i-1+j if not (i==0 and j==4) else -2,float(opts.categoryboundaries[i]),float(opts.categoryboundaries[i+1])) for i in range(len(opts.categoryboundaries)-1)]]+["ALL"] #["CAT0","CAT1","CAT2","CAT3","CAT4","ALL"]
 
 	print "%12s |"%"E(data/mc)",
 	for c in ["N"]+["%d"%x for x in range(len(opts.categoryboundaries)-1)]:

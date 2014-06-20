@@ -70,9 +70,9 @@ def plotMaps(opts,fout,maps,paves):
 	for tag,content in sorted(maps.iteritems()):
 		l2("Plotting %s%-10s%s to %s%-70s%s"%(Blue,tag,purple,plain,"./plots/%s/TriggerUncertainty/ScaleFactors1D_%s.png"%(fout.GetName().split('/')[-1][:-5],tag),purple))
 		if not all([f in content.keys() for f in files]): continue
-		c = TCanvas("c","c",1800,1200)
+		c = TCanvas("c","c",1800 if not opts.notext else 1600,1200)
 		c.cd()
-		gPad.SetRightMargin(0.20)
+		gPad.SetRightMargin(0.2 if not opts.notext else 0.08)
 		labels = []
 		for fi,f in enumerate(files):
 			h = content[f]
@@ -97,6 +97,7 @@ def plotMaps(opts,fout,maps,paves):
 					labels[-1].Draw("same")
 
 		sampleinfo = editPaves([paves[tag][x]["sampleinfo"] for x in paves[tag].keys()],colors,'#varepsilon')
+		sampleinfo.SetTextFont(62)
 		if not opts.notext: sampleinfo.Draw("same")
 		else:
 			updated = []
@@ -122,6 +123,7 @@ def plotMaps(opts,fout,maps,paves):
 		y2 = selinfo.GetY1NDC()-0.04
 		y1 = y2 - 0.030*(len(opts.tags)+1)
 		overlayinfo = TLegend(x1,y1,x2,y2)
+		overlayinfo.SetTextSize(0.020 if not opts.notext else 0.026)
 		overlayinfo.SetTextFont(62)
 		overlayinfo.SetHeader("Scale Factors")
 		overlayinfo.SetTextFont(42)
@@ -130,7 +132,7 @@ def plotMaps(opts,fout,maps,paves):
 
 		for ih,h in enumerate(content.itervalues()): overlayinfo.AddEntry(h,opts.tags[ih],"L")
 		if opts.notext: 
-			overlayinfo.SetX1(0.5)
+			overlayinfo.SetX1(0.4)
 			overlayinfo.SetX2(0.65)
 			overlayinfo.SetY1(0.20)
 			overlayinfo.SetY2(0.30)
