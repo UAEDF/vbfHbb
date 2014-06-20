@@ -7,10 +7,13 @@ else
 fi
 
 defaultopts="$basepath/../common/vbfHbb_defaultOpts_2013.json"
-#globalpath="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/"
-#globalpathtrigger="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/trigger"
-globalpath="/data/UAData/autumn2013"
-globalpathtrigger="/data/UAData/autumn2013"
+if [[ "`uname -a`" == *lxplus* ]]; then
+	globalpath="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/"
+	globalpathtrigger="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/trigger"
+elif [[ "`uname -a`" == *schrodinger* ]]; then
+	globalpath="/data/UAdata/autumn2013"
+	globalpathtrigger="/data/UAdata/autumn2013"
+fi
 samples="JetMon,QCD"
 usebool="--usebool" 
 

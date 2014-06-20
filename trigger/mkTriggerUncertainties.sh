@@ -1,7 +1,12 @@
 #!/bin/sh
 
-globalpath="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/"
-globalpathtrigger="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/trigger"
+if [[ "`uname -a`" == *lxplus* ]]; then
+	globalpath="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/"
+	globalpathtrigger="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/trigger"
+elif [[ "`uname -a`" == *schrodinger* ]]; then
+	globalpath="/data/UAdata/autumn2013"
+	globalpathtrigger="/data/UAdata/autumn2013"
+fi
 samples="VBF115,VBF120,VBF125,VBF130,VBF135,GluGlu,singleT,TTJets,WJets,ZJets,QCD" #sample
 #samples="JetMon,Data" #nosample
 groups="VBF115,VBF120,VBF125,VBF130,VBF135,GF,Tall,WJets,ZJets,QCD" #sample
