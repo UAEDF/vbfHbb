@@ -1,7 +1,10 @@
 #!/bin/sh
 
-prefix="/afs/cern.ch/user/s/salderwe/fornote/"
+if [ "$1" == "" ]; then prefix="/afs/cern.ch/user/s/salderwe/fornote/"
+else prefix=$1;
+fi
 [ ! -d $prefix ] && mkdir ${prefix};
+echo "Copying to $prefix..."
 
 echo "2D maps..."
 plots=( \
@@ -28,11 +31,11 @@ done
 
 echo "Scale factors..."
 plots=( \
-'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../trigger/plots/trigger_ScaleFactors_VBF_all/TriggerUncertainty/ScaleFactors1D_GF.pdf' \
-'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../trigger/plots/trigger_ScaleFactors_VBF_all/TriggerUncertainty/ScaleFactors1D_ZJets.pdf' \
-'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../trigger/plots/trigger_ScaleFactors_VBF_all/TriggerUncertainty/ScaleFactors1D_QCD.pdf' \
-'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../trigger/plots/trigger_ScaleFactors_VBF_all/TriggerUncertainty/ScaleFactors1D_Tall.pdf' \
-'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../trigger/plots/trigger_ScaleFactors_VBF_all/TriggerUncertainty/ScaleFactors1D_VBF125.pdf' \
+'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../trigger/plots/trigger_ScaleFactors_VBF_all/TriggerUncertainty/ScaleFactors1D_GF_noleg.pdf' \
+'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../trigger/plots/trigger_ScaleFactors_VBF_all/TriggerUncertainty/ScaleFactors1D_ZJets_noleg.pdf' \
+'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../trigger/plots/trigger_ScaleFactors_VBF_all/TriggerUncertainty/ScaleFactors1D_QCD_noleg.pdf' \
+'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../trigger/plots/trigger_ScaleFactors_VBF_all/TriggerUncertainty/ScaleFactors1D_Tall_noleg.pdf' \
+'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../trigger/plots/trigger_ScaleFactors_VBF_all/TriggerUncertainty/ScaleFactors1D_VBF125_noleg.pdf' \
 '/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../trigger/plots/trigger_ScaleFactors_NOM_jetBtag00-mqq1/TriggerUncertainty/ScaleFactors1D_GF_noleg.pdf'
 '/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../trigger/plots/trigger_ScaleFactors_NOM_jetBtag00-mqq1/TriggerUncertainty/ScaleFactors1D_QCD_noleg.pdf'
 '/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../trigger/plots/trigger_ScaleFactors_NOM_jetBtag00-mqq1/TriggerUncertainty/ScaleFactors1D_Tall_noleg.pdf'

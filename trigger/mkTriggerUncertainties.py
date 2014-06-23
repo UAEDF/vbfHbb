@@ -33,7 +33,7 @@ def parser(mp=None):
 	mgtc.add_option('-s','--samples',help=blue+'List of samples (distmap).'+plain,dest='samples',type="str",default=[],action='callback',callback=optsplit)
 	mgtc.add_option('-c','--categories',help=blue+'Pick for categories.'+plain,dest='categories',type="str",default=[],action='callback',callback=optsplit)
 	mgtc.add_option('-b','--categoryboundaries',help=blue+'Boundaries for categories.'+plain,dest='categoryboundaries',type="str",default=[0.0,0.25,0.70,0.88,1.001],action='callback',callback=optsplit)
-	mgtc.add_option('--noleg',help='No right margin legends.',default=False,action='store_true')
+	mgtc.add_option('--notext',help='No right margin legends.',default=False,action='store_true')
 
 	mp.add_option_group(mgm)
 	mp.add_option_group(mgtc)
@@ -208,7 +208,7 @@ def getCanvases(opts,fout,info):
 	gStyle.SetPaintTextFormat(".3f")
 
 	gDirectory.cd("%s:/ScaleFactors"%fout.GetName())
-	c = TCanvas("c","",1800 if not opts.noleg else 1600,1200)
+	c = TCanvas("c","",1800 if not opts.notext else 1600,1200)
 	for i in gDirectory.GetListOfKeys():
 		gPad.SetRightMargin(0.25)
 		text = printText(opts,1-0.1,1-0.15,i.GetName().split('_')[1],"NOM" if "NOM_" in fout.GetName() else ("VBF" if "VBF" in fout.GetName() else "???"),info[4])#,0.020,kBlue-2)
@@ -227,7 +227,7 @@ def getCanvases(opts,fout,info):
 		selleg = printSelleg(text.GetY1()-0.1,1-0.15,info[0],info[1])
 		if th2f: h.Draw("colz,error,text")
 		else: 
-			gPad.SetRightMargin(0.20 if not opts.noleg else 0.05)
+			gPad.SetRightMargin(0.20 if not opts.notext else 0.05)
 			text.SetX1(text.GetX1()-0.04)
 			selleg.SetX1(selleg.GetX1()-0.04)
 			h.GetYaxis().SetRangeUser(0,1.2)#round(h.GetMaximum()*1.5,1))
@@ -248,13 +248,13 @@ def getCanvases(opts,fout,info):
 		line.SetLineWidth(4)
 		line.Draw("same")
 		text.Draw("same")
-		if not opts.noleg: selleg.Draw("same")
+		if not opts.notext: selleg.Draw("same")
 		gPad.Update()
 		gDirectory.cd("%s:/Canvases"%(fout.GetName()))
 		c.Update()
 		c.Write(c.GetName(),TH1.kOverwrite)
-		c.SaveAs("plots/%s/TriggerUncertainty/%s%s.pdf"%(os.path.split(fout.GetName())[1][:-5],c.GetName(),'' if not opts.noleg else '_noleg'))
-		c.SaveAs("plots/%s/TriggerUncertainty/%s%s.png"%(os.path.split(fout.GetName())[1][:-5],c.GetName(),'' if not opts.noleg else '_noleg'))
+		c.SaveAs("plots/%s/TriggerUncertainty/%s%s.pdf"%(os.path.split(fout.GetName())[1][:-5],c.GetName(),'' if not opts.notext else '_noleg'))
+		c.SaveAs("plots/%s/TriggerUncertainty/%s%s.png"%(os.path.split(fout.GetName())[1][:-5],c.GetName(),'' if not opts.notext else '_noleg'))
 		c.Update()
 	print purple+"Scale factor plots at: plots/%s/TriggerUncertainty/*ScaleFactor*.png"%(os.path.split(fout.GetName())[1][:-5])+plain
 	c.Close()
@@ -273,8 +273,8 @@ def extraText(hcenter,vcenter,line,fontSize=0.027,fontColor=kBlack):
 
 def printText(opts,top,left,sample,selection,mapvars,fontSize=0.020,fontColor=kBlack):
 	varnames = {'jetBtag00':'bjet0 CSV','jetBtag10':'bjet1 CSV','mqq1':'m_{q#bar{q}}','mqq2':'m_{q#bar{q}}','dEtaqq1':'#Delta#eta_{q#bar{q}}','dEtaqq2':'#Delta#eta_{q#bar{q}}'}
-	nlines = 6 if not opts.noleg else 3
-	if opts.noleg: 
+	nlines = 6 if not opts.notext else 3
+	if opts.notext: 
 		left = 0.20
 		top = 0.30
 		fontSize = fontSize*1.4
@@ -284,17 +284,18 @@ def printText(opts,top,left,sample,selection,mapvars,fontSize=0.020,fontColor=kB
 	text.SetFillColor(0)
 	text.SetFillStyle(0)
 	text.SetBorderSize(0)
+	text.SetTextFont(62)
 	text.SetTextSize(fontSize)
 	text.SetTextColor(fontColor)
 	text.SetTextAlign(11)
-	if not opts.noleg:
+	if not opts.notext:
 		text.AddText("CMS preliminary")
 		text.AddText("VBF H#rightarrow b#bar{b}")
 		text.AddText("L = %.1f fb^{-1}"%(19800./1000. if selection=="NOM" else 18300./1000. if selection=="VBF" else "???"))
 	text.AddText("%s selection"%selection)
 	text.AddText("sample: %s"%sample)
 	text.AddText("2D map: %s"%(' & '.join([(varnames[x] if x in varnames else x) for x in mapvars])))
-	if not opts.noleg: 
+	if not opts.notext: 
 		thisline = text.AddText("#varepsilon = #frac{#varepsilon_{%s #times data}}{#varepsilon_{%s #times qcd}}"%(sample,sample))
 		thisline.SetTextAlign(13)
 	return text

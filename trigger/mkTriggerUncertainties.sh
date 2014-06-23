@@ -87,40 +87,26 @@ if [ "$1" == "" ] || [ "$1" == "2" ];then
 	./../common/main.py -d -D "../common/vbfHbb_defaultOpts_2013.json" -I "../common/vbfHbb_info_2013_allTGrouped.json" -G "$globalpath" -t "VBF" --datatrigger "VBF" --sample "$samples" -p "$preselsel4" -r "None" -w "18300.,PU#0;XSEC;LUMI" -o "$dist4" -m "$limits4" --numonly $usebool $notext
 	fi
 fi
-notext=""
-done
 
 ##################################################
 if [ "$1" == "" ] || [ "$1" == "3" ];then
 	if [ "$2" == "" ] || [ "$2" == "1" ]; then
 	# NOM SCALEFACTORS - jetBtag00-jetBtag10
-	./mkTriggerUncertainties.py -o $output1 --ftwodmaps $maps1 --fdistmaps $dist1 -s "$groups" -b -1.0,0.0,0.25,0.70,0.88,1.001 --noleg
-	./mkTriggerUncertainties.py -o $output1 --ftwodmaps $maps1 --fdistmaps $dist1 -s "$groups" -b -1.0,0.0,0.25,0.70,0.88,1.001
+	./mkTriggerUncertainties.py -o $output1 --ftwodmaps $maps1 --fdistmaps $dist1 -s "$groups" -b -1.0,0.0,0.25,0.70,0.88,1.001 $notext
 	
 	# NOM SCALEFACTORS - jetBtag00-mqq1
-	./mkTriggerUncertainties.py -o $output2 --ftwodmaps $maps2 --fdistmaps $dist2 -s "$groups" -b -1.0,0.0,0.25,0.70,0.88,1.001 --noleg
-	./mkTriggerUncertainties.py -o $output2 --ftwodmaps $maps2 --fdistmaps $dist2 -s "$groups" -b -1.0,0.0,0.25,0.70,0.88,1.001
+	./mkTriggerUncertainties.py -o $output2 --ftwodmaps $maps2 --fdistmaps $dist2 -s "$groups" -b -1.0,0.0,0.25,0.70,0.88,1.001 $notext
 	fi
 	if [ "$2" == "" ] || [ "$2" == "2" ]; then
 	# VBF SCALEFACTORS - mqq2-dEtaqq2 
-	./mkTriggerUncertainties.py -o $output3 --ftwodmaps $maps3 --fdistmaps $dist3 -s "$groups" -b -1.0,0.0,0.3,0.65,1.001 --noleg
-	./mkTriggerUncertainties.py -o $output3 --ftwodmaps $maps3 --fdistmaps $dist3 -s "$groups" -b -1.0,0.0,0.3,0.65,1.001
+	./mkTriggerUncertainties.py -o $output3 --ftwodmaps $maps3 --fdistmaps $dist3 -s "$groups" -b -1.0,0.0,0.3,0.65,1.001 $notext
 	
 	# VBF SCALEFACTORS - mqq2-dEtaqq2 - EXCLUSIVE
-	./mkTriggerUncertainties.py -o $output4 --ftwodmaps $maps4 --fdistmaps $dist4 -s "$groups" -b -1.0,0.0,0.3,0.65,1.001 --noleg
-	./mkTriggerUncertainties.py -o $output4 --ftwodmaps $maps4 --fdistmaps $dist4 -s "$groups" -b -1.0,0.0,0.3,0.65,1.001
+	./mkTriggerUncertainties.py -o $output4 --ftwodmaps $maps4 --fdistmaps $dist4 -s "$groups" -b -1.0,0.0,0.3,0.65,1.001 $notext
 	fi
 fi
 
 ##################################################
-# turning on/off legends
-if [ "$3" == "0" ]; then 
-	notext="--notext"
-else
-	notext=""
-fi
-for i in `seq 0 1`; do
-	if [ "$notext" == "" ] && [ "$i" == "0" ]; then continue; fi
 if [ "$1" == "" ] || [ "$1" == "4" ];then
 	# NOM SCALEFACTOR OVERLAYS - jetBtag00-jetBtag10 and jetBtag00-mqq1
 	./mkOverlay.py -o $overlay1 --files "$output1,$output2" --tags "2DMap bjet0-bjet1,2DMap bjet0-mqq1" $notext
