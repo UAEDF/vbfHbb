@@ -333,11 +333,12 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 	cuts = {}
 	inroot('TTree *t = 0;')
 # To Save
-	if opts.notext: canvas = TCanvas("cmap","cmap",1800,1200)
+	if opts.notext: canvas = TCanvas("cmap","cmap",1600,1200)
 	else: canvas = TCanvas("cmap","cmap",1800,1200)
 	canvas.cd()
 	gPad.SetGrid(0,0)
-	gPad.SetRightMargin(0.14)
+	if not opts.notext: gPad.SetRightMargin(0.14)
+	else: gPad.SetRightMargin(0.08)
 	gStyle.SetPaintTextFormat("6.2f")
 # LOOP over ALL GROUPS
 	for group in groups:
@@ -463,15 +464,15 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 			maps[ratio]['Rat'].GetXaxis().SetMoreLogLabels()
 			maps[ratio]['Rat'].SetMarkerSize(maps[ratio]['Rat'].GetMarkerSize()*0.75)
 		maps[ratio]['Rat'].Draw('colz,error,text')
-		for ix in range(1,maps[ratio]['Rat'].GetNbinsX()+1):
-			for iy in range(1,maps[ratio]['Rat'].GetNbinsY()+1):
-				if maps[ratio]['Rat'].GetBinContent(ix,iy)==0: 
-					pave = TPave(maps[ratio]['Rat'].GetXaxis().GetBinCenter(ix)-0.033,maps[ratio]['Rat'].GetYaxis().GetBinCenter(iy)-0.03,maps[ratio]['Rat'].GetXaxis().GetBinCenter(ix)+0.033,maps[ratio]['Rat'].GetYaxis().GetBinCenter(iy)+0.03,0)
-					pave.SetFillColor(kWhite)
-					pave.SetFillStyle(1001)
-					canvas.cd()
-					pave.Draw()
-					paves += [pave]
+#		for ix in range(1,maps[ratio]['Rat'].GetNbinsX()+1):
+#			for iy in range(1,maps[ratio]['Rat'].GetNbinsY()+1):
+#				if maps[ratio]['Rat'].GetBinContent(ix,iy)==0: 
+#					pave = TPave(maps[ratio]['Rat'].GetXaxis().GetBinCenter(ix)-0.033,maps[ratio]['Rat'].GetYaxis().GetBinCenter(iy)-0.03,maps[ratio]['Rat'].GetXaxis().GetBinCenter(ix)+0.033,maps[ratio]['Rat'].GetYaxis().GetBinCenter(iy)+0.03,0)
+#					pave.SetFillColor(kWhite)
+#					pave.SetFillStyle(1001)
+#					canvas.cd()
+#					pave.Draw()
+#					paves += [pave]
 		if not opts.notext:
 			text,selleg = addText(opts,'Data / QCD','SF',vx,vy,sel,trg,ref)
 			text.Draw("same")
