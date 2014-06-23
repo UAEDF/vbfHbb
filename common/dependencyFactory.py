@@ -333,11 +333,12 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 	cuts = {}
 	inroot('TTree *t = 0;')
 # To Save
-	if opts.notext: canvas = TCanvas("cmap","cmap",1800,1200)
+	if opts.notext: canvas = TCanvas("cmap","cmap",1600,1200)
 	else: canvas = TCanvas("cmap","cmap",1800,1200)
 	canvas.cd()
 	gPad.SetGrid(0,0)
-	gPad.SetRightMargin(0.14)
+	if not opts.notext: gPad.SetRightMargin(0.14)
+	else: gPad.SetRightMargin(0.08)
 	gStyle.SetPaintTextFormat("6.2f")
 # LOOP over ALL GROUPS
 	for group in groups:
