@@ -71,9 +71,10 @@ weightVBF="18300.,PU#0;XSEC;LUMI"
 variablesNOM="mqq1,dEtaqq1,jetPt0,jetPt1,jetPt2,jetPt3,mbbReg1,dPhibb1,mvaNOM,jetBtag00,jetBtag10"
 variablesVBF="mqq2,dEtaqq2,mjjTrig,dEtaTrig,jetPt0,jetPt1,jetPt2,jetPt3,ptAve,mbbReg2,dPhibb2,mvaVBF,jetBtag00,jetBtag10"
 #variablesVBF="dEtaqq2,mqq2,mvaVBF"
+variablesVBF="dEtaqq2,mqq2,mvaVBF,mjjTrig,dEtaTrig,jetPt3,ptAve,jetBtag00,jetBtag10,mbbReg2"
 
-binningNOM1="mvaNOM;10;-1;1,mbbReg1;15;0;300,jetBtag00;20;0;1,jetBtag10;20;0;1,jetPt0;20;0;400,jetPt1;15;0;300,jetPt2;8;0;160,jetPt3;6;0;120,dEtaqq1;14;2;9,mqq1;20;0;2000,dPhibb1;10;0;2"
-binningVBF1="mvaVBF;10;-1;1,mbbReg2;15;0;300,jetBtag00;20;0;1,jetBtag10;20;0;1,jetPt0;20;0;400,jetPt1;15;0;300,jetPt2;8;0;160,jetPt3;6;0;120,dEtaqq2;35;2;9,mqq2;20;0;2000,dPhibb2;10;0;2,dEtaTrig;35;2;9,mjjTrig;20;0;2000,ptAve;20;0;400"
+binningNOM1="mvaNOM;10;-1;1,mbbReg1;15;0;300,jetBtag00;20;0;1,jetBtag10;20;0;1,jetPt0;20;0;400,jetPt1;15;10;310,jetPt2;8;10;170,jetPt3;6;0;120,dEtaqq1;14;2;9,mqq1;20;50;2050,dPhibb1;10;0;2"
+binningVBF1="mvaVBF;10;-1;1,mbbReg2;15;0;300,jetBtag00;20;0;1,jetBtag10;20;0;1,jetPt0;20;0;400,jetPt1;15;0;300,jetPt2;8;0;160,jetPt3;12;0;120,dEtaqq2;36;1.9;9.1,mqq2;20;0;2000,dPhibb2;10;0;2,dEtaTrig;36;1.9;9.1,mjjTrig;20;0;2000,ptAve;20;0;400"
 
 ###   OPTIONS
 ###   

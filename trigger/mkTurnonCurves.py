@@ -73,7 +73,7 @@ class TEffiType():
 		self.e.SetTotalHistogram(self.s['Den'].GetStack().Last(),'f')
 		self.e.SetMarkerStyle(mStyle)
 		self.e.SetMarkerColor(mColor)
-		self.e.SetMarkerSize(1.5 if not any([x in names['hist'] for x in ['Data','JetMon']]) else 1) #1.75
+		self.e.SetMarkerSize(2.0 if not any([x in names['hist'] for x in ['Data','JetMon']]) else 1.6) #1.75
 		self.e.Paint("")
 		self.e.GetPaintedGraph().GetXaxis().SetTitle(names['stack-title'].split(';')[1])
 		self.e.GetPaintedGraph().GetYaxis().SetTitle(names['stack-title'].split(';')[2])
@@ -135,7 +135,7 @@ def ratio(eff1,eff2):
 	g.GetYaxis().SetTickLength(0.015)
 #	g.SetMarkerStyle(20)
 #	g.SetMarkerColor(kBlack)
-	g.SetMarkerSize(1.1) #1.25
+	g.SetMarkerSize(1.6) #1.25
 	return g
 
 def markerStyle(tag,smarker):
@@ -230,6 +230,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			if x in ytag and opts.overlay: rows += 1
 			elif x in ytag and opts.closure: rows += 1
 			elif x in ytag: rows += 1
+
 	#left    = gPad.GetLeftMargin()+0.02
 	#bottom  = 1-gPad.GetTopMargin()-0.02 - (0.05*rows) # n rows sized 0.04
 	#right   = gPad.GetLeftMargin()+0.02 + (0.20*columns) # n columns width 0.12
@@ -238,11 +239,11 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	right   = 1 - 0.02
 	bottom  = 1 - gPad.GetTopMargin() - 0.25 - 0.02 - (0.045*rows) 
 	top     = 1 - gPad.GetTopMargin() - 0.25 - 0.02 
-	legend  = getTLegend(left,bottom,right,top,columns,"(N-1) cut trg effi.",3001,1,0.030)
+	legend  = getTLegend(left,bottom,right,top,columns,"%s cut trg effi."%("(N-1)" if not ('mbb' in v['bare'] or 'mva' in v['bare']) else "N"),0,1,0.030) #3001
 	if opts.notext: 
 		legend.SetTextSize(0.028)
-		legend.SetX1(0.45 if not 'jetPt' in v['var'] else 0.25)
-		legend.SetX2(0.75 if not 'jetPt' in v['var'] else 0.55)
+		legend.SetX1(0.15)
+		legend.SetX2(0.15+0.3)
 		legend.SetY1(0.77)
 		legend.SetY2(0.90)
 
@@ -264,8 +265,8 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	if not opts.weight==[[''],['']] and 'PU'  in [x[0:2] for x in opts.weight[1]]: text.AddText("PU reweighted")
 	if not opts.weight==[[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: text.AddText("1DMap reweighted")
 	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")
-	textalt = getTPave(0.44 if not 'jetPt' in v['var'] else 0.24,0.91,0.75 if not 'jetPt' in v['var'] else 0.55,0.92,None,0,0,1,0.028)
-	l = textalt.AddText("%s selection"%('NOM' if any(['NOM' in x for x in trg]) else ('VBF' if any(['VBF' in x for x in trg]) else '???')))
+	textalt = getTPave(0.14,0.91,0.46,0.92,None,0,0,1,0.028)
+	l = textalt.AddText("%s selection"%('NOM' if any(['NOM' in x for x in trg]) else ('PRK' if any(['VBF' in x for x in trg]) else '???')))
 	l.SetTextFont(62)
 	# layout scaling
 	ymin=0
@@ -427,7 +428,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			ratioplots[group] = ratio(stacks['JetMon']['effis'].e,stacks[group]['effis'].e)
 			ratioplots[group].SetMarkerStyle(markerStyle(group,stacks[group]['markers']))
 			ratioplots[group].SetMarkerColor(markerColour(group,stacks[group]['colours']))
-			ratioplots[group].SetMarkerSize(1.0)
+			ratioplots[group].SetMarkerSize(1.6)
 			
 	cutsjson = json.loads(filecontent(opts.jsoncuts))
 	if not ratioplots=={}:
@@ -445,14 +446,15 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			elif any(['VBF' in x for x in trg]): ymax = 1.2
 			else: ymax = 1.0
 			#stack.e.SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
-			stack.e.SetTitle(";;N-1 efficiency curves")
-			stack.e.GetPaintedGraph().SetTitle(";;N-1 efficiency curves")
+			stack.e.SetTitle(";;Efficiency curves")
+			stack.e.GetPaintedGraph().SetTitle(";;Efficiency curves")
 			stack.e.GetPaintedGraph().GetXaxis().SetLimits(float(v['xmin']),float(v['xmax']))
 			stack.e.GetPaintedGraph().GetXaxis().SetLabelColor(0);
 			stack.e.GetPaintedGraph().GetXaxis().SetTitleColor(0);
 			stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,ymax)
+			stack.e.GetPaintedGraph().GetXaxis().SetNdivisions(808)
 			#stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,1.4)#5*stack.e.GetPaintedGraph().GetHistogram().GetMaximum())
-			stack.e.GetPaintedGraph().GetYaxis().SetTitleOffset(1.1 if not opts.notext else 1.3)
+			stack.e.GetPaintedGraph().GetYaxis().SetTitleOffset(1.10 if not opts.notext else 1.25)
 			stack.e.GetPaintedGraph().GetXaxis().SetTickLength(0.025)
 			stack.e.GetPaintedGraph().GetYaxis().SetTickLength(0.015)
 			stack.e.GetPaintedGraph().GetYaxis().SetLabelSize(stack.e.GetPaintedGraph().GetYaxis().GetLabelSize()*(1.2 if not opts.notext else 1.1))
@@ -460,7 +462,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			if istack==0: stack.e.GetPaintedGraph().Draw("ap")
 			stack.e.GetPaintedGraph().Draw("e,p,same")
 			if opts.notext:
-				c1.SetLeftMargin(0.10)
+				c1.SetLeftMargin(0.13)
 				c1.SetRightMargin(0.07)
 			c1.Update()
 			c1.Modified()
@@ -515,12 +517,13 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		for iratioplot,ratioplot in enumerate(ratioplots.itervalues()):
 			ratioplot.GetYaxis().SetNdivisions(505)
 			ratioplot.GetXaxis().SetLimits(float(v['xmin']),float(v['xmax']))
-			ratioplot.GetXaxis().SetTitleOffset(4.4)
-			ratioplot.GetYaxis().SetTitleOffset(1.2 if not opts.notext else 1.4)
+			ratioplot.GetXaxis().SetNdivisions(808)
+			ratioplot.GetXaxis().SetTitleOffset(3.5)
+			ratioplot.GetYaxis().SetTitleOffset(1.20 if not opts.notext else 1.40)
 			ratioplot.GetYaxis().SetTitleSize(ratioplot.GetYaxis().GetTitleSize()*0.9)
 			ratioplot.GetYaxis().SetLabelSize(ratioplot.GetYaxis().GetLabelSize()*(1.0 if not opts.notext else 0.95))
 			if opts.notext:
-				c2.SetLeftMargin(0.10)
+				c2.SetLeftMargin(0.13)
 				c2.SetRightMargin(0.07)
 			gPad.SetGridy(1)
 			if iratioplot==0: 
@@ -561,6 +564,8 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		canvas.cd()
 		for istack,stack in enumerate([stacks[g]['effis'] for g in stacks.keys()]):
 			stack.e.GetPaintedGraph().Draw("" if istack==0 else "same")
+	c1.cd()
+	gPad.RedrawAxis()
 
 	# write plot to file
 	canvas.cd()

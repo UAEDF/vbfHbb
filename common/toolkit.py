@@ -191,9 +191,9 @@ def setRangeTH1F(h,ymin,ymax,log=True):
 		h.SetMaximum(round(ymax*1.3,2))
 
 def getRatioPlotCanvas(canvas):
-	c1 = TPad('c1','c1',0,0.3,1,1)
+	c1 = TPad('c1','c1',0,0.27,1,1)
 	c2 = TPad('c2','c2',0,0,1,0.332)
-	c1.SetBottomMargin(0.0)
+	c1.SetBottomMargin(0.039)
 	c2.SetTopMargin(0.10)
 	c2.SetBottomMargin(c2.GetBottomMargin()+0.25)
 	c2.SetFillStyle(0)

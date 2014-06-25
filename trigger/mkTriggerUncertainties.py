@@ -32,7 +32,7 @@ def parser(mp=None):
 	mgtc.add_option('--fdistmaps',help=blue+'Filename for distmaps.'+plain,dest='fdistmaps',default="",type="str")
 	mgtc.add_option('-s','--samples',help=blue+'List of samples (distmap).'+plain,dest='samples',type="str",default=[],action='callback',callback=optsplit)
 	mgtc.add_option('-c','--categories',help=blue+'Pick for categories.'+plain,dest='categories',type="str",default=[],action='callback',callback=optsplit)
-	mgtc.add_option('-b','--categoryboundaries',help=blue+'Boundaries for categories.'+plain,dest='categoryboundaries',type="str",default=[0.0,0.25,0.70,0.88,1.001],action='callback',callback=optsplit)
+	mgtc.add_option('-b','--categoryboundaries',help=blue+'Boundaries for categories.'+plain,dest='categoryboundaries',type="str",default=[-1.0,-0.6,0.0,0.70,0.84,1.001],action='callback',callback=optsplit) #],[-1.0,-0.1,0.40,0.80,1.001]
 	mgtc.add_option('--notext',help='No right margin legends.',default=False,action='store_true')
 
 	mp.add_option_group(mgm)
@@ -51,7 +51,6 @@ def getTwoDMaps(opts,fout):
 	for i in ['JetMon','QCD','JetMon-QCD']:
 		gDirectory.cd("%s:/2DMaps/%s/"%(fin.GetName(),i))
 		for j in gDirectory.GetListOfKeys():
-			#print i,j.GetName()
 			if '%s-Rat'%i in j.GetName(): 
 				m[i] = fin.Get("2DMaps/%s/%s"%(i,j.GetName()))
 				m[i].SetName("ScaleFactorMap_%s"%i)
@@ -77,10 +76,9 @@ def getDistMaps(opts,fout):
 		for j in gDirectory.GetListOfKeys():
 			if info==None: info = [x.split("-") for x in re.search("_s(.*)-t(.*)-r(.*)-d(.*)_(.*)",j.GetName()).groups()]
 			if '%s-Num'%i in j.GetName(): 
-				try: cat = re.search("(mvaVBFC|mvaNOMC|CAT)([0-9]{1})",j.GetName()).group(2)
+				try: cat = re.search('(mvaVBFC|mvaNOMC|CAT)([0-9]{1})',j.GetName()).group(2)
 				except: cat = "N"
 				if opts.categories and not cat in opts.categories: continue
-				#print cat
 				m[i] = fin.Get("2DMaps/%s/%s"%(i,j.GetName()))
 				#print m[i].Integral()
 				if not m[i].Integral() == 0: m[i].Scale(1./m[i].Integral())
@@ -148,7 +146,8 @@ def getConvolutions(opts,fout,info):
 	sfplots = {}
 	sfplots1d = {}
 	j = 4 if 'VBF' in '-'.join(info[3]) else 0 
-	sfplot_labels = ["CAT%d (%.2f,%.2f)"%(x,y,z) for (x,y,z) in [(i-1+j if not (i==0 and j==4) else -2,float(opts.categoryboundaries[i]),float(opts.categoryboundaries[i+1])) for i in range(len(opts.categoryboundaries)-1)]]+["ALL"] #["CAT0","CAT1","CAT2","CAT3","CAT4","ALL"]
+	#sfplot_labels = ["CAT%d (%.2f,%.2f)"%(x,y,z) for (x,y,z) in [(i-1+j if not (i==0 and j==4) else -2,float(opts.categoryboundaries[i]),float(opts.categoryboundaries[i+1])) for i in range(len(opts.categoryboundaries)-1)]]+["ALL"] #["CAT0","CAT1","CAT2","CAT3","CAT4","ALL"]
+	sfplot_labels = ["CAT%d"%x for x in [i-1+j if not (i==0 and j==4) else -2 for i in range(len(opts.categoryboundaries)-1)]]+["ALL"] #["CAT0","CAT1","CAT2","CAT3","CAT4","ALL"]
 
 	print "%12s |"%"E(data/mc)",
 	for c in ["N"]+["%d"%x for x in range(len(opts.categoryboundaries)-1)]:
@@ -214,6 +213,8 @@ def getCanvases(opts,fout,info):
 		text = printText(opts,1-0.1,1-0.15,i.GetName().split('_')[1],"NOM" if "NOM_" in fout.GetName() else ("VBF" if "VBF" in fout.GetName() else "???"),info[4])#,0.020,kBlue-2)
 		h = fout.Get("ScaleFactors/%s"%(i.GetName()))
 		h.SetTitle("")
+		#h.GetXaxis().SetLabelSize(0.032)
+		h.GetXaxis().SetLabelSize(0.05)
 		th2f = (h.IsA().GetName() == "TH2F")
 		if th2f and 'ScaleFactor' in h.GetName():
 			h.GetYaxis().SetNdivisions(0)
@@ -225,6 +226,7 @@ def getCanvases(opts,fout,info):
 		c.SetName(h.GetName())
 		c.cd()
 		selleg = printSelleg(text.GetY1()-0.1,1-0.15,info[0],info[1])
+		pave = None
 		if th2f: h.Draw("colz,error,text")
 		else: 
 			gPad.SetRightMargin(0.20 if not opts.notext else 0.05)
@@ -237,8 +239,16 @@ def getCanvases(opts,fout,info):
 			h.SetFillColor(kBlue)
 			h.SetFillStyle(3018)#3018)
 			h.Draw("e2same,text70")
+			gPad.Update()
 			error=[None]*h.GetNbinsX()
 			for i in range(1,h.GetNbinsX()+1): 
+				if not 'ALL' in h.GetXaxis().GetBinLabel(i) and float(re.search('([A-Z]*)([0-9+-]*)',h.GetXaxis().GetBinLabel(i)).group(2))<0:
+						ctr = h.GetXaxis().GetBinCenter(i)
+						wid = h.GetXaxis().GetBinWidth(i)
+						pave = TPave(ctr-wid/2.,gPad.GetUymin(),ctr+wid/2.,gPad.GetUymax())
+						pave.SetFillColor(kGray+1)
+						pave.SetFillStyle(3003)
+						pave.Draw("same")
 				if h.GetBinContent(i)==0: continue
 				error[i-1] = extraText(i-h.GetBinWidth(i)/2.,h.GetBinContent(i),"#pm %.3f"%h.GetBinError(i))
 				error[i-1].Draw("same")
@@ -275,7 +285,7 @@ def printText(opts,top,left,sample,selection,mapvars,fontSize=0.020,fontColor=kB
 	varnames = {'jetBtag00':'bjet0 CSV','jetBtag10':'bjet1 CSV','mqq1':'m_{q#bar{q}}','mqq2':'m_{q#bar{q}}','dEtaqq1':'#Delta#eta_{q#bar{q}}','dEtaqq2':'#Delta#eta_{q#bar{q}}'}
 	nlines = 6 if not opts.notext else 3
 	if opts.notext: 
-		left = 0.20
+		left = 0.33
 		top = 0.30
 		fontSize = fontSize*1.4
 	right = left + 0.13
@@ -292,7 +302,7 @@ def printText(opts,top,left,sample,selection,mapvars,fontSize=0.020,fontColor=kB
 		text.AddText("CMS preliminary")
 		text.AddText("VBF H#rightarrow b#bar{b}")
 		text.AddText("L = %.1f fb^{-1}"%(19800./1000. if selection=="NOM" else 18300./1000. if selection=="VBF" else "???"))
-	text.AddText("%s selection"%selection)
+	text.AddText("%s selection"%selection.replace('VBF','PRK'))
 	text.AddText("sample: %s"%sample)
 	text.AddText("2D map: %s"%(' & '.join([(varnames[x] if x in varnames else x) for x in mapvars])))
 	if not opts.notext: 

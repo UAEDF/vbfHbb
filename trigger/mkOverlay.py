@@ -74,6 +74,7 @@ def plotMaps(opts,fout,maps,paves):
 		c.cd()
 		gPad.SetRightMargin(0.2 if not opts.notext else 0.08)
 		labels = []
+		pave = None
 		for fi,f in enumerate(files):
 			h = content[f]
 			c.SetName(h.GetName())
@@ -81,6 +82,7 @@ def plotMaps(opts,fout,maps,paves):
 			h.GetYaxis().SetTitle("Trigger Scale Factor")
 			h.GetYaxis().SetTitleOffset(1.0)
 			h.GetYaxis().SetRangeUser(0,1.2)
+			h.GetXaxis().SetLabelSize(0.05)
 			h.SetLineWidth(3)
 			h.SetLineColor(colors[fi])
 
@@ -88,8 +90,16 @@ def plotMaps(opts,fout,maps,paves):
 			h.SetFillColor(colors[fi])
 			h.SetFillStyle(styles[fi])
 			h.Draw("e2same") #text70
-
+		
+			gPad.Update()
 			for i in range(1,h.GetNbinsX()+1):
+				if not 'ALL' in h.GetXaxis().GetBinLabel(i) and float(re.search('([A-Z]*)([0-9+-]*)',h.GetXaxis().GetBinLabel(i)).group(2))<0:
+					ctr = h.GetXaxis().GetBinCenter(i)
+					wid = h.GetXaxis().GetBinWidth(i)
+					pave = TPave(ctr-wid/2.,gPad.GetUymin(),ctr+wid/2.,gPad.GetUymax())
+					pave.SetFillColor(kGray+1)
+					pave.SetFillStyle(3003)
+					pave.Draw("same")
 				if h.GetBinContent(i)==0: continue
 				for text in setLabel(i-h.GetBinWidth(i)/2.,h.GetBinContent(i),["%.3f"%h.GetBinContent(i),"#pm %.3f"%h.GetBinError(i)],fi):
 					labels += [text]
@@ -106,8 +116,8 @@ def plotMaps(opts,fout,maps,paves):
 			sampleinfo.Clear()
 			sampleinfo.SetTextSize(sampleinfo.GetTextSize()*1.4)
 			for u in updated: sampleinfo.AddText(u)
-			sampleinfo.SetX1NDC(0.20)
-			sampleinfo.SetX2NDC(0.50)
+			sampleinfo.SetX1NDC(0.30)
+			sampleinfo.SetX2NDC(0.60)
 			sampleinfo.SetY1NDC(0.15)
 			sampleinfo.SetY2NDC(0.30)
 			sampleinfo.Draw("same")
@@ -132,8 +142,8 @@ def plotMaps(opts,fout,maps,paves):
 
 		for ih,h in enumerate(content.itervalues()): overlayinfo.AddEntry(h,opts.tags[ih],"L")
 		if opts.notext: 
-			overlayinfo.SetX1(0.4)
-			overlayinfo.SetX2(0.65)
+			overlayinfo.SetX1(0.50)
+			overlayinfo.SetX2(0.75)
 			overlayinfo.SetY1(0.20)
 			overlayinfo.SetY2(0.30)
 			gPad.Update()

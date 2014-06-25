@@ -332,15 +332,18 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 	maps = {}
 	cuts = {}
 	inroot('TTree *t = 0;')
+# style
+	gStyle.SetPalette(20) #13
+	gStyle.SetPaintTextFormat("7.2f")
 # To Save
 	if opts.notext: canvas = TCanvas("cmap","cmap",1600,1200)
 	else: canvas = TCanvas("cmap","cmap",1800,1200)
 	canvas.cd()
 	gPad.SetGrid(0,0)
-	if not opts.notext: gPad.SetRightMargin(0.14)
-	else: gPad.SetRightMargin(0.08)
-	gStyle.SetPaintTextFormat("6.2f")
+	if not opts.notext: gPad.SetRightMargin(0.25)
+	else: gPad.SetRightMargin(0.12)
 # LOOP over ALL GROUPS
+	itest = 0
 	for group in groups:
 		l2("Filling for group: %s%s%s"%(purple,group,plain))
 		maps[group] = {}
@@ -405,13 +408,29 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 			#maps[group][tag].GetXaxis().SetTitle(variables[vx[0]]['title_x'])
 			#maps[group][tag].GetYaxis().SetTitle(variables[vy[0]]['title_x'])
 			maps[group][tag].SetTitleOffset(maps[group][tag].GetTitleOffset()*1.0 if not opts.notext else maps[group][tag].GetTitleOffset()*1.2,"XY")
-			maps[group][tag].SetMarkerSize(maps[group][tag].GetMarkerSize()*0.75)
+			#maps[group][tag].SetTitleOffset(maps[group][tag].GetTitleOffset()*0.8,"Z")
+			maps[group][tag].SetMarkerSize((1.25 if not ('mqq' in vx[0] or 'mqq' in vy[0]) else 0.85) if not (group=='QCD' and not tag=='Rat') else 1.0)
+			maps[group][tag].GetXaxis().SetTickLength(0.03)
+			maps[group][tag].GetYaxis().SetTickLength(0.016)
+			maps[group][tag].GetYaxis().SetNdivisions(505 if not 'VBF' in trg else 507)
 			maps[group][tag].SetTitle("")
 			if 'VBF' in trg:
 				gPad.SetLogx(1)
 				maps[group][tag].GetXaxis().SetMoreLogLabels()
 				maps[group][tag].SetMarkerSize(maps[group][tag].GetMarkerSize()*0.75)
+			gStyle.SetHistMinimumZero(kFALSE)
+			if maps[group][tag].GetEntries()==0: maps[group][tag].SetBinContent(0,0,-1e-16)
 			maps[group][tag].Draw("colz,text,error")
+			
+			gPad.Update()
+			try:
+				palette = maps[group][tag].GetListOfFunctions().FindObject("palette")
+				palette.SetX1NDC(0.885 - (0.13 if not opts.notext else 0.0))
+				palette.SetX2NDC(0.93 - (0.13 if not opts.notext else 0.0))
+			except:
+				continue
+			canvas.Modified()
+			canvas.Update()
 
 			if not opts.notext:
 				text,selleg = addText(opts,group,tag,vx,vy,sel,trg,ref)
@@ -421,6 +440,7 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 			maps[group][tag].Write(maps[group][tag].GetName(),TH1.kOverwrite)
 			canvas.SaveAs('%s/%s%s.png'%(path,maps[group][tag].GetName(),'' if not opts.notext else '_noleg'))
 			canvas.SaveAs('%s/%s%s.pdf'%(path,maps[group][tag].GetName(),'' if not opts.notext else '_noleg'))
+			gStyle.SetHistMinimumZero(kTRUE)
 			l3("Written %s map to (eog %s/%s%s.png)"%(tag,path,maps[group][tag].GetName(),'' if not opts.notext else '_noleg'))
 # END LOOP over ALL GROUPS
 
@@ -456,13 +476,15 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		canvas.cd()
 		#maps[ratio]['Rat'].GetXaxis().SetTitle(variables[vx[0]]['title_x'])
 		#maps[ratio]['Rat'].GetYaxis().SetTitle(variables[vy[0]]['title_x'])
+		maps[ratio]['Rat'].SetMarkerSize(1.25 if not ('mqq' in vx[0] or 'mqq' in vy[0]) else 0.85)
 		maps[ratio]['Rat'].SetTitleOffset(maps[ratio]['Rat'].GetTitleOffset()*1.0 if not opts.notext else maps[ratio]['Rat'].GetTitleOffset()*1.2,"XY")
-		#maps[ratio]['Rat'].SetTitleOffset(1.2,"X")
+		maps[ratio]['Rat'].GetXaxis().SetTickLength(0.03)
 		maps[ratio]['Rat'].GetZaxis().SetRangeUser(0,1.4)
 		if 'VBF' in trg:
 			gPad.SetLogx(1)
 			maps[ratio]['Rat'].GetXaxis().SetMoreLogLabels()
 			maps[ratio]['Rat'].SetMarkerSize(maps[ratio]['Rat'].GetMarkerSize()*0.75)
+		gStyle.SetHistMinimumZero(kFALSE)
 		maps[ratio]['Rat'].Draw('colz,error,text')
 		#for ix in range(1,maps[ratio]['Rat'].GetNbinsX()+1):
 		#	for iy in range(1,maps[ratio]['Rat'].GetNbinsY()+1):
@@ -473,6 +495,14 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		#			canvas.cd()
 		#			pave.Draw()
 		#			paves += [pave]
+			
+		gPad.Update()
+		palette = maps[group][tag].GetListOfFunctions().FindObject("palette")
+		palette.SetX1NDC(0.885 - (0.11 if not opts.notext else 0.0))
+		palette.SetX2NDC(0.93 - (0.11 if not opts.notext else 0.0))
+		canvas.Modified()
+		canvas.Update()
+
 		if not opts.notext:
 			text,selleg = addText(opts,'Data / QCD','SF',vx,vy,sel,trg,ref)
 			text.Draw("same")
@@ -488,6 +518,7 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 			if not tag in maps[ratio]: continue
 			canvas.SaveAs("%s/%s%s.png"%(path,maps[ratio][tag].GetName(),'' if not opts.notext else '_noleg'))
 			canvas.SaveAs("%s/%s%s.pdf"%(path,maps[ratio][tag].GetName(),'' if not opts.notext else '_noleg'))
+		gStyle.SetHistMinimumZero(kTRUE)
 		l2("Written map to (eog %s/%s%s.png)"%(path,maps[ratio]['Rat'].GetName(),'' if not opts.notext else '_noleg'))
 #		canvas.Close()
 
