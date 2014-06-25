@@ -46,6 +46,7 @@ def parser(mp=None):
 	mgj.add_option('-G','--globalpath',help="Global prefix for samples.",dest='globalpath',default="",type='str')
 	mgj.add_option('-F','--fileformat',help="File format for samples (1: 2012, 2: 2013).",dest='fileformat',default=1,type='int')
 	mgj.add_option('--source',help="Filepath for original flatTrees.",dest='source',default="",type='str')
+	mgj.add_option('--destination',help="Filepath for new flatTrees.",dest='destination',default="",type='str')
 
 	mgr = OptionGroup(mp,cyan+"root settings"+plain)
 	mgr.add_option('-o','--fout',help="File name for output file.",dest='fout',default='rootfiles/vbfHbb.root',type='str')

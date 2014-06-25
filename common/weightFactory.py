@@ -26,8 +26,8 @@ class weightFactory:
 			if iWght == 'TRSF' : self.addTRWght(sample_tag)
 			if iWght == 'TNOM' : self.addTNWght(sample_tag)
 			if iWght == 'TVBF' : self.addTVWght(sample_tag)
-			if iWght[0:3] == 'COR'  : self.add1DWght(sample_tag,iWght.split('#')[1:])
-			if iWght[0:3] == 'MAP'  : self.add2DWght(sample_tag,iWght.split('#')[1:])
+			if iWght[0:3] == 'COR'   : self.add1DWght(sample_tag,iWght.split('#')[1:])
+			if iWght[0:3] == 'MAP'   : self.add2DWght(sample_tag,iWght.split('#')[1:])
 		return self.wOut
 
 	def addPUWght(self,tag):

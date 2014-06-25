@@ -1,0 +1,10 @@
+fit/*.root
+kostas/*.root
+*.pyc
+*/*.pyc
+*.so
+*/*.so
+*.d
+*/*.d
+*/*.log
+
