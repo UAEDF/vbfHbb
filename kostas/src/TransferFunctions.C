@@ -8,7 +8,7 @@ void TransferFunctions(float BND1,float BND2,float BND3,float XMIN,float XMAX)
   int STYLE[NCAT[0]] = {20,20,23,21};
   int COLOR[NCAT[0]] = {kBlack,kBlue,kRed,kGreen+2};
 
-  TFile *outf = TFile::Open("TransferFunction_"+TAG+".root","RECREATE");
+  TFile *outf = TFile::Open("transfer/TransferFunction_"+TAG+".root","RECREATE");
 
   TH1F *hData[NSEL][NCAT[0]];
   TH1F *hRatio[NSEL][NCAT[0]]; 
@@ -33,7 +33,7 @@ void TransferFunctions(float BND1,float BND2,float BND3,float XMIN,float XMAX)
   ln->GetYaxis()->SetTitle("Signal/Control");
   int counter(0);
   for(int isel=0;isel<NSEL;isel++) {
-    TFile *infData = TFile::Open("Fit_data_sel"+SELECTION[isel]+".root");
+    TFile *infData = TFile::Open("flat/Fit_data_sel"+SELECTION[isel]+".root");
     TTree *trData = (TTree*)infData->Get("Hbb/events");
     can2[isel] = new TCanvas("transfer_sel"+SELECTION[isel],"transfer_sel"+SELECTION[isel],400*(NCAT[isel]-1),450);
     can2[isel]->Divide(NCAT[isel]-1,1);
@@ -113,7 +113,10 @@ void TransferFunctions(float BND1,float BND2,float BND3,float XMIN,float XMAX)
     }
     can1[isel]->cd();
     leg->Draw();
+	 can1[isel]->SaveAs(TString::Format("plots/transfer/%s.png",can1[isel]->GetName()));
+	 can2[isel]->SaveAs(TString::Format("plots/transfer/%s.png",can2[isel]->GetName()));
   }
+  can->SaveAs(TString::Format("plots/transfer/%s.png",can->GetName()));
   outf->Close();
   delete can;
 }

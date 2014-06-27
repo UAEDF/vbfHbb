@@ -19,7 +19,7 @@ class weightFactory:
 		self.wOut='1.'
 		for iWght in weights.split(','):
 			if iWght == ''     : continue
-			if iWght == 'PU'   : self.addPUWght(sample_tag)
+			if iWght[0:2] == 'PU'   : self.addPUWght(sample_tag,iWght.split('#')[1])
 			if iWght == 'XSEC' : self.addXSWght(sample_tag)
 			if iWght == 'LUMI' : self.addLUWght(sample_tag)
 			if iWght == 'KFAC' : self.addKFWght(sample_tag)
@@ -30,9 +30,9 @@ class weightFactory:
 			if iWght[0:3] == 'MAP'   : self.add2DWght(sample_tag,iWght.split('#')[1:])
 		return self.wOut
 
-	def addPUWght(self,tag):
+	def addPUWght(self,tag,element):
 		for iFile in self.samples["files"]:
-		   if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 : self.wOut += '*puWt'
+		   if self.samples["files"][iFile]["tag"] == tag and self.samples["files"][iFile]["xsec"] > 0 : self.wOut += '*puWt[%d]'%int(element)
 
 	def addXSWght(self,tag):
 		for iFile in self.samples["files"]:

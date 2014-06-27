@@ -42,7 +42,7 @@ void PrepareDataForFit(TString SAMPLE,TString SELECTION,bool isMC)
     CUT_SELECTION = "selVBF";
   }
    
-  TFile *outf = TFile::Open("Fit_"+SAMPLE+"_sel"+SELECTION+".root","RECREATE");
+  TFile *outf = TFile::Open("flat/Fit_"+SAMPLE+"_sel"+SELECTION+".root","RECREATE");
   outf->cd();
   hPass->Write("TriggerPass");
   

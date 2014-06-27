@@ -2,14 +2,8 @@
 
 void PrepareSamples()
 {
-  const int N(15);//23);
-  TString SAMPLE[N] = {"QCD100","QCD250","QCD500","QCD1000","ZJets","WJets", \
-                        "TTJets",\
-		  						"T_s-channel","T_t-channel","T_tW-channel",\
-								"Tbar_s-channel","Tbar_t-channel","Tbar_tW-channel",\
-								"VBFPowheg125","GFPowheg125"};
- //                      "VBFPowheg115","VBFPowheg120","VBFPowheg125","VBFPowheg130","VBFPowheg135",
- //                      "GFPowheg115","GFPowheg120","GFPowheg125","GFPowheg130","GFPowheg135"};
+  const int N(23);
+  TString SAMPLE[N] = {"GFPowheg115","GFPowheg120","GFPowheg125","GFPowheg130","GFPowheg135","VBFPowheg115","VBFPowheg120","VBFPowheg125","VBFPowheg130","VBFPowheg135","QCD100","QCD250","QCD500","QCD1000","ZJets","WJets","TTJets","T_s-channel","T_t-channel","T_tW-channel","Tbar_s-channel","Tbar_t-channel","Tbar_tW-channel"};
   TString SEL[2] = {"NOM","VBF"};
   
   PrepareDataForFit("MultiJetA", "NOM",false);

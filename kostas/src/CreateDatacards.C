@@ -8,8 +8,8 @@ void CreateDatacards(float BND1,float BND2,float BND3,int CAT_MIN,int CAT_MAX,in
   const float UNC_JES[NCAT]  = {1.06,1.08,1.09,1.10,1.06,1.08,1.10};
 
   TString TAG(TString::Format("%1.2f_%1.2f_%1.2f",BND1,BND2,BND3));
-  TFile *fData = TFile::Open("data_shapes_workspace_"+TAG+"_"+TString::Format("BRN%d",BRN_ORDER)+".root");
-  TFile *fSig  = TFile::Open("signal_shapes_workspace_"+TAG+".root");
+  TFile *fData = TFile::Open("workspace/data_shapes_workspace_"+TAG+"_"+TString::Format("BRN%d",BRN_ORDER)+".root");
+  TFile *fSig  = TFile::Open("workspace/signal_shapes_workspace_"+TAG+".root");
  
   RooWorkspace *wData = (RooWorkspace*)fData->Get("w");
   RooWorkspace *wSig  = (RooWorkspace*)fSig->Get("w");
@@ -34,7 +34,7 @@ void CreateDatacards(float BND1,float BND2,float BND3,int CAT_MIN,int CAT_MAX,in
 
   for(int m=0;m<5;m++) {
     ofstream datacard;
-    sprintf(name,"datacard_m%d_%s_BRN%d_CAT%d-CAT%d.txt",H_MASS[m],TAG.Data(),BRN_ORDER,CAT_MIN,CAT_MAX);
+    sprintf(name,"datacard/datacard_m%d_%s_BRN%d_CAT%d-CAT%d.txt",H_MASS[m],TAG.Data(),BRN_ORDER,CAT_MIN,CAT_MAX);
     cout<<"======================================="<<endl; 
     cout<<"Creating datacard: "<<name<<endl;
     cout<<"======================================="<<endl; 

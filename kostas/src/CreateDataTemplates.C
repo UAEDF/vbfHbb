@@ -16,7 +16,7 @@ void CreateDataTemplates(double dX,float BND1,float BND2,float BND3,int BRN_ORDE
   TString SELECTION[2] = {"NOM","VBF"};
   TString MASS_VAR[2] = {"mbbReg[1]","mbbReg[2]"};
 
-  TFile *fBKG  = TFile::Open("bkg_shapes_workspace_"+TAG+".root");
+  TFile *fBKG  = TFile::Open("workspace/bkg_shapes_workspace_"+TAG+".root");
   RooWorkspace *wBkg = (RooWorkspace*)fBKG->Get("w");
   RooWorkspace *w = new RooWorkspace("w","workspace");
   //RooRealVar x(*(RooRealVar*)wBkg->var("mbbReg"));
@@ -25,14 +25,14 @@ void CreateDataTemplates(double dX,float BND1,float BND2,float BND3,int BRN_ORDE
   TCanvas *canFit[5]; 
   RooDataHist *roohist[5];
 
-  TFile *fTransfer = TFile::Open("TransferFunction_"+TAG+".root");
+  TFile *fTransfer = TFile::Open("transfer/TransferFunction_"+TAG+".root");
   TF1 *transFunc;
 
   int counter(0);
   int NPAR = BRN_ORDER;
 
   for(int isel=0;isel<NSEL;isel++) {
-    TFile *fDATA = TFile::Open("Fit_data_sel"+SELECTION[isel]+".root");
+    TFile *fDATA = TFile::Open("flat/Fit_data_sel"+SELECTION[isel]+".root");
     RooRealVar *brn[8];
     RooArgSet brn_params;
     if (isel == 1) {
@@ -153,8 +153,9 @@ void CreateDataTemplates(double dX,float BND1,float BND2,float BND3,int BRN_ORDE
       w->import(model);
       w->import(*Yield);
       counter++; 
+		canFit[icat]->SaveAs(TString::Format("plots/fitdat/%s.png",canFit[icat]->GetName()));
     }// category loop
   }// selection loop
   //w->Print();
-  w->writeToFile("data_shapes_workspace_"+TAG+"_"+TString::Format("BRN%d",BRN_ORDER)+".root");
+  w->writeToFile("workspace/data_shapes_workspace_"+TAG+"_"+TString::Format("BRN%d",BRN_ORDER)+".root");
 }

@@ -85,6 +85,7 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	KFWght         = (None    if not 'KFWght'          in kwargs else kwargs['KFWght'])
 	trigequal      = ('49'    if not 'trigequal'       in kwargs else kwargs['trigequal'])
 	sample         = (None    if not 'sample'          in kwargs else kwargs['sample'])
+	extra          = ([]      if not 'extra'           in kwargs else kwargs['extra'])
 	if not (seljoin[0]==' ' and seljoin[-1]==' '): seljoin = ' '+seljoin+' '
 	if not (trgjoin[0]==' ' and trgjoin[-1]==' '): trgjoin = ' '+trgjoin+' '
 
@@ -123,7 +124,7 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 		if not stgroup:
 			# selection
 			#out# print [[k for (k,v) in selections[si].iteritems()] for si in sel]
-			s      = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections[si].iteritems(), key=lambda(x,y):x) if not ((k in varskip) or (k.replace("mqq[2]","mjjTrig") in varskip) or (k.replace("dEtaqq[2]","dEtaTrig") in varskip) or (k.replace("mjjTrig","mqq[2]") in varskip) or (k.replace("dEtaTrig","dEtaqq[2]") in varskip) or (k=='selection' or k=='trigger')) ]) ) for si in sorted(sel)] ) ).replace(' && ()','').replace('() &&','')
+			s      = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections[si].iteritems(), key=lambda(x,y):x) if not ((k in varskip) or (k.replace("mqq[2]","mjjTrig") in varskip) or (k.replace("dEtaqq[2]","dEtaTrig") in varskip) or (k.replace("mjjTrig","mqq[2]") in varskip) or (k.replace("dEtaTrig","dEtaqq[2]") in varskip) or (k=='selection' or k=='trigger')) ]) ) for si in sorted(sel)] + extra ) ).replace(' && ()','').replace('() &&','')
 			scmp   = group( selcmpjoin.join( [ group("! "+group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections.iteritems(), key=lambda(x,y):x) if not ((k in varskip)  or (k.replace("mqq[2]","mjjTrig") in varskip) or (k.replace("dEtaqq[2]","dEtaTrig") in varskip) or (k.replace("mjjTrig","mqq[2]") in varskip) or (k.replace("dEtaTrig","dEtaqq[2]") in varskip)) ]) )) for si in selcmp ] ) )
 			if s=='()' : s='(1.)'
 			# trigger
@@ -132,7 +133,7 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 			if t=='()' : t='(1.)'
 	
 			# selection labels
-			slabels      = group( seljoin.join( [ 's'+x for x in (sel if not sel==[] else selold) ] ) )
+			slabels      = group( seljoin.join( [ 's'+x for x in (sel if not sel==[] else selold) ] + ['s'+x for x in extra] ) )
 			scmplabels   = group( selcmpjoin.join( [ group('! s'+x) for x in selcmp ] ) )
 			# trigger labels
 			tlabels      = group( trgjoin.join( [ 't'+x for x in (trg if not trg==[] else trgold) ] ) )

@@ -47,6 +47,8 @@ def parser(mp=None):
 	mgj.add_option('-F','--fileformat',help="File format for samples (1: 2012, 2: 2013).",dest='fileformat',default=1,type='int')
 	mgj.add_option('--source',help="Filepath for original flatTrees.",dest='source',default="",type='str')
 	mgj.add_option('--destination',help="Filepath for new flatTrees.",dest='destination',default="",type='str')
+	mgj.add_option('--flatprefix',help="Prefix to flatTree names.",dest='flatprefix',default="",type='str')
+	mgj.add_option('--flatsuffix',help="Suffix to flatTree names.",dest='flatsuffix',default="",type='str')
 
 	mgr = OptionGroup(mp,cyan+"root settings"+plain)
 	mgr.add_option('-o','--fout',help="File name for output file.",dest='fout',default='rootfiles/vbfHbb.root',type='str')
@@ -173,20 +175,36 @@ def getYields(opts,loadedSamples,KFWghts):
 	yieldarchive = {}
 # selection
 	for sel in opts.selection:
-		l1("Running for sel: %s"%('-'.join(sorted(sel))))
+		thissel = '-'.join(sorted(sel))
+		l1("Running for sel: %s"%thissel)
 # trigger
 		for itrg,trg in enumerate(opts.trigger):
-			l1("Running for trg: %s"%('-'.join(trg))+("" if opts.datatrigger==[] else " (data: %s)"%('-'.join(opts.datatrigger[opts.trigger.index(trg)]))))
+			thistrg = '-'.join(trg)
+			if not opts.datatrigger==[]: thisdatatrg = '-'.join(opts.datatrigger[opts.trigger.index(trg)])
+			l1("Running for trg: %s"%(thistrg if opts.datatrigger==[] else " (data: %s)"%thisdatatrg))
 			# KFWght
-			KFWght = KFWghts[('-'.join(sorted(sel)),'-'.join(trg))]	
+			KFWght = KFWghts[(thissel,thistrg)]	
 			# samples
 			groupcounts = {}
 			# category
-			if 'CAT' in '-'.join(sorted(sel)): cat = re.search('(CAT[0-9]{1})','-'.join(sorted(sel))).group(1)
+			if any([('VBF' in '-'.join(x) or 'MBBREG2' in '-'.join(x)) for x in opts.selection]): keys = ['ALL','CAT-2','CAT4','CAT5','CAT6']
+			elif any([('NOM' in '-'.join(x) or 'MBBREG1' in '-'.join(x)) for x in opts.selection]): keys = ['ALL','CAT-1','CAT0','CAT1','CAT2','CAT3']
+			else: sys.exit(Red+'Don\'t know how to handle this selection. Exiting.'+plain)
+
+			if any([x in thissel for x in ['NOMC','VBFC']]): cat = 'CAT'+str(int(re.search('(NOMC|VBFC)([0-9]{1})',thissel).group(2))-1)
 			else: cat='ALL'
-			selmincat = ('-'.join(sorted(sel))).replace('-'+cat,'')
+			if 'VBF' in thissel and cat=="CAT-1": cat="CAT-2"
+			if 'VBF' in thissel and 'CAT' in cat and int(re.search('CAT([0-9+-]*)',cat).group(1))>=0: cat="CAT%d"%(int(re.search('CAT([0-9+-]*)',cat).group(1))+4)
+
+			if any([x in thissel for x in ['NOMC','VBFC']]):
+				print re.search('([+_-]*)(mvaNOMC|mvaVBFC)([0-9]{1})([+_-]*)',thissel).groups()
+				selmincat = thissel.replace(''.join(re.search('([+_-]*)(mvaNOMC|mvaVBFC)([0-9]{1})([+_-]*)',thissel).groups()),'')
+			else:
+				selmincat = thissel
 			if not (selmincat,'-'.join(trg)) in yieldarchive: yieldarchive[(selmincat,'-'.join(trg))] = {}
-			for k,v in {'ALL':{},'CAT0':{},'CAT1':{},'CAT2':{},'CAT3':{},'CAT4':{}}.iteritems():
+
+			d = dict([(x,{}) for x in keys])
+			for k,v in d.iteritems(): 
 				if not k in yieldarchive[(selmincat,'-'.join(trg))]: yieldarchive[(selmincat,'-'.join(trg))][k] = v		
 			for sample in loadedSamples: 
 				if opts.debug: l3("%sSample: %s%s"%(purple,sample['tag'],plain))
@@ -213,11 +231,11 @@ def getYields(opts,loadedSamples,KFWghts):
 
 	#print allkeys
 
-	printYieldTable(opts,yieldarchive,sorted(['Data','DataV','QCD','ZJets','TTJets','singleT','WJets','VBF125','GluGlu-Powheg125'],key=lambda x:(x[0:3],len(x),x)))
-	printYieldTable(opts,yieldarchive,sorted(list(set(allkeys)-set(['Data','DataV','QCD','ZJets','TTJets','singleT','WJets','VBF125','GluGlu-Powheg125'])),key=lambda x:(x[0:3],len(x),x)))
+	printYieldTable(opts,yieldarchive,sorted(['Data','DataV','QCD','ZWJets','Tall','VBF125','GF125'],key=lambda x:(x[0:3],len(x),x)))
+	printYieldTable(opts,yieldarchive,sorted(list(set(allkeys)-set(['Data','DataV','QCD','ZJets','TTJets','singleT','WJets','VBF125','GF125'])),key=lambda x:(x[0:3],len(x),x)))
 	
-	if opts.latex: printYieldTableLatex(opts,yieldarchive,['Data','DataV','QCD','ZJets','TTJets','singleT','WJets','VBF125','GluGlu-Powheg125'])
-	if opts.latex: printYieldTableLatex(opts,yieldarchive,sorted(list(set(allkeys)-set(['Data','DataV','QCD','ZJets','TTJets','singleT','WJets','VBF125','GluGlu-Powheg125'])),key=lambda x:(x[0:3],len(x),x)))
+	if opts.latex: printYieldTableLatex(opts,yieldarchive,sorted(['Data','DataV','QCD','ZWJets','Tall','VBF125','GF125'],key=lambda x:(x[0:3],len(x),x)))
+	if opts.latex: printYieldTableLatex(opts,yieldarchive,sorted(list(set(allkeys)-set(['Data','DataV','QCD','Tall','ZWJets','VBF125','GF125'])),key=lambda x:(x[0:3],len(x),x)))
 
 # HELPER FUNCTIONS #################################################################################
 def printKFWghtsTable(KFWghts):
@@ -232,7 +250,9 @@ def printKFWghtsTable(KFWghts):
 	print
 
 def printYieldTable(opts,yieldarchive,keys):
-	print "%30s | %65s | %30s | %10s | %10s | %10s | %10s | %10s | %10s |"%('sample','sel','trg','ALL','CAT0','CAT1','CAT2','CAT3','CAT4')
+	print "%30s | %65s | %30s |"%('sample','sel','trg'),
+	print " | ".join(["%10s"%x for x in sorted(yieldarchive[yieldarchive.keys()[0]].keys())]),
+	print "|"
 	tprev=""
 	sprev=""
 	for s,t in sorted(yieldarchive.iterkeys(),key=lambda (x,y):(y,x)):
@@ -256,7 +276,9 @@ def printYieldTable(opts,yieldarchive,keys):
 
 def printYieldTableLatex(opts,yieldarchive,keys):
 	print "\\begin{tabular}{*{9}{|c}|}\\hline"
-	print "%30s & %45s & %30s & %10s & %10s & %10s & %10s & %10s & %10s \\\\"%('sample','sel','trg','ALL','CAT0','CAT1','CAT2','CAT3','CAT4'),
+	print "%30s & %45s & %30s &"%('sample','sel','trg'),
+	print " & ".join(["%10s"%x for x in sorted(yieldarchive[yieldarchive.keys()[0]].keys())]),
+	print '\\\\',
 	tprev=""
 	sprev=""
 	for s,t in sorted(yieldarchive.iterkeys(),key=lambda (x,y):(y,x)):
@@ -264,7 +286,7 @@ def printYieldTableLatex(opts,yieldarchive,keys):
 			if (not tprev==t) or (not sprev==s): 
 				#print '-'*(4*9 + 90 + 60 + 15)
 				print "\\hline"
-			if not any(sample in x for x in yieldarchive[(s,t)].itervalues()): break
+			if not any(sample in x for x in yieldarchive[(s,t)].itervalues()): continue
 			tcorr = '-'.join(opts.datatrigger[opts.trigger.index(t.split('-'))]) if any([x in sample for x in ['Data','DataV','JetMon']]) and not opts.datatrigger==[] else t
 			print '%30s & %45s & %30s &'%(sample,s,tcorr),
 			for cat in sorted(yieldarchive[(s,t)].iterkeys()):
@@ -317,6 +339,9 @@ def main(mp=None,parseronly=False,variablesBool=None,samplesBool=None):
 		# all samples from file if nothing is specified in options
 		if not opts.sample: opts.sample = ','.join([y['tag'] for (x,y) in samplesfull['files'].iteritems()])
 		# veto/accept according to opts.nosample and opts.sample
+		for s in samples.itervalues(): 
+			if not opts.flatprefix=='': s['fname'] = s['fname'].replace('flat','%sFlat'%opts.flatprefix)
+			if not opts.flatsuffix=='': s['fname'] = s['fname'].replace('.root','%s.root'%opts.flatsuffix)
 		for key in samples.keys():
 			if any([x in samples[key]['tag'] for x in opts.nosample]): del samples[key] 
 			elif not any([x in samples[key]['tag'] for x in opts.sample]): del samples[key]

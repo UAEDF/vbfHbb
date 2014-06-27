@@ -16,7 +16,7 @@ void CreateBkgTemplates(float BND1,float BND2,float BND3)
   TString SELECTION[2] = {"NOM","VBF"};
   TString MASS_VAR[2] = {"mbbReg[1]","mbbReg[2]"};
   TString TRIG_WT[2] = {"trigWtNOM[1]","trigWtVBF"};
-  TString PATH("");
+  TString PATH("flat/");
   TFile *inf[9];
   TTree *tr;
   TH1F *hMbb[9],*hMbbYield[9],*hPass;
@@ -64,8 +64,17 @@ void CreateBkgTemplates(float BND1,float BND2,float BND3)
         hMbbYield[i] = new TH1F(name,name,NBINS,XMIN,XMAX);
         hMbbYield[i]->Sumw2();
         tr->Draw(MASS_VAR[isel]+">>"+hMbbYield[i]->GetName(),cut);
+		  if (i==7) {cout << "\033[1;43m" << endl;}
+		  cout << endl << endl;
+		  cout << hMbbYield[i]->GetName() << endl;
+		  cout << cut.GetTitle() << endl;
+		  cout << hMbbYield[i]->GetEntries() << endl;
+		  cout << hMbbYield[i]->Integral() << endl;
         delete tr;
         hMbbYield[i]->Scale(LUMI[isel]*XSEC[i]/hPass->GetBinContent(1)); 
+		  cout << hMbbYield[i]->Integral() << endl;
+		  cout << hPass->GetBinContent(1)/XSEC[i] << endl;
+		  if (i==7) {cout << "\033[m" << endl;}
       }
       hZ  = (TH1F*)hMbb[7]->Clone("Z");
       hW  = (TH1F*)hMbb[8]->Clone("W");
@@ -204,8 +213,11 @@ void CreateBkgTemplates(float BND1,float BND2,float BND3)
       YieldST->Print();
       counter++;
     }// category loop
+	 canZ->SaveAs(TString::Format("plots/fitbkg/%s.png",canZ->GetName()));
+	 canT->SaveAs(TString::Format("plots/fitbkg/%s.png",canT->GetName()));
+	 can->SaveAs(TString::Format("plots/fitbkg/%s_%s.png",can->GetName(),SELECTION[isel].Data()));
     delete can;
   }// selection loop
   //w->Print();
-  w->writeToFile("bkg_shapes_workspace_"+TAG+".root");
+  w->writeToFile("workspace/bkg_shapes_workspace_"+TAG+".root");
 }

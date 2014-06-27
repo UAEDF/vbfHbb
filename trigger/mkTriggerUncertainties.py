@@ -253,6 +253,8 @@ def getCanvases(opts,fout,info):
 				error[i-1] = extraText(i-h.GetBinWidth(i)/2.,h.GetBinContent(i),"#pm %.3f"%h.GetBinError(i))
 				error[i-1].Draw("same")
 	#			print error[i-1].Print()
+				print "%10s %10s    %12.3f / %12.3f   =  %12.6f"%(h.GetName(), h.GetXaxis().GetBinLabel(i), h.GetBinContent(i), h.GetBinError(i), h.GetBinError(i)/h.GetBinContent(i))
+			print
 		gPad.Update()
 		line = TLine(h.GetNbinsX()-1,0.0,h.GetNbinsX()-1,gPad.GetUymax())
 		line.SetLineWidth(4)
