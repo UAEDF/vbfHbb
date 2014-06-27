@@ -79,7 +79,7 @@ def mkSigOverBkg(opts,samples,sel,trg):
 		fsIn = TFile.Open(opts.globalpath+'/'+s['fname'].replace('flatTree','%sFlatTree'%opts.flatprefix).replace('.root','%s.root'%opts.flatsuffix) if not (opts.flatprefix=="" or opts.flatsuffix=="") else opts.globalpath+s['fname'])
 		tsIn = fsIn.Get("Hbb/events")
 		h = TH1F("hcount","hcount",1,0,1)
-		tsIn.Draw("0.5>>h",cut)
+		tsIn.Draw("0.5>>hcount",cut)
 		count = h.Integral()
 		print s['tag'], count
 		fsIn.Close()

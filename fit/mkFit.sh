@@ -82,7 +82,8 @@ fi
 if [ "$1" == "" ] || [ "$1" == "3" ];then
 	if [ "$2" == "" ] || [ "$2" == "1" ]; then
 	# NOM
-	$basepath/mkSigOverBkg.py -d -D "$defaultopts" -G "$globalpathskimslim" -V "$variablesslim" -o "rootfiles/vbfHbb_sigbkg_NOM.root" --nosample "JetMon,DataV" -w "$weightNOM" $usebool $notext $flatprefix $flatsuffixNOM --wsig "$ws_signal" -t "None" --datatrigger "None" -p "None,mvaNOMC0,mvaNOMC1,mvaNOMC2,mvaNOMC3,mvaNOMC4"	
+	#$basepath/mkSigOverBkg.py -d -D "$defaultopts" -G "$globalpathskimslim" -V "$variablesslim" -o "rootfiles/vbfHbb_sigbkg_NOM.root" --nosample "JetMon,DataV" -w "$weightNOM" $usebool $notext $flatprefix $flatsuffixNOM --wsig "$ws_signal" -t "None" --datatrigger "None" -p "None,mvaNOMC0,mvaNOMC1,mvaNOMC2,mvaNOMC3,mvaNOMC4"	
+	$basepath/mkSigOverBkg.py -d -D "$defaultopts" -G "$globalpathskimslim" -V "$variablesslim" -o "rootfiles/vbfHbb_sigbkg_NOM.root" --nosample "JetMon,DataV" -w "$weightNOM" $usebool $notext $flatprefix $flatsuffixNOM --xmin 80 --xcen 125 --xmax 200  -t "None" --datatrigger "None" -p "None,mvaNOMC0,mvaNOMC1,mvaNOMC2,mvaNOMC3,mvaNOMC4"	
 	fi
 	if [ "$2" == "" ] || [ "$2" == "2" ]; then
 	# VBF
