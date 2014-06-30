@@ -17,6 +17,9 @@ fi
 variablesslim="$basepath/../common/vbfHbb_variables_2013_bareslim.json"
 globalpathskimslim="$basepath/flat"
 samples="VBF,GluGlu,Data,T,WJets,ZJets,QCD"
+samples_SoB_NOM="VBF125,GluGlu-Powheg125,DataA,DataB,DataC,DataD,T,WJets,ZJets"
+samples_SoB_VBF="VBF125,GluGlu-Powheg125,DataV,T,WJets,ZJets"
+
 usebool="--usebool" 
 
 preselNOM="sNOM;nLeptons"
@@ -82,12 +85,17 @@ fi
 if [ "$1" == "" ] || [ "$1" == "3" ];then
 	if [ "$2" == "" ] || [ "$2" == "1" ]; then
 	# NOM
-	#$basepath/mkSigOverBkg.py -d -D "$defaultopts" -G "$globalpathskimslim" -V "$variablesslim" -o "rootfiles/vbfHbb_sigbkg_NOM.root" --nosample "JetMon,DataV" -w "$weightNOM" $usebool $notext $flatprefix $flatsuffixNOM --wsig "$ws_signal" -t "None" --datatrigger "None" -p "None,mvaNOMC0,mvaNOMC1,mvaNOMC2,mvaNOMC3,mvaNOMC4"	
-	$basepath/mkSigOverBkg.py -d -D "$defaultopts" -G "$globalpathskimslim" -V "$variablesslim" -o "rootfiles/vbfHbb_sigbkg_NOM.root" --nosample "JetMon,DataV" -w "$weightNOM" $usebool $notext $flatprefix $flatsuffixNOM --xmin 80 --xcen 125 --xmax 200  -t "None" --datatrigger "None" -p "None,mvaNOMC0,mvaNOMC1,mvaNOMC2,mvaNOMC3,mvaNOMC4"	
+	# with width 
+	$basepath/mkSigOverBkg.py -d -D "$defaultopts" -G "$globalpathskimslim" -V "$variablesslim" -o "rootfiles/vbfHbb_sigbkg_NOM.root" --nosample "JetMon,DataV" --sample "$samples_SoB_NOM" -w "$weightNOM" $usebool $notext $flatprefix $flatsuffixNOM --wsig "$ws_signal"  -t "None" --datatrigger "None" -p "None,mvaNOMC0,mvaNOMC1,mvaNOMC2,mvaNOMC3,mvaNOMC4"	
+	# with range
+	$basepath/mkSigOverBkg.py -d -D "$defaultopts" -G "$globalpathskimslim" -V "$variablesslim" -o "rootfiles/vbfHbb_sigbkg_NOM.root" --nosample "JetMon,DataV" --sample "$samples_SoB_NOM" -w "$weightNOM" $usebool $notext $flatprefix $flatsuffixNOM --xmin 80 --xcen 125 --xmax 200  -t "None" --datatrigger "None" -p "None,mvaNOMC0,mvaNOMC1,mvaNOMC2,mvaNOMC3,mvaNOMC4"	
 	fi
 	if [ "$2" == "" ] || [ "$2" == "2" ]; then
 	# VBF
-	$basepath/mkSigOverBkg.py -d -D "$defaultopts" -G "$globalpathskimslim" -V "$variablesslim" -o "rootfiles/vbfHbb_sigbkg_VBF.root" --nosample "JetMon,DataA,DataB,DataC,DataD" -w "$weightVBF" $usebool $notext $flatprefix $flatsuffixVBF --wsig "$ws_signal" -t "None" --datatrigger "None" -p "None,mvaVBFC0,mvaVBFC1,mvaVBFC2,mvaVBFC3"
+	# with width 
+	$basepath/mkSigOverBkg.py -d -D "$defaultopts" -G "$globalpathskimslim" -V "$variablesslim" -o "rootfiles/vbfHbb_sigbkg_VBF.root" --nosample "JetMon,DataA,DataB,DataC,DataD" --sample "$samples_SoB_VBF" -w "$weightVBF" $usebool $notext $flatprefix $flatsuffixVBF --wsig "$ws_signal"  -t "None" --datatrigger "None" -p "None,mvaVBFC0,mvaVBFC1,mvaVBFC2,mvaVBFC3"
+	# with range
+	$basepath/mkSigOverBkg.py -d -D "$defaultopts" -G "$globalpathskimslim" -V "$variablesslim" -o "rootfiles/vbfHbb_sigbkg_VBF.root" --nosample "JetMon,DataA,DataB,DataC,DataD" --sample "$samples_SoB_VBF" -w "$weightVBF" $usebool $notext $flatprefix $flatsuffixVBF --xmin 80 --xcen 125 --xmax 200  -t "None" --datatrigger "None" -p "None,mvaVBFC0,mvaVBFC1,mvaVBFC2,mvaVBFC3"	
 	fi
 fi
 

@@ -66,6 +66,7 @@ void CreateSigTemplates(double dX,float BND1,float BND2,float BND3)
         hVBF[iMass][icat]->Sumw2();  
         sprintf(name,"puWt[0]*%s*(mva%s>%1.2f && mva%s<=%1.2f)",TRIG_WT[isel].Data(),SELECTION[isel].Data(),MVA_BND[isel][icat],SELECTION[isel].Data(),MVA_BND[isel][icat+1]);
         TCut cut(name); 
+//		  cout << cut.GetTitle() << endl;
         trVBF->Draw(MASS_VAR[isel]+">>"+TString(hVBF[iMass][icat]->GetName()),cut);
         sprintf(name,"mass_GF%d_sel%s_CAT%d",H_MASS[iMass],SELECTION[isel].Data(),icat);
         hGF[iMass][icat] = new TH1F(name,name,NBINS,XMIN,XMAX);
@@ -81,6 +82,9 @@ void CreateSigTemplates(double dX,float BND1,float BND2,float BND3)
 
         hGF[iMass][icat]->Scale(LUMI[isel]*XSEC_GF[iMass]/hPassGF->GetBinContent(1));
         hVBF[iMass][icat]->Scale(LUMI[isel]*XSEC_VBF[iMass]/hPassVBF->GetBinContent(1));
+//		  cout << hGF[iMass][icat]->GetName() << endl;
+//		  cout << XSEC_GF[iMass]/hPassGF->GetBinContent(1) << " " << XSEC_GF[iMass] << " " << hPassGF->GetBinContent(1) << endl;
+//		  cout << hGF[iMass][icat]->Integral() << endl << endl;
         
         sprintf(name,"mass_Total%d_sel%s_CAT%d",H_MASS[iMass],SELECTION[isel].Data(),icat);
         hTOT[iMass][icat] = (TH1F*)hVBF[iMass][icat]->Clone(name);

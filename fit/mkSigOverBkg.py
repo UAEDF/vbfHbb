@@ -39,7 +39,7 @@ def mkSigOverBkg(opts,samples,sel,trg):
 	mbb=''
 	print '-'.join(sel)
 	if 'VBF' in '-'.join(sel): 
-		cat=str(int(re.search('(mvaVBFC)([0-9]*)','-'.join(sel)).group(2))+3) if int(re.search('(mvaVBFC)([0-9]*)','-'.join(sel)))>0 else "-2"
+		cat=str(int(re.search('(mvaVBFC)([0-9]*)','-'.join(sel)).group(2))+3) if int(re.search('(mvaVBFC)([0-9]*)','-'.join(sel)).group(2))>0 else "-2"
 		mbb='mbbReg[2]'
 	elif 'NOM' in '-'.join(sel): 
 		cat=str(int(re.search('(mvaNOMC)([0-9]*)','-'.join(sel)).group(2))-1)
@@ -49,7 +49,10 @@ def mkSigOverBkg(opts,samples,sel,trg):
 		mbb=''
 	else: sys.exit(Red+"Don't know how to handle this selection: %s. Exiting"%('-'.join(sel))+plain)
 	# limited categories
-	if cat=='ALL' or not (int(cat)>0 and int(cat)<7): return
+	if cat=='ALL' or not (int(cat)>=0 and int(cat)<7): return -99, None
+
+	# container
+	numbers = {}
 
 	# input
 	if not opts.wsig=='': 
@@ -66,6 +69,9 @@ def mkSigOverBkg(opts,samples,sel,trg):
 		upper = opts.xmax
 	else: sys.exit(Red+'Can\'t continue without boundaries. Exiting.'+plain)
 	l2("Looking in [%.4f,%.4f] around %.4f"%(lower,upper,mean))
+	numbers['nlower'] = lower
+	numbers['nupper'] = upper
+	numbers['nmean'] = mean
 
 	# extra cut
 	extracut = ["%s>=%.6f"%(mbb,lower),"%s<=%.6f"%(mbb,upper)]
@@ -81,13 +87,26 @@ def mkSigOverBkg(opts,samples,sel,trg):
 		h = TH1F("hcount","hcount",1,0,1)
 		tsIn.Draw("0.5>>hcount",cut)
 		count = h.Integral()
-		print s['tag'], count
+		numbers[s['tag']] = count
+		if any([x in s['tag'] for x in ['VBF','GluGlu']]): 
+			countSig += count
+		elif any([x in s['tag'] for x in ['Data']]): 
+			countBkg += count
+		else: 
+			continue
 		fsIn.Close()
+
+	numbers['bkg'] = countBkg
+	numbers['sig'] = countSig
+	numbers['SoB'] = countSig / countBkg
+
+	return cat,numbers
 
 ####################################################################################################
 if __name__=='__main__':
 	# init main (including option parsing)
 	opts,fout = main.main(parser(),True)
+	gROOT.SetBatch(opts.batch if opts.batch else 1)
 	
 	# info
 	l1('Loading:')
@@ -107,9 +126,25 @@ if __name__=='__main__':
  	l1('Creating SigOverBkg:')
 
 	# process	
+	cat,numbers,allnumbers = -99, {}, {}
 	for i in range(len(opts.selection)):
 		sel = opts.selection[i]
 		trg = opts.trigger[0]
-		mkSigOverBkg(opts,selsamples,sel,trg) 
+		cat,numbers = mkSigOverBkg(opts,selsamples,sel,trg) 
+		if not numbers==None: allnumbers[cat] = numbers
 		### END LOOP over samples
 	### END LOOP over tags
+
+	print "%20s |"%"sample",
+	for c in sorted(allnumbers.keys()): print "%15s |"%c,
+	print
+	print "%s"%("-"*(22+(18*len(allnumbers.keys()))))
+
+	for s in sorted(allnumbers[allnumbers.keys()[0]].keys(),key=lambda x:('SoB' in x, 'bkg' in x,'sig' in x,any([y in x for y in ['nlower','nupper','nmean']]),x)):
+		if s=='sig' or s=='SoB' or s=='nlower': print "%s"%("-"*(22+(18*len(allnumbers.keys()))))
+		print "%20s |"%s,
+		for c in sorted(allnumbers.keys()): 
+			if not s=='SoB': print "%15.3f |"%allnumbers[c][s],
+			else: print "%15.7f |"%allnumbers[c][s],
+		print
+

@@ -268,7 +268,7 @@ def printYieldTable(opts,yieldarchive,keys):
 			print "%30s | %65s | %30s |"%(sample,s,tcorr),
 			for cat in sorted(yieldarchive[(s,t)].iterkeys()):
 				if yieldarchive[(s,t)][cat]=={}: print "%10s |"%("-"),
-				else: print "%10s |"%("%.f"%(yieldarchive[(s,t)][cat][sample])),
+				else: print "%10s |"%("%.3f"%(yieldarchive[(s,t)][cat][sample])),
 			print
 			tprev=t
 			sprev=s
@@ -292,7 +292,7 @@ def printYieldTableLatex(opts,yieldarchive,keys):
 			for cat in sorted(yieldarchive[(s,t)].iterkeys()):
 				if yieldarchive[(s,t)][cat]=={}: print ('%10s &'%("-") if not cat=='CAT4' else '%10s '%("-")),
 				elif cat=="CAT4": print '%10s'%("%.f"%(yieldarchive[(s,t)][cat][sample])),
-				else: print '%10s &'%("%.f"%(yieldarchive[(s,t)][cat][sample])),
+				else: print '%10s &'%("%.3f"%(yieldarchive[(s,t)][cat][sample])),
 			print "\\\\"
 			tprev=t
 			sprev=s
