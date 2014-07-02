@@ -1,5 +1,9 @@
 fit/*.root
+fit/rootfiles/*.root
 kostas/*.root
+kostas/rootfiles/*.root
+kostas/transfer/
+kostas/workspace/
 *.pyc
 */*.pyc
 *.so
@@ -7,4 +11,7 @@ kostas/*.root
 *.d
 */*.d
 */*.log
-
+*/rootfiles/
+*/plots/
+*/flat/
+trigger/logs*/

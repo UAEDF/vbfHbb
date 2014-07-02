@@ -201,6 +201,7 @@ def getCanvases(opts,fout,info):
 	gDirectory.cd("%s:/"%fout.GetName())
 	makeDirsRoot(fout,"Canvases/")
 	makeDirs("plots/%s/TriggerUncertainty/"%(os.path.split(fout.GetName()))[1][:-5])
+	numbers = {}
 
 	gROOT.SetBatch(1)
 	gStyle.SetOptStat(0)
@@ -253,8 +254,10 @@ def getCanvases(opts,fout,info):
 				error[i-1] = extraText(i-h.GetBinWidth(i)/2.,h.GetBinContent(i),"#pm %.3f"%h.GetBinError(i))
 				error[i-1].Draw("same")
 	#			print error[i-1].Print()
-				print "%10s %10s    %12.3f / %12.3f   =  %12.6f"%(h.GetName(), h.GetXaxis().GetBinLabel(i), h.GetBinContent(i), h.GetBinError(i), h.GetBinError(i)/h.GetBinContent(i))
-			print
+	#			print "%10s %10s    %12.3f / %12.3f   =  %12.6f"%(h.GetName(), h.GetXaxis().GetBinLabel(i), h.GetBinContent(i), h.GetBinError(i), h.GetBinError(i)/h.GetBinContent(i))
+				if not 'ALL' in h.GetXaxis().GetBinLabel(i): 
+					numbers[(h.GetName().split('_')[1],re.search("([A-Z]*)([0-9\-+]{1,2})",h.GetXaxis().GetBinLabel(i)).group(2))] = h.GetBinError(i)/h.GetBinContent(i)
+	#		print
 		gPad.Update()
 		line = TLine(h.GetNbinsX()-1,0.0,h.GetNbinsX()-1,gPad.GetUymax())
 		line.SetLineWidth(4)
@@ -268,7 +271,24 @@ def getCanvases(opts,fout,info):
 		c.SaveAs("plots/%s/TriggerUncertainty/%s%s.pdf"%(os.path.split(fout.GetName())[1][:-5],c.GetName(),'' if not opts.notext else '_noleg'))
 		c.SaveAs("plots/%s/TriggerUncertainty/%s%s.png"%(os.path.split(fout.GetName())[1][:-5],c.GetName(),'' if not opts.notext else '_noleg'))
 		c.Update()
+
 	print purple+"Scale factor plots at: plots/%s/TriggerUncertainty/*ScaleFactor*.png"%(os.path.split(fout.GetName())[1][:-5])+plain
+
+	# table
+	labels = ['Category']+list(set([x for (x,y) in numbers.iterkeys() if not x in ['VBF115','VBF120','VBF130','VBF135','WJets']]))
+	print "\\begin{table}[htbf]\n\t\\caption{Relative uncertainties for trigger scale factors per category.} \\small \\centering \n\t\\begin{tabular}{|*{%d}{c|}} \\hline"%(len(labels))  
+	print "\t",
+	for il,l in enumerate(sorted(labels,key=lambda x:('Category' in x,'VBF125' in x,'GF' in x,'QCD' in x,'ZJets' in x,'Tall' in x),reverse=True)):
+		print "%20s%s"%("\makebox[1.8cm]{%s}"%l.replace('Tall','Top').replace('GF','GF125')," &" if il<len(labels)-1 else ""),
+	print "\\\\ \\hline \\hline"
+	for ic,cat in enumerate(sorted([y for (x,y) in numbers.iterkeys() if x==labels[-1]])):
+		print "%20s &"%cat,
+		for il,l in enumerate(sorted(list(set(labels)-set(['Category'])),key=lambda x:('Category' in x, 'VBF125' in x,'GF' in x,'QCD' in x,'ZJets' in x,'Tall' in x),reverse=True)):
+			print "%20.4f%s"%(numbers[(l,cat)]," &" if not l=="Tall" else ""),
+		print "\\\\ \\hline",
+		if not 'VBF' in fout.GetName() and ic==len([y for (x,y) in numbers.iterkeys() if x==labels[-1]])-1: print " \\hline"
+		else: print ""
+	print "\t\\end{tabular}\n\\end{table}"
 	c.Close()
 		
 ####################################################################################################

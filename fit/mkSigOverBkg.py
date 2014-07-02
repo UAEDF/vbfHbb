@@ -99,6 +99,7 @@ def mkSigOverBkg(opts,samples,sel,trg):
 	numbers['bkg'] = countBkg
 	numbers['sig'] = countSig
 	numbers['SoB'] = countSig / countBkg
+	numbers['SosB'] = countSig / sqrt(countBkg)
 
 	return cat,numbers
 
@@ -140,11 +141,11 @@ if __name__=='__main__':
 	print
 	print "%s"%("-"*(22+(18*len(allnumbers.keys()))))
 
-	for s in sorted(allnumbers[allnumbers.keys()[0]].keys(),key=lambda x:('SoB' in x, 'bkg' in x,'sig' in x,any([y in x for y in ['nlower','nupper','nmean']]),x)):
+	for s in sorted(allnumbers[allnumbers.keys()[0]].keys(),key=lambda x:('SosB' in x, 'SoB' in x, 'bkg' in x,'sig' in x,any([y in x for y in ['nlower','nupper','nmean']]),x)):
 		if s=='sig' or s=='SoB' or s=='nlower': print "%s"%("-"*(22+(18*len(allnumbers.keys()))))
 		print "%20s |"%s,
 		for c in sorted(allnumbers.keys()): 
-			if not s=='SoB': print "%15.3f |"%allnumbers[c][s],
+			if not (s=='SoB' or s=='SosB'): print "%15.3f |"%allnumbers[c][s],
 			else: print "%15.7f |"%allnumbers[c][s],
 		print
 

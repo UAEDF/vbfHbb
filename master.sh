@@ -26,7 +26,8 @@ if [ "$1" == "all" ]; then
 ./plots/mkHist.sh 2 7					# VBF map3 NOMveto
 
 ### JEx
-./uncertainties/mkUncJEx.sh 			# NOM (1) & VBF (2)
+./uncertainties/mkUncJEx.sh 			# NOM (1) & VBF (2) -- VBF125
+./uncertainties/mkUncJEx.sh 10 		# NOM (1) & VBF (2) -- GF125
 #./uncertainties/mkUncJEx.sh 999     # other selections
 fi
 

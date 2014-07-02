@@ -1,7 +1,12 @@
 #!/bin/sh
 
-globalpath="/data/UAData/JEx/"
+if [[ "`uname -a`" == *lxplus* ]]; then
+	globalpath="/afs/cern.ch/work/s/salderwe/private/2014/flat"
+elif [[ "`uname -a`" == *schrodinger* ]]; then
+	globalpath="/data/UAdata/JEx"
+fi
 samples="VBF125"
+samplesGF="GluGlu-Powheg125"
 groups="VBF125" #sample
 
 #limits1=
@@ -33,7 +38,7 @@ bins="mbb1;75;50;200,jetPt0;40;0;400,jetPt1;40;0;350,jetPt2;40;0;300,jetPt3;40;0
 jsonvar="../common/vbfHbb_variables_2013_unsmeared.json"
 output1="rootfiles/vbfHbb_uncertainties_JEx.root"
 
-# NOM + VBF ######################################
+# NOM + VBF ### VBF ##############################
 if [ "$1" == "" ] || [ "$1" == "1" ]; then
 	./mkUncJEx.py -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpath" -V "${jsonvar}" -o "$output1" -s "$samples" -p "$preselselNOM" -t "NOMMC" --tag "NOM" --weight "${lumiNOM},${weightNOM}" -v "$varsNOM" --binning "$bins"
 	./mkUncJEx.py -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpath" -V "${jsonvar}" -o "$output1" -s "$samples" -p "$preselselNOM" -t "NOMMC" --tag "NOM" --weight "${lumiNOM},${weightNOM}" -v "$varsNOM" --binning "$bins" --noleg
@@ -41,6 +46,16 @@ fi
 if [ "$1" == "" ] || [ "$1" == "2" ]; then
 	./mkUncJEx.py -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpath" -V "${jsonvar}" -o "$output1" -s "$samples" -p "$preselselVBF" -t "VBF" --tag "VBF" --weight "${lumiVBF},${weightVBF}" -v "$varsVBF" --binning "$bins"
 	./mkUncJEx.py -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpath" -V "${jsonvar}" -o "$output1" -s "$samples" -p "$preselselVBF" -t "VBF" --tag "VBF" --weight "${lumiVBF},${weightVBF}" -v "$varsVBF" --binning "$bins" --noleg
+fi
+
+# NOM + VBF ### GF ###############################
+if [ "$1" == "10" ] || [ "$1" == "3" ]; then
+	./mkUncJEx.py -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpath" -V "${jsonvar}" -o "$output1" -s "$samplesGF" -p "$preselselNOM" -t "NOMMC" --tag "NOM" --weight "${lumiNOM},${weightNOM}" -v "$varsNOM" --binning "$bins"
+	./mkUncJEx.py -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpath" -V "${jsonvar}" -o "$output1" -s "$samplesGF" -p "$preselselNOM" -t "NOMMC" --tag "NOM" --weight "${lumiNOM},${weightNOM}" -v "$varsNOM" --binning "$bins" --noleg
+fi
+if [ "$1" == "10" ] || [ "$1" == "4" ]; then
+	./mkUncJEx.py -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpath" -V "${jsonvar}" -o "$output1" -s "$samplesGF" -p "$preselselVBF" -t "VBF" --tag "VBF" --weight "${lumiVBF},${weightVBF}" -v "$varsVBF" --binning "$bins"
+	./mkUncJEx.py -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpath" -V "${jsonvar}" -o "$output1" -s "$samplesGF" -p "$preselselVBF" -t "VBF" --tag "VBF" --weight "${lumiVBF},${weightVBF}" -v "$varsVBF" --binning "$bins" --noleg
 fi
 
 ##################################################

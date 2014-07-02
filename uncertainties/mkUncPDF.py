@@ -30,16 +30,16 @@ def estimate(ientry,nentries,tstart,tnow):
 
 ##################################################
 def useTree(tree):
-	variableNames = ["x1","x2","id1","id2"]
+	variableNames = ["pdfX1","pdfX2","pdfQ"]
 	x1 = array('f',[-1.0])
 	x2 = array('f',[-1.0])
-	id1 = array('i',[-999])
-	id2 = array('i',[-999])
+	q  = array('f',[-1.0])
+#	id1 = array('i',[-999])
+#	id2 = array('i',[-999])
 	variablesBare = { \
-			"x1":x1  , \
-			"x2":x2,   \
-			"id1":id1, \
-			"id2":id2 \
+			"pdfX1":x1  , \
+			"pdfX2":x2,   \
+			"pdfQ":q \
 			}
 	variablesPDF = {}
 	tree.SetBranchStatus("*",0)
@@ -59,10 +59,11 @@ def createHist():
 	hx1    = TH1F("hx1","parton x1;parton x1",50,0.,1.)
 	hx2    = TH1F("hx2","parton x2;parton x2",50,0.,1.)
 	hx1x2  = TH2F("hx1x2","x2 vs. x1;parton x1;parton x2",50,0.,1.,50,0.,1.)
-	hid1   = TH1F("hid1","parton id1;parton id1",14,-7,7) 
-	hid2   = TH1F("hid2","parton id2;parton id2",14,-7,7)
+#	hid1   = TH1F("hid1","parton id1;parton id1",14,-7,7) 
+#	hid2   = TH1F("hid2","parton id2;parton id2",14,-7,7)
+	hq     = TH1F("hq","q;q;q",100,0.,500.)
 
-	hBare = {"x1":hx1,"x2":hx2,"id1":hid1,"id2":hid2,"x1x2":hx1x2}
+	hBare = {"pdfX1":hx1,"pdfX2":hx2,"pdfQ":hq,"x1x2":hx1x2}#"id1":hid1,"id2":hid2,"x1x2":hx1x2}
 	hPDF  = {}
 
 	return hBare,hPDF
@@ -72,7 +73,7 @@ def fillBare(fout,hBare,tree,variables):
 	for v in variables.keys():
 		if v in hBare.keys(): tree.Draw("%s>>%s"%(v,hBare[v].GetName()))
 		else: print "No histogram defined for %s"%v
-	tree.Draw("x2:x1>>%s"%hBare["x1x2"].GetName())
+	tree.Draw("pdfX2:pdfX1>>%s"%hBare["x1x2"].GetName())
 	return hBare
 
 ##################################################
@@ -84,21 +85,23 @@ def fillPDF(fout,hPDF,variables):
 
 ##################################################
 def plotHist(fout,histos):
-	makeDirs("./plots")
+	makeDirs("./plots/PDF")
 	fout.cd()
 	for hname,h in histos.iteritems():
 		c = TCanvas("c%s"%hname,"c%s"%hname,1800,1200)
 		c.cd()
+		h.SetLineColor(kRed+2)
+		h.SetLineWidth(2)
 		if h.IsA().GetName()=="TH1F": h.Draw()
 		elif h.IsA().GetName()=="TH2F": h.Draw("colz")
 		else: h.Draw()
 		h.Write("%s"%h.GetName(),TH1.kOverwrite)
-		if any([hname=="x1",hname=="x2"]): gPad.SetLogy(1)
+		if any([hname=="pdfX1",hname=="pdfX2",hname=="pdfQ"]): gPad.SetLogy(1)
 		if any([hname=="x1x2"]): gPad.SetLogz(1) 
 		c.Update()
 		c.Write("%s"%c.GetName(),TH1.kOverwrite)
-		c.SaveAs("./plots/%s.pdf"%c.GetName())
-		c.SaveAs("./plots/%s.png"%c.GetName())
+		c.SaveAs("./plots/PDF/%s.pdf"%c.GetName())
+		c.SaveAs("./plots/PDF/%s.png"%c.GetName())
 		c.Close()
 
 ##################################################
