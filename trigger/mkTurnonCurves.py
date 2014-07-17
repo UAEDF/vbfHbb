@@ -266,7 +266,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	if not opts.weight==[[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: text.AddText("1DMap reweighted")
 	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")
 	textalt = getTPave(0.14,0.91,0.46,0.92,None,0,0,1,0.028)
-	l = textalt.AddText("%s selection"%('NOM' if any(['NOM' in x for x in trg]) else ('PRK' if any(['VBF' in x for x in trg]) else '???')))
+	l = textalt.AddText("%s selection"%('Set A' if any(['NOM' in x for x in trg]) else ('Set B' if any(['VBF' in x for x in trg]) else '???')))
 	l.SetTextFont(62)
 	# layout scaling
 	ymin=0

@@ -290,9 +290,11 @@ def printYieldTableLatex(opts,yieldarchive,keys):
 			tcorr = '-'.join(opts.datatrigger[opts.trigger.index(t.split('-'))]) if any([x in sample for x in ['Data','DataV','JetMon']]) and not opts.datatrigger==[] else t
 			print '%30s & %45s & %30s &'%(sample,s,tcorr),
 			for cat in sorted(yieldarchive[(s,t)].iterkeys()):
-				if yieldarchive[(s,t)][cat]=={}: print ('%10s &'%("-") if not cat=='CAT4' else '%10s '%("-")),
-				elif cat=="CAT4": print '%10s'%("%.f"%(yieldarchive[(s,t)][cat][sample])),
-				else: print '%10s &'%("%.3f"%(yieldarchive[(s,t)][cat][sample])),
+			#//	if yieldarchive[(s,t)][cat]=={}: print ('%10s &'%("-") if not cat=='CAT4' else '%10s '%("-")),
+			#//	elif cat=="CAT4": print '%10s'%("%.f"%(yieldarchive[(s,t)][cat][sample])),
+			#//	else: 
+					
+				print '%10s &'%("%.3f"%(yieldarchive[(s,t)][cat][sample])),
 			print "\\\\"
 			tprev=t
 			sprev=s

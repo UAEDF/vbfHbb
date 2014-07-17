@@ -125,6 +125,10 @@ plots=( \
 '/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../uncertainties/plots/uncertainties/LUMI-PU.0-TNOM-XSEC_noleg/cJES_mvaNOM-B20-0-1_GF125_GluGlu-Powheg125_sBtag0_LL-dEtaqq1_gt2p5-dPhibb1_lt2-jetPt0_gt80-jetPt1_gt70-jetPt2_gt50-jetPt3_gt40-mqq1_gt250-nLeptons_tNOMMC_dNOMMC_rNone.pdf' \
 '/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../uncertainties/plots/uncertainties/LUMI-PU.0-TVBF-XSEC_noleg/cJER_mvaVBF-B20-0-1_GF125_GluGlu-Powheg125_sdEtaTrig_gt3p5-dEtaqq2_gt3p5-dPhibb2_lt2-jetPt3_gt30-jetPtAve_gt80-mjjTrig_gt700-mqq2_gt700-nLeptons_tVBF_dVBF_rNone.pdf' \
 '/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../uncertainties/plots/uncertainties/LUMI-PU.0-TVBF-XSEC_noleg/cJES_mvaVBF-B20-0-1_GF125_GluGlu-Powheg125_sdEtaTrig_gt3p5-dEtaqq2_gt3p5-dPhibb2_lt2-jetPt3_gt30-jetPtAve_gt80-mjjTrig_gt700-mqq2_gt700-nLeptons_tVBF_dVBF_rNone.pdf' \
+'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../uncertainties/plots/uncertainties/LUMI-PU.0-TNOM-XSEC_noleg/cJES_mbb1-B75-50-200_GF125_GluGlu-Powheg125_sBtag0_LL-dEtaqq1_gt2p5-dPhibb1_lt2-jetPt0_gt80-jetPt1_gt70-jetPt2_gt50-jetPt3_gt40-mqq1_gt250-nLeptons_tNOMMC_dNOMMC_rNone.pdf' \
+'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../uncertainties/plots/uncertainties/LUMI-PU.0-TNOM-XSEC_noleg/cJES_mbb1-B75-50-200_VBF125_VBF125_sBtag0_LL-dEtaqq1_gt2p5-dPhibb1_lt2-jetPt0_gt80-jetPt1_gt70-jetPt2_gt50-jetPt3_gt40-mqq1_gt250-nLeptons_tNOMMC_dNOMMC_rNone.pdf' \
+'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../uncertainties/plots/uncertainties/LUMI-PU.0-TVBF-XSEC_noleg/cJES_mbb2-B75-50-200_GF125_GluGlu-Powheg125_sdEtaTrig_gt3p5-dEtaqq2_gt3p5-dPhibb2_lt2-jetPt3_gt30-jetPtAve_gt80-mjjTrig_gt700-mqq2_gt700-nLeptons_tVBF_dVBF_rNone.pdf' \
+'/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/common/../uncertainties/plots/uncertainties/LUMI-PU.0-TVBF-XSEC_noleg/cJES_mbb2-B75-50-200_VBF125_VBF125_sdEtaTrig_gt3p5-dEtaqq2_gt3p5-dPhibb2_lt2-jetPt3_gt30-jetPtAve_gt80-mjjTrig_gt700-mqq2_gt700-nLeptons_tVBF_dVBF_rNone.pdf' \
 )
 
 for i in ${plots[@]}; do

@@ -263,7 +263,7 @@ def func01(opts,tag,c,d,sel="",trg=""):
 	for iline,line in enumerate(sorted([x.strip() for x in sel])): t2.AddText('%s %s'%(' sel:' if iline==0 else ' '*5, line))
 	t2.AddText(' trg: %s (MC)'%(','.join(trg)))
 	if any([('PU' in x or 'TNOM' in x or 'TVBF' in x) for x in opts.weight[1]]):
-		labels = {'PU':'PU reweighted','TNOM':'TRG-NOM reweighted','TVBF':'TRG-PRK reweighted'}
+		labels = {'PU':'PU reweighted','TNOM':'TRG-SetA reweighted','TVBF':'TRG-SetB reweighted'}
 		wght = [z for (y,z) in labels.iteritems() if any([y in x for x in opts.weight[1]])]
 		for iw,w in enumerate(sorted(wght)):
 			if iw==0: t2.AddText('wght: %s'%(w))
@@ -314,7 +314,7 @@ def func01(opts,tag,c,d,sel="",trg=""):
 		t1.AddText("CMS preliminary")
 		t1.AddText("VBF H#rightarrow b#bar{b}")
 		t1.AddText("L = %.1f fb^{-1}"%(19800./1000. if tag=="NOM" else 18300./1000. if tag=="VBF" else -1.))
-	t1.AddText("%s selection"%tag.replace('VBF','PRK'))
+	t1.AddText("%s selection"%tag.replace('VBF','Set B').replace('NOM','Set A'))
 	t1.AddText("sample: %s"%sample)
 	if not opts.noleg: t1.Draw()
 	else: 

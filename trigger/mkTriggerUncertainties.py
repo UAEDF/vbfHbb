@@ -211,7 +211,7 @@ def getCanvases(opts,fout,info):
 	c = TCanvas("c","",1800 if not opts.notext else 1600,1200)
 	for i in gDirectory.GetListOfKeys():
 		gPad.SetRightMargin(0.25)
-		text = printText(opts,1-0.1,1-0.15,i.GetName().split('_')[1],"NOM" if "NOM_" in fout.GetName() else ("VBF" if "VBF" in fout.GetName() else "???"),info[4])#,0.020,kBlue-2)
+		text = printText(opts,1-0.1,1-0.15,i.GetName().split('_')[1],"Set A" if "NOM_" in fout.GetName() else ("Set B" if "VBF" in fout.GetName() else "???"),info[4])#,0.020,kBlue-2)
 		h = fout.Get("ScaleFactors/%s"%(i.GetName()))
 		h.SetTitle("")
 		#h.GetXaxis().SetLabelSize(0.032)
@@ -323,8 +323,8 @@ def printText(opts,top,left,sample,selection,mapvars,fontSize=0.020,fontColor=kB
 	if not opts.notext:
 		text.AddText("CMS preliminary")
 		text.AddText("VBF H#rightarrow b#bar{b}")
-		text.AddText("L = %.1f fb^{-1}"%(19800./1000. if selection=="NOM" else 18300./1000. if selection=="VBF" else "???"))
-	text.AddText("%s selection"%selection.replace('VBF','PRK'))
+		text.AddText("L = %.1f fb^{-1}"%(19800./1000. if selection=="Set A" else 18300./1000. if selection=="Set B" else "???")) # NOM VBF
+	text.AddText("%s selection"%selection.replace('VBF','Set B').replace('NOM','Set A'))
 	text.AddText("sample: %s"%sample)
 	text.AddText("2D map: %s"%(' & '.join([(varnames[x] if x in varnames else x) for x in mapvars])))
 	if not opts.notext: 

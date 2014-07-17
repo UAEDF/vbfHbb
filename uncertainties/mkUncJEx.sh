@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [[ "`uname -a`" == *lxplus* ]]; then
-	globalpath="/afs/cern.ch/work/s/salderwe/private/2014/flat"
+	globalpath="/afs/cern.ch/work/s/salderwe/private/2014/flat/JEx"
 elif [[ "`uname -a`" == *schrodinger* ]]; then
 	globalpath="/data/UAdata/JEx"
 fi

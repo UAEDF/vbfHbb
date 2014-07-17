@@ -9,22 +9,24 @@ sys.argv = tempargv
 from toolkit import *
 from optparse import OptionParser
 
-def listdir(ikey0,level,info):
+def listdir(ikey0,level,info,tag):
 	print ' '*level*2 + '++ ' + ikey0.GetName(),
 	if not info:
-		choice = raw_input(" rm ([n]/y/s(kip))? ",)
-		if choice == "y":
-			print "REMOVED."
-			ikey0.Delete()
-			return 0
-		if choice == "s":
-			print "SKIPPED."
-			return 0
+		if (not tag=="" and tag in ikey0.GetName()) or tag=="": 
+			choice = raw_input(" rm ([n]/y/s(kip))? ",)
+			if choice == "y":
+				print "REMOVED."
+				ikey0.Delete()
+				return 0
+			if choice == "s":
+				print "SKIPPED."
+				return 0
+		else: print
 	else: print
 	if ikey0.IsFolder():
 		gDirectory.cd(ikey0.GetName())
 		for ikey in gDirectory.GetListOfKeys():	
-			listdir(ikey,level+1,info)
+			listdir(ikey,level+1,info,tag)
 		gDirectory.cd('../')
 		print
 
@@ -32,7 +34,7 @@ def clean(opts,args):
 	f = TFile(args[0],"read" if opts.info else "update")
 	f.cd()
 	for ikey in gDirectory.GetListOfKeys(): 
-		listdir(ikey,1,opts.info)
+		listdir(ikey,1,opts.info,opts.tag)
 		print
 	if not opts.info:
 		f.Write()
@@ -40,6 +42,7 @@ def clean(opts,args):
 if __name__=='__main__':
 	mp = OptionParser()
 	mp.add_option('-i','--info',help='Print only, no actions.',action='store_true',default=False)
+	mp.add_option('-t','--tag',help='Tag in keys.',default='',type='str')
 	opts,args = mp.parse_args()
 
 	clean(opts,args)
