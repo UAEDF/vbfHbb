@@ -2,7 +2,7 @@
 
 import sys,os,json,re
 basepath=os.path.split(os.path.abspath(__file__))[0]
-sys.path.append(basepath+'/../common/')
+sys.path.append(basepath+'/../../common/')
 
 tempargv = sys.argv[:]
 sys.argv = []
@@ -19,14 +19,14 @@ def parser(mp=None):
 	if mp==None: mp = OptionParser()
 
 	mgf = OptionGroup(mp,cyan+"mkFlatTree settings"+plain)
-	mgf.add_option('--tag',help='Tag set with this.',default=[],type='str',action='callback',callback=optsplit)
+	mgf.add_option('--tag',help='Tag set with this.',default="pdf",type='str')
 
 	mp.add_option_group(mgf)
 	return mp
 
 
-# mkFitFlatTree ####################################################################################
-def mkFitFlatTree(opts,s,sel,trg):
+# mkPDFFlatTree ####################################################################################
+def mkPDFFlatTree(opts,s,sel,trg):
 	# info
 	jsoninfo = json.loads(filecontent(opts.jsoninfo))
 	jsonsamp = json.loads(filecontent(opts.jsonsamp))
@@ -34,21 +34,22 @@ def mkFitFlatTree(opts,s,sel,trg):
 
 	# prepare
 	tag = 'VBF' if 'VBF' in trg else 'NOM'
+	makeDirs(opts.destination)
 	nfin = s['fname']
-	nfout = nfin.replace('flatTree','fitFlatTree').replace('.root','_%s.root'%tag) 
+	nfout = nfin.replace('flatTree','%sFlatTree'%opts.tag).replace('.root','_%s.root'%tag) 
 	fin = TFile.Open(opts.globalpath+nfin,"read")
 	fout = TFile.Open(opts.destination+nfout,"recreate")
-	l2("Working for %s"%s['tag'])
+	l2("Working for %s, renaming with %s"%(s['tag'],opts.tag))
 	l3("File in : %s"%nfin)
 	l3("File out: %s"%nfout)
 
 	# process
 	fin.cd()
 	tin = fin.Get("Hbb/events")
-	hpass = fin.Get("Hbb/TriggerPass")
+#	hpass = fin.Get("Hbb/TriggerPass")
 
 	tin.SetBranchStatus("*",0)
-	for b in ["mvaNOM","mvaVBF","selNOM","selVBF","dPhibb","mbbReg","mbb","nLeptons","triggerResult"]:
+	for b in ["mvaNOM","mvaVBF","selNOM","selVBF","dPhibb","mbbReg","mbb","nLeptons","triggerResult","pdfX1","pdfX2","pdfID1","pdfID2","pdfQ"]:
 		tin.SetBranchStatus(b,1)
 	if ismc:
 		for b in ["puWt","trigWtNOM","trigWtVBF"]:
@@ -67,7 +68,7 @@ def mkFitFlatTree(opts,s,sel,trg):
 
 	# process
 	fout.cd()
-	hpass.Write("TriggerPass")
+#	hpass.Write("TriggerPass")
 	makeDirsRoot(fout,"Hbb")
 	gDirectory.cd("%s:/%s"%(fout.GetName(),"Hbb"))
 	tout = tin.CopyTree(cut)
@@ -78,7 +79,8 @@ def mkFitFlatTree(opts,s,sel,trg):
 	fout.Close()
 	fin.Close()
 
-def mkFitFlatTrees():
+##################################################
+def mkPDFFlatTrees():
 	# init main (including option parsing)
 	opts,fout = main.main(parser(),True)
 	
@@ -100,7 +102,7 @@ def mkFitFlatTrees():
 		if ('BJetPlus' in s['fname'] or 'MultiJet' in s['fname']) and any(['VBF' in trg for trg in opts.trigger]): continue
 		selsamples += [s]
 		l2('%s: %s'%(s['tag'],s['fname']))
- 	l1('Creating FitFlatTrees:')
+ 	l1('Creating %sFlatTrees:'%opts.tag)
 	
 	# consistensy check
 	if not len(opts.trigger)==len(opts.selection): sys.exit(Red+"\n!!! Sel and trg options need to have the same length. Exiting.\n"+plain)
@@ -109,10 +111,11 @@ def mkFitFlatTrees():
 	for i in range(len(opts.selection)):
 		sel = opts.selection[i]
 		trg = opts.trigger[i]
-		for s in selsamples: mkFitFlatTree(opts,s,sel,trg)
+		for s in selsamples: mkPDFFlatTree(opts,s,sel,trg)
 		### END LOOP over samples
 	### END LOOP over tags
 
+##################################################
 if __name__=='__main__':
-	mkFitFlatTrees()
+	mkPDFFlatTrees()
 	
