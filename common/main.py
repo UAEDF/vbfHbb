@@ -43,7 +43,7 @@ def parser(mp=None):
 	mgj.add_option('-V','--jsonvars',help="File name for json with variable info.",dest='jsonvars',default="%s/vbfHbb_variables.json"%(basepath),type='str')
 	mgj.add_option('-C','--jsoncuts',help="File name for json with cut info.",dest='jsoncuts',default="%s/vbfHbb_cuts.json"%(basepath),type='str')
 	mgj.add_option('-I','--jsoninfo',help="File name for json with general info.",dest='jsoninfo',default="%s/vbfHbb_info.json"%(basepath),type='str')
-	mgj.add_option('-G','--globalpath',help="Global prefix for samples.",dest='globalpath',default="",type='str')
+	mgj.add_option('-G','--globalpath',help="Global prefix for samples.",dest='globalpath',type='str',action='callback',callback=printopts)
 	mgj.add_option('-F','--fileformat',help="File format for samples (1: 2012, 2: 2013).",dest='fileformat',default=1,type='int')
 	mgj.add_option('--source',help="Filepath for original flatTrees.",dest='source',default="",type='str')
 	mgj.add_option('--destination',help="Filepath for new flatTrees.",dest='destination',default="",type='str')

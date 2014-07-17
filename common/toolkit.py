@@ -21,7 +21,9 @@ def l2(text):
 def l3(text):
 	print plain+'  ++++ %s'%(text)+plain
 def l4(text):
-	print plain+'  ++++++ %s'%(text)+plain
+	print orange+'    ++++ %s'%(text)+plain
+def l5(text):
+	print green+'      ++++ %s'%(text)+plain
 
 # COLORS ########################################################################################## 
 red 	= "\033[0;31m"
@@ -37,6 +39,7 @@ Blue	= "\033[1;34m"
 Purple	= "\033[1;35m"
 Cyan	= "\033[1;36m"
 grey    = "\033[38;5;243m"
+orange  = "\033[38;5;208m" #202
 Black   = "\033[1m"
 plain	= "\033[m"
 
@@ -81,6 +84,11 @@ def setdefaults(option,opt,value,parser):
 		pass	
 	setattr(parser.values, 'globalpath', globalpath)
 	if not globalpath=='': l2("Set default: %s --> %s"%('globalpath',globalpath))
+
+def printopts(option,opt,value,parser):
+	optname = str(option).split('/')[-1].strip('-')
+	setattr(parser.values, optname, value)
+	l2("Changed default: %s --> %s"%(optname,value))
 
 # SAVING HELPER FUNCTIONS ##########################################################################
 def makeDirsRoot(fout,ndir):
