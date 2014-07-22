@@ -24,6 +24,8 @@ def l4(text):
 	print orange+'    ++++ %s'%(text)+plain
 def l5(text):
 	print green+'      ++++ %s'%(text)+plain
+def l6(text):
+	print plain+'        ++ %s'%(text)+plain
 
 # COLORS ########################################################################################## 
 red 	= "\033[0;31m"
