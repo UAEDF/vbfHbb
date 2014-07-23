@@ -68,6 +68,16 @@ def optsplitlist(option,opt,value,parser):
 def optsplit(option,opt,value,parser):
 	setattr(parser.values, option.dest, value.split(','))
 
+def optsplitdict(option,opt,value,parser):
+	vd = {}
+	for v in value.split(','):
+		tmp = v.split("#")
+		key = tmp[0]
+		val = [tmp[1],tmp[2].split(';')]
+		vd[key] = val
+	setattr(parser.values,option.dest,vd)
+
+
 def setdefaults(option,opt,value,parser):
 	jsondefaults = json.loads(filecontent(value))
 	for ok,oval in jsondefaults.iteritems():
