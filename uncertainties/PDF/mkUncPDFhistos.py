@@ -31,13 +31,14 @@ def twopad(c):
 	c.cd()
 	p1 = TPad("p1","p1",0.0,0.37,1.0,1.0)
 	p2 = TPad("p2","p2",0.0,0.0,1.0,0.4)
+	p1.SetTopMargin(0.05)
 	p1.SetBottomMargin(0.04)
 	p1.SetLeftMargin(0.12)
 	p1.SetRightMargin(0.2)
 	p2.SetTopMargin(0)
 	p2.SetLeftMargin(0.12)
 	p2.SetRightMargin(0.2)
-	p2.SetBottomMargin(0.2)
+	p2.SetBottomMargin(0.25)
 	p2.SetFillStyle(0)
 	p1.SetTicks(1,1)
 	p2.SetTicks(1,1)
@@ -181,7 +182,9 @@ def mkUncPDFhistos():
 					haxisp2.GetXaxis().SetBinLabel(1,'ALL')
 				haxisp2.Draw("AXIS")
 				hone = archive[v][p if not p=='all' else 'CT10']['cl' if not p=='band' else 'M'].Clone("axisp1")
-				for iBin in range(0,hone.GetNbinsX()+2): hone.SetBinContent(iBin,1.0)
+				for iBin in range(0,hone.GetNbinsX()+2): 
+					hone.SetBinContent(iBin,1.0)
+					hone.SetBinError(iBin,0.0)
 
 				href = archive[v][p if not p=='all' else 'CT10']['cl' if not p=='band' else 'M'].Clone("ref")
 				archiveall = {}
@@ -211,7 +214,7 @@ def mkUncPDFhistos():
 					if 'band' in h.GetName() and not 'M' in t: 
 						r.SetFillStyle(3003)
 						r.SetFillColor(TColor.GetColorBright(kCyan))
-					r.Draw("same")
+					r.Draw("samehiste0")
 					# legend
 					legentry = c.l.AddEntry(r,t.replace("as"," #alpha_{s}").replace("cb"," combined"),"L" if not ('band' in h.GetName() and not 'M' in t) else "LF")
 					if 'cl' in t: 

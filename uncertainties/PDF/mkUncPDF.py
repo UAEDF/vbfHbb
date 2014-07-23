@@ -208,6 +208,14 @@ def mkUncPDF():
 			makeDirsRoot(fout,S.name+'_histos')
 			gDirectory.cd("%s:/%s_histos"%(fout.GetName(),S.name))
 			tree = fout.Get("%s/%s"%(S.name,"events"))
+			tree.SetBranchStatus("*",1)
+			nentries = tree.GetEntries()
+			bvbf = ['mvaVBF','selVBF','selNOM','trigWtNOM','trigWtVBF','triggerResult','nLeptons','dPhibb','mbb','puWt','pdfID1','pdfID2','pdfX1','pdfX2','pdfQ']
+			bnom = ['mvaNOM','selVBF','selNOM','trigWtNOM','trigWtVBF','triggerResult','nLeptons','dPhibb','mbb','puWt','pdfID1','pdfID2','pdfX1','pdfX2','pdfQ']
+			if 'NOM' in S.name:
+				for b in bvbf: tree.SetBranchStatus(b,0)
+			else:
+				for b in bnom: tree.SetBranchStatus(b,0)
 			
 			histos = {}
 # loop over sets
@@ -224,16 +232,37 @@ def mkUncPDF():
 						v['xmax'] = opts.mvaBins[v['var']][1][-1]
 					l5('var %s'%(v['var']))
 					histos[kPS][v['var']] = [None]*(PS.nmem)
-# loop over members
-					for imem in range(PS.nmem):
-						hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PS.tag,imem)
-						if not 'xs' in v: histos[kPS][v['var']][imem] = TH1F(hname,hname,int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
-						else: histos[kPS][v['var']][imem] = TH1F(hname,hname,int(v['nbins_x']),v['xs'])
-						h = histos[kPS][v['var']][imem]
+# loop over tree
+				for iev,ev in enumerate(tree):
+					if opts.ncut>-1 and iev>=opts.ncut: break
+					if (iev%int(nentries/10)==0): l6("%8s / %8s"%(iev,nentries))
+					vPS = ev.PDFwghts[iPS]
+					vPSas = ev.PDFwghtsalphas[iPS]
+					PSl = ev.PDFlabels[iPS]
+					if not PSl == TString(PS.tag): sys.exit("PDFs don't match (%s,%s). Exiting."%PSl.Data(),PS.tag)
+# loop over variables and members
+					for v in opts.variable:
+						v = jsons['vars']['variables'][v]
+						if v['var'] in opts.mvaBins:
+							v['nbins_x'] = opts.mvaBins[v['var']][0]
+							v['xs'] = array('f',[round(float(x),4) for x in opts.mvaBins[v['var']][1]])
+							v['xmin'] = opts.mvaBins[v['var']][1][0]
+							v['xmax'] = opts.mvaBins[v['var']][1][-1]
+						for imem in range(PS.nmem):
+							if iev==0:
+								hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PS.tag,imem)
+								if not 'xs' in v: histos[kPS][v['var']][imem] = TH1F(hname,hname,int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
+								else: histos[kPS][v['var']][imem] = TH1F(hname,hname,int(v['nbins_x']),v['xs'])
+							h = histos[kPS][v['var']][imem]
 # fill histos
-						tree.Draw("%s>>%s"%(v['root'],h.GetName()),"(1.)*(PDFwghts[%d][%d])*(PDFwghtsalphas[%d][%d])"%(iPS,imem,iPS,imem),"",opts.ncut)
+#							tree.Draw("%s>>%s"%(v['root'],h.GetName()),"(1.)*(PDFwghts[%d][%d])*(PDFwghtsalphas[%d][%d])"%(iPS,imem,iPS,imem),"",opts.ncut)
+							h.Fill(eval("ev.%s"%v['root']) if not v['var']=='plain' else 0.,vPS[imem]*vPSas[imem])
 # save histos
-						h.Write(h.GetName(),TH1.kOverwrite)
+				for v in opts.variable:
+					v = jsons['vars']['variables'][v]
+					for imem in range(PS.nmem):
+#						h.Write(h.GetName(),TH1.kOverwrite)
+						histos[kPS][v['var']][imem].Write(histos[kPS][v['var']][imem].GetName(),TH1.kOverwrite)
 	
 			gDirectory.cd("%s:/"%(fout.GetName()))
 	
