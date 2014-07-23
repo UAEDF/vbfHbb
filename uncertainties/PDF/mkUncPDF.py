@@ -160,9 +160,9 @@ def mkUncPDF():
 			PDFwghtsalphas.resize(len(PSETS.keys()))
 			bnewalphas = tnew.Branch("PDFwghtsalphas","vector<vector<double> >",PDFwghtsalphas)
 # container for labels
-			PDFlabels = std.vector('string')()
+			PDFlabels = std.vector('TString')()
 			PDFlabels.resize(len(PSETS.keys()))
-			blabels = tnew.Branch("PDFlabels","vector<string>",PDFlabels)
+			blabels = tnew.Branch("PDFlabels","vector<TString>",PDFlabels)
 # nentries
 			nentries = tnew.GetEntries()
 	
@@ -187,7 +187,7 @@ def mkUncPDF():
 	
 					PDFwghts[iPS] = PS.wghts
 					PDFwghtsalphas[iPS] = PS.wghtsalphas
-					PDFlabels[iPS] = PS.tag
+					PDFlabels[iPS] = TString(PS.tag)
 # storing
 				bnew.Fill()
 				bnewalphas.Fill()
@@ -222,7 +222,6 @@ def mkUncPDF():
 						v['xs'] = array('f',[round(float(x),4) for x in opts.mvaBins[v['var']][1]])
 						v['xmin'] = opts.mvaBins[v['var']][1][0]
 						v['xmax'] = opts.mvaBins[v['var']][1][-1]
-						print v['xs']
 					l5('var %s'%(v['var']))
 					histos[kPS][v['var']] = [None]*(PS.nmem)
 # loop over members
@@ -293,10 +292,6 @@ def mkUncPDF():
 								wp = 0.
 								wm = 0.
 								for i in range(1,int(float(PS.nmem)/2.)):
-									if w0==0:
-										wp = 0
-										wm = 0
-										break
 									wa = hs[2*i-1].GetBinContent(iBin)
 									wb = hs[2*i].GetBinContent(iBin)
 									wp += pow(max((wa/w0-1.),(wb/w0-1.),0),2.)
@@ -327,10 +322,7 @@ def mkUncPDF():
 								w0 = hs[0].GetBinContent(iBin)
 								wp = 0.
 								wm = 0.
-								if w0==0:
-									wp = 0
-									wm = 0
-								elif 'CT10as' in PS.tag:
+								if 'CT10as' in PS.tag:
 									wp = (hsp.GetBinContent(iBin)/w0 - 1.)*6./5.
 									wm = (1.-hsm.GetBinContent(iBin)/w0)*6./5.
 								elif 'MSTW' in PS.tag:
@@ -364,13 +356,10 @@ def mkUncPDF():
 							rs[il] = fout.Get("%s_results/%s"%(S.name,hname))
 						for	iBin in range(1,rs[0].GetNbinsX()+1):
 							w0 = rs[labels.index('cl')].GetBinContent(iBin)
-							if w0==0:
-								wp,wm,wpas,wmas = 0,0,0,0
-							else:
-								wp = rs[labels.index('up')].GetBinContent(iBin)/w0 - 1.
-								wm = 1. - rs[labels.index('dn' if not 'MSTW' in PS.tag else 'up')].GetBinContent(iBin)/w0
-								wpas = rs[labels.index('upas')].GetBinContent(iBin)/w0 - 1.
-								wmas = 1. - rs[labels.index('dnas')].GetBinContent(iBin)/w0
+							wp = rs[labels.index('up')].GetBinContent(iBin)/w0 - 1.
+							wm = 1. - rs[labels.index('dn' if not 'MSTW' in PS.tag else 'up')].GetBinContent(iBin)/w0
+							wpas = rs[labels.index('upas')].GetBinContent(iBin)/w0 - 1.
+							wmas = 1. - rs[labels.index('dnas')].GetBinContent(iBin)/w0
 							rs[labels.index('upcb')].SetBinContent( iBin, (1.+sqrt( pow(wp,2.) + pow(wpas,2.) ))*w0 )
 							rs[labels.index('dncb')].SetBinContent( iBin, (1.-sqrt( pow(wm,2.) + pow(wmas,2.) ))*w0 ) 
 						for r in rs[-2:]:
@@ -417,11 +406,10 @@ def mkUncPDF():
 							w0 = w0/sum([x.nmem for x in friends.itervalues()])
 	#					other
 							ws = 0.
-							if not ws==0:
-								for ifPS,(kfPS,fPS) in enumerate(sorted(friends.iteritems())):
-									for imem in range(fPS.nmem):
-										wf = histos[kPS][v['var']][kfPS][imem].GetBinContent(iBin)
-										ws += pow(wf/w0 - 1.,2.)
+							for ifPS,(kfPS,fPS) in enumerate(sorted(friends.iteritems())):
+								for imem in range(fPS.nmem):
+									wf = histos[kPS][v['var']][kfPS][imem].GetBinContent(iBin)
+									ws += pow(wf/w0 - 1.,2.)
 							ws = ws/(sum([x.nmem for x in friends.itervalues()])-1.)
 							ws = sqrt(ws)
 	# fill

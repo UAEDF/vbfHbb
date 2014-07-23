@@ -88,7 +88,7 @@ def mkUncPDFhistos():
 	gROOT.SetBatch(1)
 
 	keys = [k.GetName() for k in f.GetListOfKeys() if not '_' in k.GetName()]
-	axistitles = {'mvaNOM': 'mva set A', 'mvaVBF': 'mva set B', 'mbbReg[1]': 'regressed m_{b#bar{b}}', 'mbbReg[2]': 'regressed m_{b#bar{b}}'}
+	axistitles = {'mvaNOM': 'mva set A', 'mvaVBF': 'mva set B', 'mbbReg1': 'regressed m_{b#bar{b}}', 'mbbReg2': 'regressed m_{b#bar{b}}'}
 
 	archive = {}
 
