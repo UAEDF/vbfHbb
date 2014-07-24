@@ -35,7 +35,6 @@ def parser():
 	mp.add_option('--rdTree',help='Read flatTree weight branches.',action='store_true',default=False)
 	mp.add_option('--mkHistos',help='Recreate weighted histos.',action='store_true',default=False)
 	mp.add_option('--rdHistos',help='Read weighted histos.',action='store_true',default=False)
-	mp.add_option('--mkCombi',help='Make combination.',action='store_true',default=False)
 
 	mp.add_option('--mvaBins',help='mva bins: var#3#1;3;6;9,...',type='str',action='callback',callback=optsplitdict)
 	return mp
@@ -204,19 +203,21 @@ def mkUncPDF():
 	if opts.mkHistos:
 		for kS,S in sorted(SAMPLES.iteritems(),key=lambda (x,y):(x)):
 			l2("%s"%S.name)
-			l3("Directory %s_histos in %s"%(S.name,fout.GetName()))
-			makeDirsRoot(fout,S.name+'_histos')
-			gDirectory.cd("%s:/%s_histos"%(fout.GetName(),S.name))
+			l3("Directory %s_histos%s in %s"%(S.name,'_ref' if 'REF' in S.name else '',fout.GetName()))
+			makeDirsRoot(fout,S.name+'_histos'+('_ref' if 'REF' in S.name else ''))
+			gDirectory.cd("%s:/%s_histos%s"%(fout.GetName(),S.name,"_ref" if 'REF' in S.name else ''))
 			tree = fout.Get("%s/%s"%(S.name,"events"))
-			tree.SetBranchStatus("*",1)
+			tree.SetBranchStatus("*",0)
 			nentries = tree.GetEntries()
-			bvbf = ['mvaVBF','selVBF','selNOM','trigWtNOM','trigWtVBF','triggerResult','nLeptons','dPhibb','mbb','puWt','pdfID1','pdfID2','pdfX1','pdfX2','pdfQ']
-			bnom = ['mvaNOM','selVBF','selNOM','trigWtNOM','trigWtVBF','triggerResult','nLeptons','dPhibb','mbb','puWt','pdfID1','pdfID2','pdfX1','pdfX2','pdfQ']
-			if 'NOM' in S.name:
-				for b in bvbf: tree.SetBranchStatus(b,0)
-			else:
-				for b in bnom: tree.SetBranchStatus(b,0)
-			
+			br = ['PDFlabels','PDFwghts','PDFwghtsalphas']
+			bv = []
+			for v in opts.variable:
+				v = jsons['vars']['variables'][v]
+				if v['var']=='plain': continue
+				bv += [v['bare']]
+			for b in list(set(bv+br)):
+				tree.SetBranchStatus(b,1)
+
 			histos = {}
 # loop over sets
 			for iPS,(kPS,PS) in enumerate(sorted(PSETS.iteritems(),key=lambda (x,y):(not y.purpose=='main',y.name))):
@@ -305,7 +306,7 @@ def mkUncPDF():
 	# load histos
 					for imem in range(PS.nmem): 
 						hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PS.tag,imem)
-						hs[imem] = fout.Get("%s_histos/%s"%(S.name,hname))
+						hs[imem] = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
 					for i in range(len(labels)):						
 						rs[i] = hs[0].Clone(('-'.join(hs[0].GetName().split('-')[:-1]))+"_%s"%labels[i]) 
 						rs[i].SetTitle(rs[i].GetName())
@@ -342,11 +343,11 @@ def mkUncPDF():
 							PSm = [psm for psm in PSETS.itervalues() if psm.purpose=='alphas-' and psm.id==PS.id][0]
 							l6("alphas")
 							hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PS.tag,0)
-							hs[0] = fout.Get("%s_histos/%s"%(S.name,hname))
+							hs[0] = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
 							hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PSp.tag,0)
-							hsp = fout.Get("%s_histos/%s"%(S.name,hname))
+							hsp = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
 							hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PSm.tag,0)
-							hsm = fout.Get("%s_histos/%s"%(S.name,hname))
+							hsm = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
 							for iBin in range(1,rs[0].GetNbinsX()+1):
 								w0 = hs[0].GetBinContent(iBin)
 								wp = 0.
@@ -412,7 +413,7 @@ def mkUncPDF():
 						results[kPS][v['var']] = [None]*3
 						for ri in range(len(labelsnnpdf)):
 							hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PS.tag,0)
-							hr = fout.Get("%s_histos/%s"%(S.name,hname))
+							hr = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
 							results[kPS][v['var']][ri] = hr.Clone(('-'.join(hr.GetName().split('-')[:-1]))+"_%s"%labelsnnpdf[ri])
 							r = results[kPS][v['var']][ri] 
 							r.SetTitle(r.GetName())
@@ -425,7 +426,7 @@ def mkUncPDF():
 							hs = histos[kPS][v['var']][kfPS]
 							for imem in range(fPS.nmem):
 								hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,fPS.tag,imem)
-								hs[imem] = fout.Get("%s_histos/%s"%(S.name,hname))
+								hs[imem] = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
 	#					central
 						for iBin in range(1,hs[0].GetNbinsX()+1):
 							w0 = 0.

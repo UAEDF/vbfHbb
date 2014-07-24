@@ -24,7 +24,7 @@ class mycanvas():
 	def __init__(self,base,var,pdf):
 		self.c = TCanvas("%s_%s_%s_UncPDF"%(var,pdf,base),"%s_%s_%s_UncPDF"%(var,pdf,base),1600,1200)
 		self.p1,self.p2 = twopad(self.c)
-		self.l = legend(0.81,0.5,0.99,0.9,"pdfset-%s"%pdf)
+		self.l = legend(0.81,0.5,0.99,0.95,"pdfset-%s"%pdf)
 		
 ##################################################
 def twopad(c):
@@ -155,7 +155,7 @@ def mkUncPDFhistos():
 			for p in archive[v].keys()+['all']:
 				c = canvases[v][p]
 				l2("Running for %s -- %s"%(v,p))
-				c.l.SetY1(0.9-0.032*(len(archive[v][p]) if not p=='all' else sum([len(archive[v][p2]) for p2 in archive[v].keys()]))-0.032*6/5)
+				c.l.SetY1(0.95-0.032*(len(archive[v][p]) if not p=='all' else sum([len(archive[v][p2]) for p2 in archive[v].keys()]))-0.032*6/5)
 				
 				c.p1.cd()
 				haxisp1 = archive[v][p if not p=='all' else 'CT10']['cl' if not p=='band' else 'M'].Clone("axisp1")
@@ -221,7 +221,7 @@ def mkUncPDFhistos():
 						legentry.SetTextFont(72)
 					c.p1.cd()
 					if (p=='all' and (((not prevp=="") and (not prevp==palt)))) or (np==0): 
-						line = TLine(0.81,0.9-0.032*np-0.034,0.99,0.9-0.032*np-0.034)
+						line = TLine(0.81,0.95-0.032*np-0.034,0.99,0.95-0.032*np-0.034)
 						line.SetNDC(1)
 						line.SetLineColor(kBlack)
 						line.SetLineWidth(1)
