@@ -35,8 +35,10 @@ def parser():
 	mp.add_option('--rdTree',help='Read flatTree weight branches.',action='store_true',default=False)
 	mp.add_option('--mkHistos',help='Recreate weighted histos.',action='store_true',default=False)
 	mp.add_option('--rdHistos',help='Read weighted histos.',action='store_true',default=False)
+	mp.add_option('--gendiv',help='Acceptance calculation instead of yields.',action='store_true',default=False)
 
 	mp.add_option('--mvaBins',help='mva bins: var#3#1;3;6;9,...',type='str',action='callback',callback=optsplitdict)
+	
 	return mp
 
 ####################################################################################################
@@ -56,7 +58,7 @@ def prepare(opts):
 ####################################################################################################
 ####################################################################################################
 class sample():
-	def __init__(self,opts,name,filename,npassed,xsec,scale):
+	def __init__(self,opts,name,filename,npassed,xsec,scale,ref):
 		self.name = name
 		self.filename = filename
 		self.path = opts.globalpath
@@ -65,6 +67,7 @@ class sample():
 		self.scale = float(scale)
 		self.file = TFile.Open('/'.join([self.path,self.filename]))
 		self.tree = self.file.Get("Hbb/events")
+		self.ref = ref
 
 ####################################################################################################
 ####################################################################################################
@@ -98,6 +101,65 @@ class pdf():
 ####################################################################################################
 ####################################################################################################
 ####################################################################################################
+class hblock():
+	def __init__(self,nmem):
+		self.hs = [None]*nmem
+		self.hp = None
+		self.hm = None
+		self.us = [None]*nmem
+		self.up = None
+		self.um = None
+	
+	def GetIBinH0(self,iBin):
+		return self.hs[0].GetBinContent(iBin)
+
+	def GetIBinU0(self,iBin):
+		return self.us[0].GetBinContent(iBin)
+
+	def GetIBinHoverU0(self,iBin):
+		return self.hs[0].GetBinContent(iBin)/self.us[0].GetBinContent(iBin)
+
+	def GetIBinMemH(self,iBin,iMem,single=False):
+		if not single: return self.hs[iMem].GetBinContent(iBin),self.hs[iMem+1].GetBinContent(iBin)
+		else:          return self.hs[iMem].GetBinContent(iBin)
+
+	def GetIBinMemU(self,iBin,iMem,single=False):
+		if not single: return self.us[iMem].GetBinContent(iBin),self.us[iMem+1].GetBinContent(iBin)
+		else:          return self.us[iMem].GetBinContent(iBin)
+
+	def GetIBinMemHoverU(self,iBin,iMem,single=False):
+		if not single: return (self.hs[iMem].GetBinContent(iBin)/self.us[iMem].GetBinContent(iBin)),(self.hs[iMem+1].GetBinContent(iBin)/self.us[iMem+1].GetBinContent(iBin))
+		else:          return self.hs[iMem].GetBinContent(iBin)/self.us[iMem].GetBinContent(iBin)
+
+	def GetIBinH(self,iBin):
+		return self.hs[0].GetBinContent(iBin),self.hp.GetBinContent(iBin),self.hm.GetBinContent(iBin)
+	
+	def GetIBinU(self,iBin):
+		return self.us[0].GetBinContent(iBin),self.up.GetBinContent(iBin),self.um.GetBinContent(iBin)
+	
+	def GetIBinHoverU(self,iBin):
+		return (self.hs[0].GetBinContent(iBin)/self.us[0].GetBinContent(iBin)),(self.hp.GetBinContent(iBin)/self.up.GetBinContent(iBin)),(self.hm.GetBinContent(iBin)/self.um.GetBinContent(iBin))
+
+####################################################################################################
+####################################################################################################
+####################################################################################################
+class rblock():
+	def __init__(self,nlab):
+		self.rs = [None]*nlab
+		self.rsacc = [None]*nlab
+	
+	def GetIBinLab(self,iLab,iBin):
+		return self.rs[iLab].GetBinContent(iBin)
+
+	def GetIBinLabs(self,iLabs,iBin):
+		return [self.rs[iLab].GetBinContent(iBin) for iLab in iLabs]
+
+	def SetIBinLab(self,iLab,iBin,value):
+		self.rs[iLab].SetBinContent(iBin,value)
+
+####################################################################################################
+####################################################################################################
+####################################################################################################
 def mkUncPDF():
 	mp = parser()
 	opts,fout,samples = main(mp,False,False,True)
@@ -108,12 +170,12 @@ def mkUncPDF():
 ########################################
 	l1("List of samples:")
 	SAMPLES = {}
-	l2("| %20s | %20s | %20s | %20s |"%("sample","entries","cross section","scale factor"))
-	l2("-"*(23+23+23+23+1)) 
+	l2("| %20s | %20s | %20s | %20s | %20s |"%("sample","entries","cross section","scale factor","ref sample"))
+	l2("-"*(23+23+23+23+23+1)) 
 	for s in sorted(samples): 
-		S = sample(opts,jsons['samp']['files'][s]['tag'],s,jsons['samp']['files'][s]['npassed'],jsons['samp']['files'][s]['xsec'],jsons['samp']['files'][s]['scale'])	
+		S = sample(opts,jsons['samp']['files'][s]['tag'],s,jsons['samp']['files'][s]['npassed'],jsons['samp']['files'][s]['xsec'],jsons['samp']['files'][s]['scale'],jsons['samp']['files'][s]['ref'])	
 		SAMPLES[S.name] = S
-		l2("| %20s | %20.f | %20.3f | %20.6f |"%(S.name,S.npassed,S.xsec,S.scale))
+		l2("| %20s | %20.f | %20.3f | %20.6f | %20s |"%(S.name,S.npassed,S.xsec,S.scale,S.ref))
 
 ########################################
 	l1("List of PDF sets:")
@@ -203,9 +265,9 @@ def mkUncPDF():
 	if opts.mkHistos:
 		for kS,S in sorted(SAMPLES.iteritems(),key=lambda (x,y):(x)):
 			l2("%s"%S.name)
-			l3("Directory %s_histos%s in %s"%(S.name,'_ref' if 'REF' in S.name else '',fout.GetName()))
-			makeDirsRoot(fout,S.name+'_histos'+('_ref' if 'REF' in S.name else ''))
-			gDirectory.cd("%s:/%s_histos%s"%(fout.GetName(),S.name,"_ref" if 'REF' in S.name else ''))
+			l3("Directory %s_histos in %s"%(S.name,fout.GetName()))
+			makeDirsRoot(fout,S.name+'_histos')
+			gDirectory.cd("%s:/%s_histos"%(fout.GetName(),S.name))
 			tree = fout.Get("%s/%s"%(S.name,"events"))
 			tree.SetBranchStatus("*",0)
 			nentries = tree.GetEntries()
@@ -232,7 +294,7 @@ def mkUncPDF():
 						v['xmin'] = opts.mvaBins[v['var']][1][0]
 						v['xmax'] = opts.mvaBins[v['var']][1][-1]
 					l5('var %s'%(v['var']))
-					histos[kPS][v['var']] = [None]*(PS.nmem)
+					histos[kPS][v['var']] = hblock(PS.nmem)
 # loop over tree
 				for iev,ev in enumerate(tree):
 					if opts.ncut>-1 and iev>=opts.ncut: break
@@ -249,12 +311,13 @@ def mkUncPDF():
 							v['xs'] = array('f',[round(float(x),4) for x in opts.mvaBins[v['var']][1]])
 							v['xmin'] = opts.mvaBins[v['var']][1][0]
 							v['xmax'] = opts.mvaBins[v['var']][1][-1]
+						hb = histos[kPS][v['var']]
 						for imem in range(PS.nmem):
 							if iev==0:
 								hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PS.tag,imem)
-								if not 'xs' in v: histos[kPS][v['var']][imem] = TH1F(hname,hname,int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
-								else: histos[kPS][v['var']][imem] = TH1F(hname,hname,int(v['nbins_x']),v['xs'])
-							h = histos[kPS][v['var']][imem]
+								if not 'xs' in v: hb.hs[imem] = TH1F(hname,hname,int(v['nbins_x']),float(v['xmin']),float(v['xmax']))
+								else: hb.hs[imem] = TH1F(hname,hname,int(v['nbins_x']),v['xs'])
+							h = hb.hs[imem]
 # fill histos
 #							tree.Draw("%s>>%s"%(v['root'],h.GetName()),"(1.)*(PDFwghts[%d][%d])*(PDFwghtsalphas[%d][%d])"%(iPS,imem,iPS,imem),"",opts.ncut)
 							h.Fill(eval("ev.%s"%v['root']) if not v['var']=='plain' else 0.,vPS[imem]*vPSas[imem])
@@ -263,7 +326,7 @@ def mkUncPDF():
 					v = jsons['vars']['variables'][v]
 					for imem in range(PS.nmem):
 #						h.Write(h.GetName(),TH1.kOverwrite)
-						histos[kPS][v['var']][imem].Write(histos[kPS][v['var']][imem].GetName(),TH1.kOverwrite)
+						histos[kPS][v['var']].hs[imem].Write(histos[kPS][v['var']].hs[imem].GetName(),TH1.kOverwrite)
 	
 			gDirectory.cd("%s:/"%(fout.GetName()))
 	
@@ -276,11 +339,9 @@ def mkUncPDF():
 			l2("%s"%S.name)
 			l3("Directory %s_results in %s"%(S.name,fout.GetName()))
 			makeDirsRoot(fout,S.name+'_results')
-			gDirectory.cd("%s:/%s_results"%(fout.GetName(),S.name))
+			gDirectory.cd("%s:/%s_results%s"%(fout.GetName(),S.name,'_acc' if opts.gendiv else ''))
 	
 			histos = {}
-			histosp = {}
-			histosm = {}
 			results = {}
 			labels = ['cl','up','dn','upas','dnas','upcb','dncb']
 			colours = [kBlack,kRed+1,kBlue+1,kMagenta+1,kGreen+1,kOrange+1,kCyan+1]
@@ -289,48 +350,58 @@ def mkUncPDF():
 				if not any([x in ['main','alphas0'] for x in PS.purpose.split(',')]): continue
 				l4("%s(%d)"%(kPS,PS.nmem))
 				histos[kPS] = {}
-				histosp[kPS] = {}
-				histosm[kPS] = {}
 				results[kPS] = {}
 				for v in opts.variable:
 					v = jsons['vars']['variables'][v]
 					l5('var %s'%(v['var']))
-					histos[kPS][v['var']] = [None]*(PS.nmem)
-					hs = histos[kPS][v['var']]
-					histosp[kPS][v['var']] = None 
-					hsp = histosp[kPS][v['var']]
-					histosm[kPS][v['var']] = None
-					hsm = histosm[kPS][v['var']]
-					results[kPS][v['var']] = [None]*len(labels)
-					rs = results[kPS][v['var']]
+					if v['var'] in opts.mvaBins:
+						v['nbins_x'] = opts.mvaBins[v['var']][0]
+						v['xs'] = array('f',[round(float(x),4) for x in opts.mvaBins[v['var']][1]])
+						v['xmin'] = opts.mvaBins[v['var']][1][0]
+						v['xmax'] = opts.mvaBins[v['var']][1][-1]
+					# histograms for h, h+, h-, gen, gen+ and gen-
+					histos[kPS][v['var']] = hblock(PS.nmem)
+					hb = histos[kPS][v['var']]
+					hs = hb.hs                 # h histograms
+					us = hb.us                 # gen histograms
+					# histograms for r
+					results[kPS][v['var']] = rblock(len(labels))
+					rb = results[kPS][v['var']]  
+					rs = rb.rs                 # r histograms 
 	# load histos
 					for imem in range(PS.nmem): 
 						hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PS.tag,imem)
-						hs[imem] = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
-					for i in range(len(labels)):						
-						rs[i] = hs[0].Clone(('-'.join(hs[0].GetName().split('-')[:-1]))+"_%s"%labels[i]) 
-						rs[i].SetTitle(rs[i].GetName())
-						rs[i].SetLineColor(colours[i])
-						rs[i].SetLineStyle(dashes[PS.id-1])
+						hs[imem] = fout.Get("%s_histos/%s"%(S.name,hname))
+						us[imem] = fout.Get("%s_histos/%s"%(S.ref,hname.replace(S.name,S.ref)))
+					for ilab in range(len(labels)):						
+						rs[ilab] = hs[0].Clone(('-'.join(hs[0].GetName().split('-')[:-1]))+"_%s"%labels[ilab]) 
+						rs[ilab].SetTitle(rs[ilab].GetName())
+						rs[ilab].SetLineColor(colours[ilab])
+						rs[ilab].SetLineStyle(dashes[PS.id-1])
 	# use histos
 					if any([x=='main' for x in PS.purpose.split(',')]):
 						l6("main")
 	# ct10 & mstw
 						if PS.tag == 'CT10' or PS.tag == 'MSTW2008':
 							for iBin in range(1,rs[0].GetNbinsX()+1):
-								w0 = hs[0].GetBinContent(iBin)
+								w0 = hb.GetIBinHoverU0(iBin) if opts.gendiv else hb.GetIBinH0(iBin)
+#								w0 = hs[0].GetBinContent(iBin)
 								wp = 0.
 								wm = 0.
 								for i in range(1,int(float(PS.nmem)/2.)):
-									wa = hs[2*i-1].GetBinContent(iBin)
-									wb = hs[2*i].GetBinContent(iBin)
+									wa,wb = hb.GetIBinMemHoverU(iBin,2*i-1) if opts.gendiv else hb.GetIBinMemH(iBin,2*i-1)
+#									wa = hs[2*i-1].GetBinContent(iBin)
+#									wb = hs[2*i].GetBinContent(iBin)
 									wp += pow(max((wa/w0-1.),(wb/w0-1.),0),2.)
 									wm += pow(max((1.-wa/w0),(1.-wb/w0),0),2.)
-								wp = sqrt(wp)*1.64485
-								wm = sqrt(wm)*1.64485
-								rs[labels.index('cl')].SetBinContent(iBin,w0)
-								rs[labels.index('up')].SetBinContent(iBin,(1.+wp)*w0)
-								rs[labels.index('dn')].SetBinContent(iBin,(1.-wm)*w0)
+								wp = sqrt(wp)/1.64485
+								wm = sqrt(wm)/1.64485
+								rb.SetIBinLab(labels.index('cl'),iBin,w0)
+								rb.SetIBinLab(labels.index('up'),iBin,(1.+wp)*w0)
+								rb.SetIBinLab(labels.index('dn'),iBin,(1.-wm)*w0)
+#								rs[labels.index('cl')].SetBinContent(iBin,w0)
+#								rs[labels.index('up')].SetBinContent(iBin,(1.+wp)*w0)
+#								rs[labels.index('dn')].SetBinContent(iBin,(1.-wm)*w0)
 								
 							for r in rs[0:3]+rs[-2:]: 
 								l6("Writing %s"%r.GetName())
@@ -342,24 +413,36 @@ def mkUncPDF():
 							PSp = [psp for psp in PSETS.itervalues() if psp.purpose=='alphas+' and psp.id==PS.id][0]
 							PSm = [psm for psm in PSETS.itervalues() if psm.purpose=='alphas-' and psm.id==PS.id][0]
 							l6("alphas")
-							hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PS.tag,0)
-							hs[0] = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
-							hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PSp.tag,0)
-							hsp = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
-							hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PSm.tag,0)
-							hsm = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
+							for (tag,his,uis) in [(PS.tag,'hs[0]','us[0]'),(PSp.tag,'hb.hp','hb.up'),(PSm.tag,'hb.hm','hb.um')]:
+								hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,tag,0)
+								exec("%s"%his+" = fout.Get('%s_histos/%s'%(S.name,hname))")
+								exec("%s"%uis+" = fout.Get('%s_histos/%s'%(S.ref,hname.replace(S.name,S.ref)))")
+#							hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PS.tag,0)
+#							hs[0] = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
+#							hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PSp.tag,0)
+#							hsp = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
+#							hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PSm.tag,0)
+#							hsm = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
 							for iBin in range(1,rs[0].GetNbinsX()+1):
-								w0 = hs[0].GetBinContent(iBin)
-								wp = 0.
-								wm = 0.
+								w0,wp,wm = hb.GetIBinHoverU(iBin) if opts.gendiv else hb.GetIBinH(iBin)
+								#print w0,wp,wm
+#								w0 = hs[0].GetBinContent(iBin)
+#								wp = 0.
+#								wm = 0.
 								if 'CT10as' in PS.tag:
-									wp = (hsp.GetBinContent(iBin)/w0 - 1.)*6./5.
-									wm = (1.-hsm.GetBinContent(iBin)/w0)*6./5.
+#									wp = (hsp.GetBinContent(iBin)/w0 - 1.)*6./5.
+#									wm = (1.-hsm.GetBinContent(iBin)/w0)*6./5.
+									wa = (wp/w0 - 1.)*6./5.
+									wb = (1. - wm/w0)*6./5.
 								elif 'MSTW' in PS.tag:
-									wp = (hsp.GetBinContent(iBin)/w0 - 1.)
-									wm = (1.-hsm.GetBinContent(iBin)/w0)*4./5.
-								rs[labels.index('upas')].SetBinContent(iBin,(1.+wp)*w0)
-								rs[labels.index('dnas')].SetBinContent(iBin,(1.-wm)*w0)
+#									wp = (hsp.GetBinContent(iBin)/w0 - 1.)
+#									wm = (1.-hsm.GetBinContent(iBin)/w0)*4./5.
+									wa = (wp/w0 - 1.)
+									wb = (1. - wm/w0)*4./5.
+#								rs[labels.index('upas')].SetBinContent(iBin,(1.+wp)*w0)
+#								rs[labels.index('dnas')].SetBinContent(iBin,(1.-wm)*w0)
+								rb.SetIBinLab(labels.index('upas'),iBin,(1.+wa)*w0)
+								rb.SetIBinLab(labels.index('dnas'),iBin,(1.-wb)*w0)
 	
 							for r in rs[-4:-2]: 
 								l6("Writing %s"%r.GetName())
@@ -379,19 +462,35 @@ def mkUncPDF():
 					for v in opts.variable:
 						v = jsons['vars']['variables'][v]
 						l5('var %s'%(v['var']))
-						results[kPS][v['var']] = [None]*len(labels)
-						rs = results[kPS][v['var']]
+						if v['var'] in opts.mvaBins:
+							v['nbins_x'] = opts.mvaBins[v['var']][0]
+							v['xs'] = array('f',[round(float(x),4) for x in opts.mvaBins[v['var']][1]])
+							v['xmin'] = opts.mvaBins[v['var']][1][0]
+							v['xmax'] = opts.mvaBins[v['var']][1][-1]
+#						results[kPS][v['var']] = [None]*len(labels)
+#						rs = results[kPS][v['var']]
+						results[kPS][v['var']] = rblock(len(labels))
+						rb = results[kPS][v['var']]
+						rs = rb.rs                         # r histograms
 						for il,l in enumerate(labels):
 							hname = "%s-B%s-%s-%s_%s_%s_%s"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,tags[il],l)
 							rs[il] = fout.Get("%s_results/%s"%(S.name,hname))
 						for	iBin in range(1,rs[0].GetNbinsX()+1):
-							w0 = rs[labels.index('cl')].GetBinContent(iBin)
-							wp = rs[labels.index('up')].GetBinContent(iBin)/w0 - 1.
-							wm = 1. - rs[labels.index('dn' if not 'MSTW' in PS.tag else 'up')].GetBinContent(iBin)/w0
-							wpas = rs[labels.index('upas')].GetBinContent(iBin)/w0 - 1.
-							wmas = 1. - rs[labels.index('dnas')].GetBinContent(iBin)/w0
-							rs[labels.index('upcb')].SetBinContent( iBin, (1.+sqrt( pow(wp,2.) + pow(wpas,2.) ))*w0 )
-							rs[labels.index('dncb')].SetBinContent( iBin, (1.-sqrt( pow(wm,2.) + pow(wmas,2.) ))*w0 ) 
+#							w0 = rs[labels.index('cl')].GetBinContent(iBin)
+#							wp = rs[labels.index('up')].GetBinContent(iBin)/w0 - 1.
+#							wm = 1. - rs[labels.index('dn' if not 'MSTW' in PS.tag else 'up')].GetBinContent(iBin)/w0
+#							wpas = rs[labels.index('upas')].GetBinContent(iBin)/w0 - 1.
+#							wmas = 1. - rs[labels.index('dnas')].GetBinContent(iBin)/w0
+							w0, wp, wm, wpas, wmas = rb.GetIBinLabs([labels.index(x) for x in ['cl','up','dn' if not 'MSTW' in PS.tag else 'up','upas','dnas']],iBin)
+							wa = wp/w0 - 1.
+							wb = 1. - wm/w0
+							waas = wpas/w0 - 1.
+							wbas = 1. - wmas/w0
+#							rs[labels.index('upcb')].SetBinContent( iBin, (1.+sqrt( pow(wp,2.) + pow(wpas,2.) ))*w0 )
+#							rs[labels.index('dncb')].SetBinContent( iBin, (1.-sqrt( pow(wm,2.) + pow(wmas,2.) ))*w0 ) 
+							rb.SetIBinLab(labels.index('upcb'),iBin, (1.+sqrt( pow(wa,2.) + pow(waas,2.) ))*w0 )
+							rb.SetIBinLab(labels.index('dncb'),iBin, (1.-sqrt( pow(wa,2.) + pow(wbas,2.) ))*w0 )
+
 						for r in rs[-2:]:
 							l6("Writing %s"%r.GetName())
 							r.SetLineColor(colours[rs.index(r)])
@@ -409,45 +508,69 @@ def mkUncPDF():
 					for v in opts.variable:
 						v = jsons['vars']['variables'][v]
 						l5('var %s'%(v['var']))
+						if v['var'] in opts.mvaBins:
+							v['nbins_x'] = opts.mvaBins[v['var']][0]
+							v['xs'] = array('f',[round(float(x),4) for x in opts.mvaBins[v['var']][1]])
+							v['xmin'] = opts.mvaBins[v['var']][1][0]
+							v['xmax'] = opts.mvaBins[v['var']][1][-1]
 						histos[kPS][v['var']] = {}
-						results[kPS][v['var']] = [None]*3
+#						results[kPS][v['var']] = [None]*3
+						results[kPS][v['var']] = rblock(len(labelsnnpdf))
+						rb = results[kPS][v['var']]
+						rs = rb.rs
 						for ri in range(len(labelsnnpdf)):
 							hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,PS.tag,0)
-							hr = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
-							results[kPS][v['var']][ri] = hr.Clone(('-'.join(hr.GetName().split('-')[:-1]))+"_%s"%labelsnnpdf[ri])
-							r = results[kPS][v['var']][ri] 
+							hr = fout.Get("%s_histos/%s"%(S.name,hname))
+							rs[ri] = hr.Clone(('-'.join(hr.GetName().split('-')[:-1]))+"_%s"%labelsnnpdf[ri])
+							r = rs[ri] 
 							r.SetTitle(r.GetName())
 							r.SetLineColor(coloursnnpdf[ri])
 							r.SetLineStyle(dashes[PS.id-1])
 	
 	#					central + other (load)
 						for ifPS,(kfPS,fPS) in enumerate(sorted(friends.iteritems())):
-							histos[kPS][v['var']][kfPS] = [None]*fPS.nmem
-							hs = histos[kPS][v['var']][kfPS]
+#							histos[kPS][v['var']][kfPS] = [None]*fPS.nmem
+#							hs = histos[kPS][v['var']][kfPS]
+							histos[kPS][v['var']][kfPS] = hblock(fPS.nmem)
+							hb = histos[kPS][v['var']][kfPS]
+							hs = hb.hs
+							us = hb.us
 							for imem in range(fPS.nmem):
 								hname = "%s-B%s-%s-%s_%s_%s-%03d"%(v['var'],v['nbins_x'],v['xmin'],v['xmax'],S.name,fPS.tag,imem)
-								hs[imem] = fout.Get("%s_histos%s/%s"%(S.name,"_ref" if 'REF' in S.name else "",hname))
+								hs[imem] = fout.Get("%s_histos/%s"%(S.name,hname))
+								us[imem] = fout.Get("%s_histos/%s"%(S.ref,hname.replace(S.name,S.ref)))
 	#					central
 						for iBin in range(1,hs[0].GetNbinsX()+1):
 							w0 = 0.
 							for ifPS,(kfPS,fPS) in enumerate(sorted(friends.iteritems())):
+								hb = histos[kPS][v['var']][kfPS]
+								hs = hb.hs
+								us = hb.us
 								for imem in range(fPS.nmem):
-									w0 += histos[kPS][v['var']][kfPS][imem].GetBinContent(iBin)
+#									w0 += histos[kPS][v['var']][kfPS][imem].GetBinContent(iBin)
+									w0 += hb.GetIBinMemHoverU(iBin,imem,True) if opts.gendiv else hb.GetIBinMemH(iBin,imem,True)
 							w0 = w0/sum([x.nmem for x in friends.itervalues()])
 	#					other
 							ws = 0.
 							for ifPS,(kfPS,fPS) in enumerate(sorted(friends.iteritems())):
+								hb = histos[kPS][v['var']][kfPS]
+								hs = hb.hs
+								us = hb.us
 								for imem in range(fPS.nmem):
-									wf = histos[kPS][v['var']][kfPS][imem].GetBinContent(iBin)
+#									wf = histos[kPS][v['var']][kfPS][imem].GetBinContent(iBin)
+									wf = hb.GetIBinMemHoverU(iBin,imem,True) if opts.gendiv else hb.GetIBinMemH(iBin,imem,True)
 									ws += pow(wf/w0 - 1.,2.)
 							ws = ws/(sum([x.nmem for x in friends.itervalues()])-1.)
 							ws = sqrt(ws)
 	# fill
-							results[kPS][v['var']][0].SetBinContent(iBin,w0)
-							results[kPS][v['var']][1].SetBinContent(iBin,(1.+ws)*w0)
-							results[kPS][v['var']][2].SetBinContent(iBin,(1.-ws)*w0)
+#							results[kPS][v['var']][0].SetBinContent(iBin,w0)
+#							results[kPS][v['var']][1].SetBinContent(iBin,(1.+ws)*w0)
+#							results[kPS][v['var']][2].SetBinContent(iBin,(1.-ws)*w0)
+							rb.SetIBinLab(labelsnnpdf.index('cl'),iBin,w0)
+							rb.SetIBinLab(labelsnnpdf.index('upcb'),iBin,(1.+ws)*w0)
+							rb.SetIBinLab(labelsnnpdf.index('dncb'),iBin,(1.-ws)*w0)
 	# write
-						for ir,r in enumerate(results[kPS][v['var']]):
+						for ir,r in enumerate(rs):
 							l6("Writing %s"%r.GetName())
 							r.Write(r.GetName(),TH1.kOverwrite)
 
@@ -459,6 +582,11 @@ def mkUncPDF():
 			for v in opts.variable:
 				v = jsons['vars']['variables'][v]
 				l5('var %s'%(v['var']))
+				if v['var'] in opts.mvaBins:
+					v['nbins_x'] = opts.mvaBins[v['var']][0]
+					v['xs'] = array('f',[round(float(x),4) for x in opts.mvaBins[v['var']][1]])
+					v['xmin'] = opts.mvaBins[v['var']][1][0]
+					v['xmax'] = opts.mvaBins[v['var']][1][-1]
 				bandinput[v['var']] = {}
 				b = bandinput[v['var']]
 				for iPS,(kPS,PS) in enumerate(sorted(PSETS.iteritems(),key=lambda (x,y):(not y.purpose=='main',y.name))):
@@ -486,9 +614,9 @@ def mkUncPDF():
 					results['U'].SetBinContent(iBin,max(Ul))
 					results['L'].SetBinContent(iBin,min(Ll))
 					results['M'].SetBinContent(iBin,(max(Ul)+min(Ll))/2.)
-					results['denv'].SetBinContent(iBin,results['U'].GetBinContent(iBin)/results['M'].GetBinContent(iBin) - 1.)
-					results['dpm'].SetBinContent(iBin,b['MSTW2008']['upcb'].GetBinContent(iBin)/b['MSTW2008']['cl'].GetBinContent(iBin)-1.)
-					results['rpm'].SetBinContent(iBin,results['denv'].GetBinContent(iBin)/results['dpm'].GetBinContent(iBin))
+					results['denv'].SetBinContent(iBin,results['U'].GetBinContent(iBin)/results['M'].GetBinContent(iBin) - 1. if not 'REF' in S.name else 0.)
+					results['dpm'].SetBinContent(iBin,b['MSTW2008']['upcb'].GetBinContent(iBin)/b['MSTW2008']['cl'].GetBinContent(iBin)-1. if not 'REF' in S.name else 0.)
+					results['rpm'].SetBinContent(iBin,results['denv'].GetBinContent(iBin)/results['dpm'].GetBinContent(iBin) if not 'REF' in S.name else 0.)
 
 				for ir,r in enumerate(sorted(results.itervalues())):
 					l6("Writing %s"%r.GetName())
