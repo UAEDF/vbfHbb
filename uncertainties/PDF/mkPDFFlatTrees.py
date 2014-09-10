@@ -20,6 +20,7 @@ def parser(mp=None):
 
 	mgf = OptionGroup(mp,cyan+"mkFlatTree settings"+plain)
 	mgf.add_option('--tag',help='Tag set with this.',default="pdf",type='str')
+	mgf.add_option('--nentries',help='Only copy this many events.',default=-1,type=int)
 
 	mp.add_option_group(mgf)
 	return mp
@@ -71,7 +72,7 @@ def mkPDFFlatTree(opts,s,sel,trg):
 #	hpass.Write("TriggerPass")
 	makeDirsRoot(fout,"Hbb")
 	gDirectory.cd("%s:/%s"%(fout.GetName(),"Hbb"))
-	tout = tin.CopyTree(cut)
+	tout = tin.CopyTree(cut,"",opts.nentries)
 	l3("Events: %d"%tout.GetEntries())
 	tout.Write()
 

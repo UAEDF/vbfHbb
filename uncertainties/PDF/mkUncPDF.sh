@@ -46,3 +46,19 @@ if [ "$1" == "" ] || [ "$1" == "2" ]; then
 	./mkUncPDF.py -D "../common/vbfHbb_defaultOpts_2013.json" -G "$globalpath" -o "$output1" -s "$samples" -p "$preselselVBF" -t "VBF" --weight "${lumiVBF},${weightVBF}" -v "$varsVBF" --binning "$bins"
 fi
 
+
+
+
+
+# other
+
+./mkUncPDF.py -D ../../common/vbfHbb_defaultOpts_2013.json -G /data/UAData/pdf -S ../../common/vbfHbb_samples_2013_small.json -V ../../common/vbfHbb_variables_2013_bareslim.json -o rootfiles/vbfHbb_uncertainties_PDF_aod.root -s "VBF125NOM,VBF125REF,VBF125VBF" -P ../../common/vbfHbb_pdfsets_2013.json --PDF "CT10,MSTW,NNPDF" --main --alphas --refPDF "CT10;0" -v plain,mvaNOM,mbbReg1,mvaVBF,mbbReg2 --mvaBins "mvaNOM#5#-1.0;-0.6;0.0;0.7;0.84;1.0,mvaVBF#4#-1.0;-0.1;0.4;0.7;1.0" --rdTree --rdHistos --ncut 100000
+./mkUncPDF.py -D ../../common/vbfHbb_defaultOpts_2013.json -G /data/UAData/pdf -S ../../common/vbfHbb_samples_2013_small.json -V ../../common/vbfHbb_variables_2013_bareslim.json -o rootfiles/vbfHbb_uncertainties_PDF_aod.root -s "VBF125NOM,VBF125REF,VBF125VBF" -P ../../common/vbfHbb_pdfsets_2013.json --PDF "CT10,MSTW,NNPDF" --main --alphas --refPDF "CT10;0" -v plain,mvaNOM,mbbReg1,mvaVBF,mbbReg2 --mvaBins "mvaNOM#5#-1.0;-0.6;0.0;0.7;0.84;1.0,mvaVBF#4#-1.0;-0.1;0.4;0.7;1.0" --rdTree --rdHistos --ncut 100000 --gendiv
+
+./mkUncPDF.py -D ../../common/vbfHbb_defaultOpts_2013.json -G /data/UAData/pdf -S ../../common/vbfHbb_samples_2013_small.json -V ../../common/vbfHbb_variables_2013_bareslim.json -o rootfiles/vbfHbb_uncertainties_PDF_aod_gluglu2.root -s "GF125REF,GF125NOM,GF125VBF" -P ../../common/vbfHbb_pdfsets_2013.json --PDF "CT10,MSTW,NNPDF" --main --alphas --refPDF "CT10;0" -v plain,mvaNOM,mbbReg1,mvaVBF,mbbReg2 --mvaBins "mvaNOM#5#-1.0;-0.6;0.0;0.7;0.84;1.0,mvaVBF#4#-1.0;-0.1;0.4;0.7;1.0" --rdTree --rdHistos --ncut 50000 --binning "mbbReg1;7;60;200,mbbReg2;7;60;200" 
+./mkUncPDF.py -D ../../common/vbfHbb_defaultOpts_2013.json -G /data/UAData/pdf -S ../../common/vbfHbb_samples_2013_small.json -V ../../common/vbfHbb_variables_2013_bareslim.json -o rootfiles/vbfHbb_uncertainties_PDF_aod_gluglu2.root -s "GF125REF,GF125NOM,GF125VBF" -P ../../common/vbfHbb_pdfsets_2013.json --PDF "CT10,MSTW,NNPDF" --main --alphas --refPDF "CT10;0" -v plain,mvaNOM,mbbReg1,mvaVBF,mbbReg2 --mvaBins "mvaNOM#5#-1.0;-0.6;0.0;0.7;0.84;1.0,mvaVBF#4#-1.0;-0.1;0.4;0.7;1.0" --rdTree --rdHistos --ncut 50000 --binning "mbbReg1;7;60;200,mbbReg2;7;60;200" --gendiv 
+
+./mkUncPDFhistos.py -o rootfiles/vbfHbb_uncertainties_PDF_aod_gluglu.root --plotmax=0.06 --noleg 
+./mkUncPDFhistos.py -o rootfiles/vbfHbb_uncertainties_PDF_aod.root --plotmax=0.06 --noleg
+
+
