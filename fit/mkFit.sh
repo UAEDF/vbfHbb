@@ -11,12 +11,11 @@ if [[ "`uname -a`" == *lxplus* ]]; then
 	globalpath="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/"
 	globalpathtrigger="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/trigger"
 elif [[ "`uname -a`" == *schrodinger* ]]; then
-	globalpath="/data/UAData/autumn2013/"
-	globalpathtrigger="/data/UAData/autumn2013/"
+	globalpath="/data/UAdata/autumn2013"
+	globalpathtrigger="/data/UAdata/autumn2013"
 fi
 variablesslim="$basepath/../common/vbfHbb_variables_2013_bareslim.json"
 globalpathskimslim="$basepath/flat"
-samplesslim="Data"
 samples="VBF,GluGlu,Data,T,WJets,ZJets,QCD"
 samples_SoB_NOM="VBF125,GluGlu-Powheg125,DataA,DataB,DataC,DataD,T,WJets,ZJets"
 samples_SoB_VBF="VBF125,GluGlu-Powheg125,DataV,T,WJets,ZJets"
@@ -70,6 +69,21 @@ if [ "$1" == "" ] || [ "$1" == "1" ];then
 	$basepath/mkFitFlatTrees.py -d -D "$defaultopts" -G "$globalpath" --destination "./flat/" -t "VBF" --datatrigger "VBF" -p "$preselVBF" -s "$samples" -w "$NOweight" $usebool $notext
 	fi
 fi
+
+if ([ "$1" == "" ] || [ "$1" == "1" ]) && ([ "$2" == "3" ] || [ "2" == "" ]); then
+	if [ ! -d ./flat/DataSeparate ]; then mkdir ./flat/DataSeparate; fi
+	if [ ! -f ./flat/fitFlatTree_MultiJetA_NOM.root ]; then mv ./flat/DataSeparate/fitFlatTree_{MultiJet,BJetPlusX,VBF1Parked}*.root ./flat/; fi
+
+	if [ -f "./flat/fitFlatTree_Data_NOM.root" ]; then mv ./flat/fitFlatTree_Data_NOM.root ./flat/DataSeparate/fitFlatTree_Data_NOM.root.backup; fi
+	hadd ./flat/fitFlatTree_Data_NOM.root ./flat/fitFlatTree_{MultiJet,BJetPlusX}*_NOM.root
+	mv ./flat/fitFlatTree_{MultiJet,BJetPlusX}*_NOM.root ./flat/DataSeparate/
+
+	if [ -f "./flat/fitFlatTree_Data_VBF.root" ]; then mv ./flat/fitFlatTree_Data_VBF.root ./flat/DataSeparate/fitFlatTree_Data_VBF.root.backup; fi
+	hadd ./flat/fitFlatTree_Data_VBF.root ./flat/fitFlatTree_VBF1Parked*_VBF.root
+	mv ./flat/fitFlatTree_VBF1Parked*_VBF.root ./flat/DataSeparate/
+fi
+
+
 ##################################################
 if [ "$1" == "" ] || [ "$1" == "2" ];then
 	if [ "$2" == "" ] || [ "$2" == "1" ]; then
