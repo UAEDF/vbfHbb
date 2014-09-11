@@ -11,11 +11,12 @@ if [[ "`uname -a`" == *lxplus* ]]; then
 	globalpath="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/"
 	globalpathtrigger="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/trigger"
 elif [[ "`uname -a`" == *schrodinger* ]]; then
-	globalpath="/data/UAdata/autumn2013"
-	globalpathtrigger="/data/UAdata/autumn2013"
+	globalpath="/data/UAData/autumn2013/"
+	globalpathtrigger="/data/UAData/autumn2013/"
 fi
 variablesslim="$basepath/../common/vbfHbb_variables_2013_bareslim.json"
 globalpathskimslim="$basepath/flat"
+samplesslim="Data"
 samples="VBF,GluGlu,Data,T,WJets,ZJets,QCD"
 samples_SoB_NOM="VBF125,GluGlu-Powheg125,DataA,DataB,DataC,DataD,T,WJets,ZJets"
 samples_SoB_VBF="VBF125,GluGlu-Powheg125,DataV,T,WJets,ZJets"

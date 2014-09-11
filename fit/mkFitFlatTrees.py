@@ -36,6 +36,7 @@ def mkFitFlatTree(opts,s,sel,trg):
 	tag = 'VBF' if 'VBF' in trg else 'NOM'
 	nfin = s['fname']
 	nfout = nfin.replace('flatTree','fitFlatTree').replace('.root','_%s.root'%tag) 
+	if not os.path.exists(opts.destination): makeDirs(opts.destination)
 	fin = TFile.Open(opts.globalpath+nfin,"read")
 	fout = TFile.Open(opts.destination+nfout,"recreate")
 	l2("Working for %s"%s['tag'])
@@ -67,7 +68,7 @@ def mkFitFlatTree(opts,s,sel,trg):
 
 	# process
 	fout.cd()
-	hpass.Write("TriggerPass")
+	if hpass: hpass.Write("TriggerPass")
 	makeDirsRoot(fout,"Hbb")
 	gDirectory.cd("%s:/%s"%(fout.GetName(),"Hbb"))
 	tout = tin.CopyTree(cut)
