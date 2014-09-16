@@ -7,7 +7,7 @@ void DrawSignalProperties(TString OPTION)
   int COLOR[N] = {kBlack,kGreen+1,kRed+1,kBlue,kMagenta};
   int STYLE[N] = {20,21,22,23,24};
  
-  TFile *fSig  = TFile::Open("workspace/signal_shapes_workspace_"+OPTION+".root");
+  TFile *fSig  = TFile::Open("output/signal_shapes_workspace_"+OPTION+".root");
   RooWorkspace *wSig = (RooWorkspace*)fSig->Get("w");
 
   float x[N],yMean[N][NCAT],ySigma[N][NCAT],yWidth[N][NCAT],eMean[N][NCAT],eSigma[N][NCAT];  

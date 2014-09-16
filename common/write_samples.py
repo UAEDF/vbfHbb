@@ -29,16 +29,20 @@ class info:
 		self.basetrigger = dc(self.content['trigger'])
 		self.read_info()
 
-	def help_TrigArray(self,h):
+	def help_TrigArray(self,h,hpass):
 		trigarray = []
-		for tname in self.content['trigger']: 
+		for itname,tname in enumerate(self.content['trigger']): 
 			found=False
-			for i in range(h.GetXaxis().GetNbins()):
-				if h.GetXaxis().GetBinLabel(i+1)==tname: 
-					trigarray.append('%i'%i)
-					found=True
-					break
-			if not found: trigarray.append('-')
+			if h:
+				for i in range(h.GetXaxis().GetNbins()):
+					if h.GetXaxis().GetBinLabel(i+1)==tname: 
+						trigarray.append('%i'%i)
+						found=True
+						break
+				if not found: trigarray.append('-')
+			else:
+				if itname < hpass.GetNbinsX(): trigarray.append('%i'%itname)
+				else: trigarray.append('-')
 		return trigarray
 
 	def print_info(self):	
@@ -91,8 +95,8 @@ class info:
 			if not h1: sys.exit('TriggerPass;1 problematic for %s. Exiting'%iname)
 			npassed = h1.GetBinContent(1)
 			h2 = f.FindObjectAny('TriggerNames;1')
-			if not h2: sys.exit('TriggerNames;1 problematic for %s. Exiting'%iname)
-			trigarray = self.help_TrigArray(h2)
+			#if not h2: sys.exit('TriggerNames;1 problematic for %s. Exiting'%iname)
+			trigarray = self.help_TrigArray(h2,h1)
 			fields[0] = os.path.split(iname)[1]
 			fields[1] = "%i"%npassed
 			done = False
@@ -108,6 +112,7 @@ class info:
 							done = True
 						if done: break 
 					if done: break
+				print fields[4]
 				fields[2] = infojson['crosssections'][fields[4]]
 				new_value = raw_input("      --> sample %s: cross section? [%s]"%(fields[0],fields[2]))
 				if not new_value=="": fields[2]=new_value

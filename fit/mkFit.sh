@@ -11,8 +11,8 @@ if [[ "`uname -a`" == *lxplus* ]]; then
 	globalpath="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/"
 	globalpathtrigger="~/eosaccess/cms/store/cmst3/group/vbfhbb/flat/trigger"
 elif [[ "`uname -a`" == *schrodinger* ]]; then
-	globalpath="/data/UAdata/autumn2013"
-	globalpathtrigger="/data/UAdata/autumn2013"
+	globalpath="/data/UAdata/autumn2013/"
+	globalpathtrigger="/data/UAdata/autumn2013/"
 fi
 variablesslim="$basepath/../common/vbfHbb_variables_2013_bareslim.json"
 globalpathskimslim="$basepath/flat"
@@ -30,11 +30,18 @@ weightNOM="19784.,LUMI;XSEC;PU#0;TNOM;KF"
 weightVBF="18281.,LUMI;XSEC;PU#0;TVBF;KF"
 #19784,18281
 
+mvaBins="mvaNOM#5#-1.0;-0.6;0.0;0.7;0.84;1.0,mvaVBF#4#-1.0;-0.1;0.4;0.8;1.0"
+
 flatprefix="--flatprefix fit"
 flatsuffixNOM="--flatsuffix _NOM"
 flatsuffixVBF="--flatsuffix _VBF"
 
 ws_signal="../kostas/workspace/signal_shapes_workspace_0.00_0.70_0.84.root"
+
+varsMbb="mbbReg1,mbbReg2"
+binningMbb="mbbReg1;15;50;200,mbbReg2;15;50;200"
+weightBoth="NOM_19784._LUMI;XSEC;PU#0;TNOM;KF,VBF_18281._LUMI;XSEC;PU#0;TVBF;KF"
+
 
 ###   OPTIONS
 ###   
@@ -114,6 +121,15 @@ if [ "$1" == "" ] || [ "$1" == "3" ];then
 	fi
 fi
 
+##################################################
+if [ "$1" == "" ] || [ "$1" == "4" ]; then
+	$basepath/mk-01-TransferFunctions.py -D "$defaultopts" -G "$globalpathskimslim" -o "rootfiles/vbfHbb_transferFunctions.root" --mvaBins $mvaBins --catTags "NOM,VBF" --fBound "80,200"
+fi
+
+##################################################
+if [ "$1" == "" ] || [ "$1" == "5" ]; then
+	$basepath/mk-02-CreateBkgTemplates.py -D "$defaultopts" -G "$globalpathskimslim" -o "rootfiles/vbfHbb_bkgTemplates.root" --mvaBins $mvaBins --catTags "NOM,VBF" --fBound "80,200" --sample $samplesBkg --nosample $nosamplesBkg --complexWeight $weightBoth $usebool -v $varsMbb --binning $binningMbb
+fi
 
 ##################################################
 #notext=""

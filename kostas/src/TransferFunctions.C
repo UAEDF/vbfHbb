@@ -1,19 +1,19 @@
-void TransferFunctions(float BND1,float BND2,float BND3,float XMIN,float XMAX)
+void TransferFunctions(float XMIN,float XMAX)
 {
   const int NSEL(2);
   const int NCAT[NSEL] = {4,3};
-  const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,BND1,BND2,BND3,1},{-0.1,0.4,0.8,1}};
-  TString TAG(TString::Format("%1.2f_%1.2f_%1.2f",BND1,BND2,BND3));
-  TString SELECTION[2] = {"NOM","VBF"};
+  const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};
+  TString SELECTION[2] = {"NOM","VBF"};  
+  TString SELTAG[2] = {"NOM","PRK"};
   int STYLE[NCAT[0]] = {20,20,23,21};
   int COLOR[NCAT[0]] = {kBlack,kBlue,kRed,kGreen+2};
 
-  TFile *outf = TFile::Open("transfer/TransferFunction_"+TAG+".root","RECREATE");
+  TFile *outf = TFile::Open("output/TransferFunctions.root","RECREATE");
 
   TH1F *hData[NSEL][NCAT[0]];
   TH1F *hRatio[NSEL][NCAT[0]]; 
   TF1  *fitRatio[NSEL][NCAT[0]]; 
-  TGraphErrors *gUnc[NSEL][NCAT[0]];
+  TGraphErrors *gUnc[NSEL][NCAT[0]],*gUnc_approx[NSEL][NCAT[0]];
   TVirtualFitter *fitter;
   TMatrixDSym COV;
   
@@ -21,7 +21,7 @@ void TransferFunctions(float BND1,float BND2,float BND3,float XMIN,float XMAX)
   TCanvas *can2[NSEL];
   TCanvas *can = new TCanvas("aux","aux");
  
-  float vx[200],vy[200],vex[200],vey[200];
+  float vx[200],vy[200],vex[200],vey[200],vey_approx[200];
   
   TF1 *ln = new TF1("line","1",XMIN,XMAX);
   ln->SetLineColor(kBlack);
@@ -38,21 +38,28 @@ void TransferFunctions(float BND1,float BND2,float BND3,float XMIN,float XMAX)
     can2[isel] = new TCanvas("transfer_sel"+SELECTION[isel],"transfer_sel"+SELECTION[isel],400*(NCAT[isel]-1),450);
     can2[isel]->Divide(NCAT[isel]-1,1);
     TLegend *leg = new TLegend(0.6,0.6,0.9,0.9);
-    leg->SetHeader(SELECTION[isel]+" selection");
+    leg->SetHeader(SELTAG[isel]+" selection");
     leg->SetFillColor(0);
     leg->SetBorderSize(0);
     leg->SetTextFont(42);
     leg->SetTextSize(0.05);  
     for(int icat=0;icat<NCAT[isel];icat++) { 
-      TString ss("sel"+SELECTION[isel]+TString::Format("_CAT%d",icat));
-      hData[isel][icat] = new TH1F("hData_"+ss,"hData_"+ss,(XMAX-XMIN)/10.0,XMIN,XMAX);
+      TString ss("sel"+SELTAG[isel]+TString::Format("_CAT%d",icat));
+      hData[isel][icat] = new TH1F("hData_"+ss,"hData_"+ss,(XMAX-XMIN)/5.0,XMIN,XMAX);
       hData[isel][icat]->Sumw2();
       hData[isel][icat]->SetMarkerStyle(STYLE[icat]);
       hData[isel][icat]->SetMarkerColor(COLOR[icat]);
       hData[isel][icat]->SetLineColor(COLOR[icat]);
-      TCut cut(TString::Format("mvaNOM>%1.2f && mvaNOM<=%1.2f",MVA_BND[isel][icat],MVA_BND[isel][icat+1])); 
-      can->cd();
-      trData->Draw("mbbReg[1]>>hData_"+ss,cut);
+      if (isel == 0) {
+        TCut cut(TString::Format("mvaNOM>%1.2f && mvaNOM<=%1.2f",MVA_BND[isel][icat],MVA_BND[isel][icat+1])); 
+        can->cd();
+        trData->Draw("mbbReg[1]>>hData_"+ss,cut);
+      }
+      else {
+        TCut cut(TString::Format("mvaVBF>%1.2f && mvaVBF<=%1.2f",MVA_BND[isel][icat],MVA_BND[isel][icat+1])); 
+        can->cd();
+        trData->Draw("mbbReg[2]>>hData_"+ss,cut);
+      }  
       Blind(hData[isel][icat],100,150);
       hData[isel][icat]->Scale(1./hData[isel][icat]->Integral());
       hData[isel][icat]->SetDirectory(0);
@@ -62,7 +69,7 @@ void TransferFunctions(float BND1,float BND2,float BND3,float XMIN,float XMAX)
       hRatio[isel][icat]->SetLineColor(COLOR[icat]); 
       hRatio[isel][icat]->Divide(hData[isel][0]);
       hRatio[isel][icat]->SetDirectory(0);
-      fitRatio[isel][icat] = new TF1("fitRatio_"+ss,"pol1",XMIN,XMAX);
+      fitRatio[isel][icat] = new TF1("fitRatio_"+ss,"pol2",XMIN,XMAX);
       fitRatio[isel][icat]->SetLineColor(COLOR[icat]);
       
       if (icat > 0) {
@@ -74,11 +81,17 @@ void TransferFunctions(float BND1,float BND2,float BND3,float XMIN,float XMAX)
           vx[i] = hRatio[isel][icat]->GetBinLowEdge(1)+(i+1)*dx;
           vy[i] = fitRatio[isel][icat]->Eval(vx[i]);
           vex[i] = 0.0;
-          vey[i] = sqrt(pow(vx[i],2)*COV(1,1)+COV(0,0));
+          //vey[i] = sqrt(pow(vx[i],2)*COV(1,1)+COV(0,0)); // linear
+          vey[i] = sqrt(COV(0,0)+2*vx[i]*COV(0,1)+(2*COV(0,2)+COV(1,1))*pow(vx[i],2)+2*COV(1,2)*pow(vx[i],3)+COV(2,2)*pow(vx[i],4));// quadratic
+          // approximate quadratic error band: ignore correlations but shrink the errors
+          vey_approx[i] = sqrt(0.0025*COV(0,0)+0.0025*COV(1,1)*pow(vx[i],2)+0.0025*COV(2,2)*pow(vx[i],4));
         }
         gUnc[isel][icat] = new TGraphErrors(200,vx,vy,vex,vey);
+        gUnc_approx[isel][icat] = new TGraphErrors(200,vx,vy,vex,vey_approx);
         gUnc[isel][icat]->SetFillColor(COLOR[icat]);
         gUnc[isel][icat]->SetFillStyle(3004);
+        gUnc_approx[isel][icat]->SetFillColor(kGray);
+        gUnc_approx[isel][icat]->SetFillStyle(1001); 
       }
       if (icat == 0) {
         can1[isel] = new TCanvas("MbbShape_sel"+SELECTION[isel],"MbbShape_sel"+SELECTION[isel],900,600);
@@ -97,10 +110,12 @@ void TransferFunctions(float BND1,float BND2,float BND3,float XMIN,float XMAX)
         leg->AddEntry(hData[isel][icat],TString::Format("CAT%d",counter),"P");
         can2[isel]->cd(icat);
         ln->Draw();
+        gUnc_approx[isel][icat]->Draw("sameE3");
+        ln->Draw("same");
         gUnc[isel][icat]->Draw("sameE3");
         hRatio[isel][icat]->Draw("same");
         TPaveText *pave = new TPaveText(0.2,0.8,0.5,0.9,"NDC");
-        pave->AddText("sel"+SELECTION[isel]+TString::Format("_CAT%d",counter));
+        pave->AddText("sel"+SELTAG[isel]+TString::Format("_CAT%d",counter));
         pave->SetFillColor(0);
         pave->SetBorderSize(0);
         pave->SetTextFont(42);
@@ -112,11 +127,10 @@ void TransferFunctions(float BND1,float BND2,float BND3,float XMIN,float XMAX)
       counter++;
     }
     can1[isel]->cd();
-    leg->Draw();
-	 can1[isel]->SaveAs(TString::Format("plots/transfer/%s.png",can1[isel]->GetName()));
-	 can2[isel]->SaveAs(TString::Format("plots/transfer/%s.png",can2[isel]->GetName()));
+   	leg->Draw(); 
+	can1[isel]->SaveAs(TString::Format("plots/transfer/%s.png",can1[isel]->GetName()));
+	can2[isel]->SaveAs(TString::Format("plots/transfer/%s.png",can2[isel]->GetName()));
   }
-  can->SaveAs(TString::Format("plots/transfer/%s.png",can->GetName()));
   outf->Close();
   delete can;
 }

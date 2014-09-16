@@ -77,6 +77,16 @@ def optsplitdict(option,opt,value,parser):
 		vd[key] = val
 	setattr(parser.values,option.dest,vd)
 
+def optsplitmore(option,opt,value,parser):
+	vd = {}
+	for v in value.split(','):
+		tmp = v.split('_')
+		key = tmp[0]
+		lumi = tmp[1]
+		wght = tmp[2].split(';')
+		vd[(key,'lumi')] = lumi
+		vd[(key,'wght')] = wght
+	setattr(parser.values,option.dest,vd)
 
 def setdefaults(option,opt,value,parser):
 	jsondefaults = json.loads(filecontent(value))

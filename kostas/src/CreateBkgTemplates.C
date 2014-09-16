@@ -1,5 +1,5 @@
 using namespace RooFit;
-void CreateBkgTemplates(float BND1,float BND2,float BND3)
+void CreateBkgTemplates()
 {
   gROOT->ForceStyle();
   RooMsgService::instance().setSilentMode(kTRUE);
@@ -8,8 +8,7 @@ void CreateBkgTemplates(float BND1,float BND2,float BND3)
   }
   const int NSEL(2);
   const int NCAT[NSEL] = {4,3};
-  const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,BND1,BND2,BND3,1},{-0.1,0.4,0.8,1}};
-  TString TAG(TString::Format("%1.2f_%1.2f_%1.2f",BND1,BND2,BND3));
+  const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};
   float XMIN = 80;
   float XMAX = 200;
   float LUMI[2] = {19784,18281};
@@ -64,18 +63,8 @@ void CreateBkgTemplates(float BND1,float BND2,float BND3)
         hMbbYield[i] = new TH1F(name,name,NBINS,XMIN,XMAX);
         hMbbYield[i]->Sumw2();
         tr->Draw(MASS_VAR[isel]+">>"+hMbbYield[i]->GetName(),cut);
-//if (i==7) {cout << "\033[1;43m" << endl;}
-//		  cout << endl << endl;
-//		  cout << hMbbYield[i]->GetName() << endl;
-//		  cout << cut.GetTitle() << endl;
-//		  cout << hMbbYield[i]->GetEntries() << endl;
-//		  cout << hMbbYield[i]->Integral() << endl;
         delete tr;
         hMbbYield[i]->Scale(LUMI[isel]*XSEC[i]/hPass->GetBinContent(1)); 
-//		  cout << hMbbYield[i]->Integral() << endl;
-//		  cout << hPass->GetBinContent(1)/XSEC[i] << endl;
-//		  cout << XSEC[i] << " " << hPass->GetBinContent(1) << endl;
-//		  if (i==7) {cout << "\033[m" << endl;}
       }
       hZ  = (TH1F*)hMbb[7]->Clone("Z");
       hW  = (TH1F*)hMbb[8]->Clone("W");
@@ -214,11 +203,10 @@ void CreateBkgTemplates(float BND1,float BND2,float BND3)
       YieldST->Print();
       counter++;
     }// category loop
-	 canZ->SaveAs(TString::Format("plots/fitbkg/%s.png",canZ->GetName()));
-	 canT->SaveAs(TString::Format("plots/fitbkg/%s.png",canT->GetName()));
-	 can->SaveAs(TString::Format("plots/fitbkg/%s_%s.png",can->GetName(),SELECTION[isel].Data()));
+	canT->SaveAs(TString::Format("plots/bkgTemplates/%s.png",canT->GetName()));
+	canZ->SaveAs(TString::Format("plots/bkgTemplates/%s.png",canZ->GetName()));
     delete can;
   }// selection loop
   //w->Print();
-  w->writeToFile("workspace/bkg_shapes_workspace_"+TAG+".root");
+  w->writeToFile("output/bkg_shapes_workspace.root");
 }

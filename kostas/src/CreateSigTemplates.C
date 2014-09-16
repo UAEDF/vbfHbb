@@ -1,5 +1,5 @@
 using namespace RooFit;
-void CreateSigTemplates(double dX,float BND1,float BND2,float BND3)
+void CreateSigTemplates(double dX)
 {
   gROOT->ForceStyle();
   RooMsgService::instance().setSilentMode(kTRUE);
@@ -12,9 +12,9 @@ void CreateSigTemplates(double dX,float BND1,float BND2,float BND3)
   float LUMI[2] = {19784,18281};
   const int NSEL(2);
   const int NCAT[NSEL] = {4,3};
-  const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,BND1,BND2,BND3,1},{-0.1,0.4,0.8,1}};
-  TString TAG(TString::Format("%1.2f_%1.2f_%1.2f",BND1,BND2,BND3));
+  const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};
   TString SELECTION[NSEL] = {"NOM","VBF"};
+  TString SELTAG[NSEL] = {"NOM","PRK"};
   TString MASS_VAR[NSEL] = {"mbbReg[1]","mbbReg[2]"};
   TString TRIG_WT[NSEL] = {"trigWtNOM[1]","trigWtVBF"};
   const int NMASS(5);
@@ -44,7 +44,7 @@ void CreateSigTemplates(double dX,float BND1,float BND2,float BND3)
   TString ss("");
 
   for(int iMass=0;iMass<NMASS;iMass++) {
-    cout<<"Mass = "<<H_MASS[iMass]<<" GeV"<<endl;
+    //cout<<"Mass = "<<H_MASS[iMass]<<" GeV"<<endl;
     int counter(0);
     for(int isel=0;isel<NSEL;isel++) {
       sprintf(name,"flat/Fit_VBFPowheg%d_sel%s.root",H_MASS[iMass],SELECTION[isel].Data());
@@ -66,7 +66,6 @@ void CreateSigTemplates(double dX,float BND1,float BND2,float BND3)
         hVBF[iMass][icat]->Sumw2();  
         sprintf(name,"puWt[0]*%s*(mva%s>%1.2f && mva%s<=%1.2f)",TRIG_WT[isel].Data(),SELECTION[isel].Data(),MVA_BND[isel][icat],SELECTION[isel].Data(),MVA_BND[isel][icat+1]);
         TCut cut(name); 
-//		  cout << cut.GetTitle() << endl;
         trVBF->Draw(MASS_VAR[isel]+">>"+TString(hVBF[iMass][icat]->GetName()),cut);
         sprintf(name,"mass_GF%d_sel%s_CAT%d",H_MASS[iMass],SELECTION[isel].Data(),icat);
         hGF[iMass][icat] = new TH1F(name,name,NBINS,XMIN,XMAX);
@@ -82,9 +81,6 @@ void CreateSigTemplates(double dX,float BND1,float BND2,float BND3)
 
         hGF[iMass][icat]->Scale(LUMI[isel]*XSEC_GF[iMass]/hPassGF->GetBinContent(1));
         hVBF[iMass][icat]->Scale(LUMI[isel]*XSEC_VBF[iMass]/hPassVBF->GetBinContent(1));
-//		  cout << hGF[iMass][icat]->GetName() << endl;
-//		  cout << XSEC_GF[iMass]/hPassGF->GetBinContent(1) << " " << XSEC_GF[iMass] << " " << hPassGF->GetBinContent(1) << endl;
-//		  cout << hGF[iMass][icat]->Integral() << endl << endl;
         
         sprintf(name,"mass_Total%d_sel%s_CAT%d",H_MASS[iMass],SELECTION[isel].Data(),icat);
         hTOT[iMass][icat] = (TH1F*)hVBF[iMass][icat]->Clone(name);
@@ -129,8 +125,8 @@ void CreateSigTemplates(double dX,float BND1,float BND2,float BND3)
         
         sprintf(name,"fsig_m%d_CAT%d",H_MASS[iMass],counter);
         RooRealVar fsig(name,name,0.7,0.,1.);
-
-        sprintf(name,"signal_gauss_m%d_CAT%d",H_MASS[iMass],counter);
+        
+		sprintf(name,"signal_gauss_m%d_CAT%d",H_MASS[iMass],counter);
         RooCBShape sig(name,name,x,mShift,sShift,a,n);
         
         ss = TString::Format("signal_model_m%d_CAT%d",H_MASS[iMass],counter); 
@@ -182,7 +178,7 @@ void CreateSigTemplates(double dX,float BND1,float BND2,float BND3)
         TPaveText *pave = new TPaveText(0.65,0.55,0.9,0.92,"NDC");
         sprintf(name,"M_{H} = %d GeV",H_MASS[iMass]);
         pave->AddText(name);
-        sprintf(name,"%s selection",SELECTION[isel].Data());
+        sprintf(name,"%s selection",SELTAG[isel].Data());
         pave->AddText(name);
         sprintf(name,"CAT%d",counter);
         pave->AddText(name);
@@ -220,10 +216,10 @@ void CreateSigTemplates(double dX,float BND1,float BND2,float BND3)
         
         counter++;
       }// categories loop
-	 	can[iMass]->SaveAs(TString::Format("plots/fitsig/%s_%s.png",can[iMass]->GetName(),SELECTION[isel].Data()));
+	  can[iMass]->SaveAs(TString::Format("plots/sigTemplates/%s.png",can[iMass]->GetName()));
     }// selection loop 
   }// mass loop
   //w->Print();
   //x.Print();
-  w->writeToFile("workspace/signal_shapes_workspace_"+TAG+".root");
+  w->writeToFile("output/signal_shapes_workspace.root");
 }
