@@ -4,8 +4,6 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER)
   const int NCAT = 7;
   const int NF = 6;
   //---- uncertainties -------------------------------------
-  const float UNC_BR              = 1.032;
-
   const float UNC_UEPS_VBF[NCAT]  = {1.04,1.02,0.97,0.93,1.02,1.03,1.04};
   const float UNC_JES_VBF[NCAT]   = {1.06,1.08,1.09,1.10,1.06,1.08,1.10};
   const float UNC_JER_VBF[NCAT]   = {0.97,0.96,0.97,0.98,0.99,0.98,0.99};
@@ -14,8 +12,6 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER)
   const float UNC_QGL_VBF[NCAT]   = {1.03,1.01,1.00,0.98,1.03,1.01,0.98};
   const float UNC_SCALE_VBF[NCAT] = {1.00,1.00,1.01,1.02,1.03,1.03,1.05};
   const float UNC_PDF_VBF[NCAT]   = {1.02,1.02,1.02,1.02,1.03,1.03,1.03};
-  const float UNC_PDFGlobal_VBF   = 1.028;
-  const float UNC_SCALEGlobal_VBF = 1.002;
 
   const float UNC_UEPS_GF[NCAT]   = {1.25,1.10,0.80,0.90,0.65,1.65,1.45};
   const float UNC_JES_GF[NCAT]    = {1.08,1.10,1.12,1.12,1.04,1.09,1.10};
@@ -25,11 +21,9 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER)
   const float UNC_QGL_GF[NCAT]    = {1.03,1.01,1.00,0.98,1.03,1.01,0.98};
   const float UNC_SCALE_GF[NCAT]  = {1.00,1.00,1.01,1.02,1.03,1.03,1.05};
   const float UNC_PDF_GF[NCAT]    = {1.04,1.04,1.04,1.04,1.05,1.04,1.04};
-  const float UNC_PDFGlobal_GF    = 1.075;
-  const float UNC_SCALEGlobal_GF  = 1.078;
 
-  TFile *fData = TFile::Open("data_shapes_workspace_"+TString::Format("BRN%d",BRN_ORDER)+".root");
-  TFile *fSig  = TFile::Open("signal_shapes_workspace.root");
+  TFile *fData = TFile::Open("output/data_shapes_workspace_"+TString::Format("BRN%d",BRN_ORDER)+".root");
+  TFile *fSig  = TFile::Open("output/signal_shapes_workspace.root");
  
   RooWorkspace *wData = (RooWorkspace*)fData->Get("w");
   RooWorkspace *wSig  = (RooWorkspace*)fSig->Get("w");
@@ -106,31 +100,6 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER)
     }
     datacard<<"\n";
     datacard<<"----------------"<<"\n";
-    datacard<<"BR                     lnN ";
-    for(int i=CAT_MIN;i<=CAT_MAX;i++) {
-      datacard<<setw(NF)<<UNC_BR<<setw(NF)<<UNC_BR<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
-    }  
-    datacard<<"\n";
-    datacard<<"QCDscale_qqh           lnN ";
-    for(int i=CAT_MIN;i<=CAT_MAX;i++) {
-      datacard<<setw(NF)<<UNC_SCALEGlobal_GF<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
-    } 
-    datacard<<"\n";
-    datacard<<"QCDscale_ggh           lnN ";
-    for(int i=CAT_MIN;i<=CAT_MAX;i++) {
-      datacard<<setw(NF)<<"-"<<setw(NF)<<UNC_SCALEGlobal_VBF<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
-    } 
-    datacard<<"\n";
-    datacard<<"pdf_qqbar              lnN ";
-    for(int i=CAT_MIN;i<=CAT_MAX;i++) {
-      datacard<<setw(NF)<<UNC_PDFGlobal_VBF<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
-    } 
-    datacard<<"\n";
-    datacard<<"pdf_gg                 lnN ";
-    for(int i=CAT_MIN;i<=CAT_MAX;i++) {
-      datacard<<setw(NF)<<"-"<<setw(NF)<<UNC_PDFGlobal_GF<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
-    } 
-    datacard<<"\n";
     datacard<<"lumi                   lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
       datacard<<setw(NF)<<"1.026"<<setw(NF)<<"1.026"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
@@ -171,24 +140,34 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER)
       datacard<<setw(NF)<<UNC_UEPS_VBF[i]<<setw(NF)<<UNC_UEPS_GF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     }
     datacard<<"\n";
-    datacard<<"CMS_qqH_hbb_QCDscale   lnN ";
+    datacard<<"QCDscale_qqH           lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
       datacard<<setw(NF)<<UNC_SCALE_VBF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     } 
     datacard<<"\n";
-    datacard<<"CMS_ggH_hbb_QCDscale   lnN ";
+    datacard<<"QCDscale_ggH           lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
       datacard<<setw(NF)<<"-"<<setw(NF)<<UNC_SCALE_GF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     } 
     datacard<<"\n";
-    datacard<<"CMS_qqH_hbb_pdf        lnN ";
+    datacard<<"pdf_qqH                lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
       datacard<<setw(NF)<<UNC_PDF_VBF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     }
     datacard<<"\n";
-    datacard<<"CMS_ggH_hbb_pdf        lnN ";
+    datacard<<"pdf_ggH                lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
       datacard<<setw(NF)<<"-"<<setw(NF)<<UNC_PDF_GF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
+    }
+    datacard<<"\n";
+    datacard<<"qqH_xsec               lnN ";
+    for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+      datacard<<setw(NF)<<1.03<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
+    }
+    datacard<<"\n";
+    datacard<<"ggH_xsec               lnN ";
+    for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+      datacard<<setw(NF)<<"-"<<setw(NF)<<1.1<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     }
     datacard<<"\n";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
@@ -237,43 +216,42 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER)
     datacard<<"\n";
     datacard<<"#--- signal and Z shape parameters ------ \n";
     datacard<<"\n";
-    datacard<<"CMS_vbfbb_scale_mbb_selNOM   param 1.0 0.02"<<"\n";
-    datacard<<"CMS_vbfbb_scale_mbb_selVBF   param 1.0 0.02"<<"\n";
-    datacard<<"CMS_vbfbb_res_mbb_selNOM     param 1.0 0.1"<<"\n";
-    datacard<<"CMS_vbfbb_res_mbb_selVBF     param 1.0 0.1"<<"\n";
+    datacard<<"CMS_scale_j        param 1.0 0.04 \n";
+    datacard<<"CMS_res_j          param 1.0 0.1 \n";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
-      /*
-      sprintf(name,"CMS_vbfbb_scale_mbb_CAT%d",i); 
-      datacard<<name<<"     param 1.0 0.02"<<"\n";
-      sprintf(name,"CMS_vbfbb_res_mbb_CAT%d",i);
-      datacard<<name<<"       param 1.0 0.1"<<"\n";
-      */      
+      //if ((i == 0) || (i == 5)) continue;
+      //float mZ  = mzjet[icat]->getValV();
+      //float emZ = mzjet[icat]->getError();
+      //float emZ = sqrt(pow(mzjet[icat]->getError(),2)+pow(0.015*mZ,2));
+      //float sZ  = szjet[icat]->getValV();
+      //float esZ = szjet[icat]->getError();
+      //float esZ = sqrt(pow(szjet[icat]->getError(),2)+pow(0.1*sZ,2));
+     
+      //datacard<<mzjet[icat]->GetName()<<"   param "<<mZ<<" "<<emZ<<"\n";
+      //datacard<<szjet[icat]->GetName()<<"  param "<<sZ<<" "<<esZ<<"\n";
+      
       sprintf(name,"mean_m%d_CAT%d",H_MASS[m],i);
       RooRealVar *vmass = (RooRealVar*)wSig->var(name);
       double mass  = vmass->getValV();
       double emass = vmass->getError();
-      datacard<<name<<"               param "<<mass<<" "<<emass<<"\n";
+      //float em = sqrt(pow(mean[imass][icat]->getError(),2)+pow(0.015*m,2));
+      datacard<<name<<"     param "<<mass<<" "<<emass<<"\n";
       sprintf(name,"sigma_m%d_CAT%d",H_MASS[m],i);
       RooRealVar *vsigma = (RooRealVar*)wSig->var(name);
       double sigma  = vsigma->getValV();
       double esigma = vsigma->getError(); 
+      //float es = sqrt(pow(sigma[imass][icat]->getError(),2)+pow(0.1*s,2));
+      //cout<<m<<" "<<sigma<<" "<<esigma<<endl;
+      datacard<<name<<"    param "<<sigma<<" "<<esigma<<"\n";
       
-      datacard<<name<<"              param "<<sigma<<" "<<esigma<<"\n";
-      
-      if (i > 0 && i < 4) {
-        sprintf(name,"trans_p1_CAT%d",i); 
-        datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
-        sprintf(name,"trans_p0_CAT%d",i); 
-        datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n"; 
-      }
-      if (i > 4) {
+      if (i != 0 && i != 4) {
         sprintf(name,"trans_p2_CAT%d",i); 
-        datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
+        datacard<<name<<"      param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
         sprintf(name,"trans_p1_CAT%d",i); 
-        datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
+        datacard<<name<<"      param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
         sprintf(name,"trans_p0_CAT%d",i); 
-        datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
-      } 
+        datacard<<name<<"      param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n"; 
+      }
       
     }
     datacard.close();

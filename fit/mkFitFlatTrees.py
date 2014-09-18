@@ -49,7 +49,7 @@ def mkFitFlatTree(opts,s,sel,trg):
 	hpass = fin.Get("Hbb/TriggerPass")
 
 	tin.SetBranchStatus("*",0)
-	for b in ["mvaNOM","mvaVBF","selNOM","selVBF","dPhibb","mbbReg","mbb","nLeptons","triggerResult"]:
+	for b in ["mvaNOM","mvaVBF","selNOM","selVBF","dPhibb","mbbReg","mbb","nLeptons","triggerResult","dEtaqq","mqq","jetBtag","jetQGL","cosTheta","softHt","nSoftJets2","dPhiqq","btagIdx","b1","b2","q1","q2"]:
 		tin.SetBranchStatus(b,1)
 	if ismc:
 		for b in ["puWt","trigWtNOM","trigWtVBF"]:

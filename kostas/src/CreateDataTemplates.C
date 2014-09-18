@@ -1,5 +1,5 @@
 using namespace RooFit;
-void CreateDataTemplates(double dX,int BRN_ORDER_NOM,int BRN_ORDER_VBF)
+void CreateDataTemplates(double dX,int BRN_ORDER)
 {
   gROOT->ForceStyle();
   RooMsgService::instance().setSilentMode(kTRUE);
@@ -10,14 +10,13 @@ void CreateDataTemplates(double dX,int BRN_ORDER_NOM,int BRN_ORDER_VBF)
   double XMAX = 200;
   const int NSEL(2);
   const int NCAT[NSEL] = {4,3};
-  const int BRN_ORDER[NSEL] = {BRN_ORDER_NOM,BRN_ORDER_VBF};
   const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};
   char name[1000];
   TString SELECTION[NSEL] = {"NOM","VBF"};
   TString SELTAG[NSEL]    = {"NOM","PRK"};
   TString MASS_VAR[NSEL]  = {"mbbReg[1]","mbbReg[2]"};
 
-  TFile *fBKG  = TFile::Open("output/bkg_shapes_workspace.root");
+  TFile *fBKG  = TFile::Open("bkg_shapes_workspace.root");
   RooWorkspace *wBkg = (RooWorkspace*)fBKG->Get("w");
   RooWorkspace *w = new RooWorkspace("w","workspace");
   //RooRealVar x(*(RooRealVar*)wBkg->var("mbbReg"));
@@ -26,75 +25,68 @@ void CreateDataTemplates(double dX,int BRN_ORDER_NOM,int BRN_ORDER_VBF)
   TCanvas *canFit[5]; 
   RooDataHist *roohist[5],*roohist_blind[5];
 
-//  TFile *fTransfer = TFile::Open("output/TransferFunctions.root");
-//  TF1 *transFunc;
+  TFile *fTransfer = TFile::Open("TransferFunctions.root");
+  TF1 *transFunc;
 
   int counter(0);
-  int NPAR(0);
-  TString CATSTRING(""), SELSTRING("");
+  int NPAR = BRN_ORDER;
 
-  for(int isel=0;isel<2;isel++) {
-  //for(int isel=1;isel>=0;isel--) {
-	SELSTRING = TString::Format("_sel%s",SELECTION[isel].Data());	
-	//const int NCATSEL(NCAT[isel]);
-	const int NCATSEL(10);
-  	NPAR = BRN_ORDER[isel];
-    TFile *fDATA = TFile::Open("flat/Fit_data"+SELSTRING+".root");
-    RooRealVar *brn[NCATSEL][8];
-    RooArgSet brn_params[NCATSEL];
-    RooAbsPdf *qcd_pdf[NCATSEL];
-    RooBernstein *qcd_pdf_aux[NCATSEL];
-	RooAddPdf model[NCATSEL];
-	RooRealVar *nQCD[NCATSEL];
-//    if (isel == 1) {
-//      NPAR = 5;
-//    } 
+  for(int isel=0;isel<NSEL;isel++) {
+    TFile *fDATA = TFile::Open("Fit_data_sel"+SELECTION[isel]+".root");
+    RooRealVar *brn[8];
+    RooArgSet brn_params;
+    if (isel == 1) {
+      NPAR = 4;
+    } 
+    for(int ib=0;ib<=NPAR;ib++) {
+      brn[ib] = new RooRealVar("b"+TString::Format("%d",ib)+"_sel"+SELECTION[isel],"b"+TString::Format("%d",ib)+"_sel"+SELECTION[isel],0.5,0,10.);
+      brn_params.add(*brn[ib]);
+    }
     for(int icat=0;icat<NCAT[isel];icat++) {
-	  CATSTRING = TString::Format("_CAT%d",counter);
-	  for(int ib=0;ib<=NPAR;ib++) {
-		  BRNSTRING = TString::Format("b%d",ib);
-		  //cout << "\t \033[0;36mBernstein template for: SEL: " << SELECTION[isel] << ", CAT: " << counter << ", BRN_ORDER: " << NPAR << ", PAR: b" << ib << "\033[m" << endl;
-    	  brn[icat][ib] = new RooRealVar(BRNSTRING+SELSTRING+CATSTRING,BRNSTRING+SELSTRING+CATSTRING,0.5,0,10.);
-	      brn_params[icat].add(*brn[icat][ib]);
-	  }
-      RooRealVar x("mbbReg"+CATSTRING,"mbbReg"+CATSTRING,XMIN,XMAX);
+      RooRealVar x("mbbReg_"+TString::Format("CAT%d",counter),"mbbReg_"+TString::Format("CAT%d",counter),XMIN,XMAX);
 
-//      sprintf(name,"fitRatio_sel%s_CAT%d",SELTAG[isel].Data(),icat);
-//      transFunc = (TF1*)fTransfer->Get(name);
-      // --- the error on the tranfer function parameters is shrinked because the correlations are ingored. 
+      sprintf(name,"fitRatio_sel%s_CAT%d",SELTAG[isel].Data(),icat);
+      transFunc = (TF1*)fTransfer->Get(name);
+      // --- The error on the tranfer function parameters is shrinked because the correlations are ingored. 
       // --- Must be consistent with TransferFunctions.C
-//      float p0 = transFunc->GetParameter(0);
-//      float e0 = 0.05*transFunc->GetParError(0);
-//      float p1 = transFunc->GetParameter(1);
-//      float e1 = 0.05*transFunc->GetParError(1);
-//      float p2 = transFunc->GetParameter(2);
-//      float e2 = 0.05*transFunc->GetParError(2);
-      
-//      RooRealVar trans_p2(TString::Format("trans_p2_CAT%d",counter),TString::Format("trans_p2_CAT%d",counter),p2,p2-e2,p2+e2);
-//      RooRealVar trans_p1(TString::Format("trans_p1_CAT%d",counter),TString::Format("trans_p1_CAT%d",counter),p1,p1-e1,p1+e1);
-//      RooRealVar trans_p0(TString::Format("trans_p0_CAT%d",counter),TString::Format("trans_p0_CAT%d",counter),p0,p0-e0,p0+e0);
-//      trans_p2.setError(e2);
-//      trans_p1.setError(e1);
-//      trans_p0.setError(e0);
-//      trans_p2.setConstant(kTRUE);
-//      trans_p1.setConstant(kTRUE);
-//      trans_p0.setConstant(kTRUE);
-//      RooGenericPdf transfer(TString::Format("transfer_CAT%d",counter),"@3*@0*@0+@2*@0+@1",RooArgList(x,trans_p0,trans_p1,trans_p2));
-
-      sprintf(name,("FitData"+SELSTRING+CATSTRING).Data());
+      float p0 = transFunc->GetParameter(0);
+      float e0 = transFunc->GetParError(0);
+      float p1 = transFunc->GetParameter(1);
+      float e1 = transFunc->GetParError(1);
+      float p2 = transFunc->GetParameter(2);
+      float e2 = transFunc->GetParError(2);
+      RooRealVar trans_p2(TString::Format("trans_p2_CAT%d",counter),TString::Format("trans_p2_CAT%d",counter),p2);
+      RooRealVar trans_p1(TString::Format("trans_p1_CAT%d",counter),TString::Format("trans_p1_CAT%d",counter),p1);
+      RooRealVar trans_p0(TString::Format("trans_p0_CAT%d",counter),TString::Format("trans_p0_CAT%d",counter),p0);
+      RooGenericPdf *transfer;
+      if (isel == 0) {
+        trans_p2.setError(0.5*e2);
+        trans_p1.setError(0.5*e1);
+        trans_p0.setError(0.5*e0);
+        transfer = new RooGenericPdf(TString::Format("transfer_CAT%d",counter),"@2*@0+@1",RooArgList(x,trans_p0,trans_p1)); 
+      }
+      else {
+        trans_p2.setError(0.05*e2);
+        trans_p1.setError(0.05*e1);
+        trans_p0.setError(0.05*e0);
+        transfer = new RooGenericPdf(TString::Format("transfer_CAT%d",counter),"@3*@0*@0+@2*@0+@1",RooArgList(x,trans_p0,trans_p1,trans_p2));
+      }
+      trans_p2.setConstant(kTRUE);
+      trans_p1.setConstant(kTRUE);
+      trans_p0.setConstant(kTRUE);
+            
+      sprintf(name,"FitData_sel%s_CAT%d",SELECTION[isel].Data(),icat);
       canFit[icat] = new TCanvas(name,name,900,600);
       canFit[icat]->cd(1)->SetBottomMargin(0.4);
       sprintf(name,"Hbb/events");
       tr = (TTree*)fDATA->Get(name); 
-      sprintf(name,("hMbb"+SELSTRING+CATSTRING).Data());
-	  //int NBINS = (XMAX[isel][icat]-XMIN[isel][icat])/dX;
-      int NBINS = (XMAX-XMIN)/dX;
+      sprintf(name,"hMbb_%s_CAT%d",SELECTION[isel].Data(),icat);
+      int NBINS = (XMAX[isel][icat]-XMIN[isel][icat])/dX;
       
       h = new TH1F(name,name,NBINS,XMIN[isel][icat],XMAX[isel][icat]);
 
-      sprintf(name,("hMbb_blind"+SELSTRING+CATSTRING).Data());
-      //hBlind = new TH1F(name,name,NBINS,XMIN[isel][icat],XMAX[isel][icat]);
-      hBlind = new TH1F(name,name,NBINS,XMIN,XMAX);
+      sprintf(name,"hMbb_blind_%s_CAT%d",SELECTION[isel].Data(),icat);
+      hBlind = new TH1F(name,name,NBINS,XMIN[isel][icat],XMAX[isel][icat]);
 
       sprintf(name,"mva%s>%1.2f && mva%s<=%1.2f",SELECTION[isel].Data(),MVA_BND[isel][icat],SELECTION[isel].Data(),MVA_BND[isel][icat+1]);
       TCut cut(name);
@@ -102,52 +94,65 @@ void CreateDataTemplates(double dX,int BRN_ORDER_NOM,int BRN_ORDER_VBF)
       TCut cutBlind(name);
       tr->Draw(MASS_VAR[isel]+">>"+h->GetName(),cut); 
       tr->Draw(MASS_VAR[isel]+">>"+hBlind->GetName(),cutBlind); 
-      sprintf(name,("yield_data"+CATSTRING).Data());
+      sprintf(name,"yield_data_CAT%d",counter);
       RooRealVar *Yield = new RooRealVar(name,name,h->Integral());
       
-      sprintf(name,("data_hist"+CATSTRING).Data());
+      sprintf(name,"data_hist_CAT%d",counter);
       roohist[icat] = new RooDataHist(name,name,x,h);
 
-      sprintf(name,("data_hist_blind"+CATSTRING).Data());
+      sprintf(name,"data_hist_blind_CAT%d",counter);
       roohist_blind[icat] = new RooDataHist(name,name,x,hBlind);
         
-      for(int ib=0;ib<=NPAR;ib++) {
-        brn[icat][ib]->setConstant(kFALSE);
+      RooAbsPdf *qcd_pdf;
+      if (icat == 0) {
+        for(int ib=0;ib<=NPAR;ib++) {
+          brn[ib]->setConstant(kFALSE);
+        }
+        sprintf(name,"qcd_model_CAT%d",counter);
+        RooBernstein *qcd_pdf_aux = new RooBernstein(name,name,x,brn_params);
+        qcd_pdf = dynamic_cast<RooAbsPdf*> (qcd_pdf_aux);
       }
-	  sprintf(name,("qcd_model"+CATSTRING).Data());
-      qcd_pdf_aux[icat] = new RooBernstein(name,name,x,brn_params[icat]);
-      qcd_pdf[icat] = dynamic_cast<RooAbsPdf*> (qcd_pdf_aux[icat]);
-      
-      sprintf(name,("Z_model"+CATSTRING).Data());
+      else {
+        for(int ib=0;ib<=NPAR;ib++) {
+          brn[ib]->setConstant(kTRUE);
+        }
+        sprintf(name,"qcd_model_aux1_CAT%d",counter);
+        RooBernstein *qcd_pdf_aux1 = new RooBernstein(name,name,x,brn_params);
+        sprintf(name,"qcd_model_CAT%d",counter);
+        RooProdPdf *qcd_pdf_aux2 = new RooProdPdf(name,name,RooArgSet(*transfer,*qcd_pdf_aux1));
+        qcd_pdf = dynamic_cast<RooAbsPdf*> (qcd_pdf_aux2);
+      } 
+
+      sprintf(name,"Z_model_CAT%d",counter);
       RooAbsPdf *z_pdf = (RooAbsPdf*)wBkg->pdf(name);
-      sprintf(name,("Top_model"+CATSTRING).Data());
+      sprintf(name,"Top_model_CAT%d",counter);
       RooAbsPdf *top_pdf = (RooAbsPdf*)wBkg->pdf(name);
 
-      sprintf(name,("yield_ZJets"+CATSTRING).Data());
+      sprintf(name,"yield_ZJets_CAT%d",counter);
       RooRealVar *nZ = (RooRealVar*)wBkg->var(name);
-      sprintf(name,("yield_Top"+CATSTRING).Data());
+      sprintf(name,"yield_Top_CAT%d",counter);
       RooRealVar *nT = (RooRealVar*)wBkg->var(name);
-      sprintf(name,("yield_QCD"+CATSTRING).Data());
-      nQCD[icat] = new RooRealVar(name,name,1000,0,1e+10);
+      sprintf(name,"yield_QCD_CAT%d",counter);
+      RooRealVar nQCD(name,name,1000,0,1e+10);
       nZ->setConstant(kTRUE);
       nT->setConstant(kTRUE);
     
-      sprintf(name,("bkg_model"+CATSTRING).Data());
-      model[icat] = new RooAddPdf(name,name,RooArgList(*z_pdf,*top_pdf,*qcd_pdf[icat]),RooArgList(*nZ,*nT,*nQCD[icat]));
-	  model[icat].Print();
+      sprintf(name,"bkg_model_CAT%d",counter);
+      RooAddPdf model(name,name,RooArgList(*z_pdf,*top_pdf,*qcd_pdf),RooArgList(*nZ,*nT,nQCD));
       
-	  RooFitResult *res = model[icat].fitTo(*roohist[icat],RooFit::Save());
+      RooFitResult *res = model.fitTo(*roohist[icat],RooFit::Save());
       res->Print();
       
       RooPlot* frame = x.frame();
       RooPlot* frame1 = x.frame();
       roohist[icat]->plotOn(frame);
-      model[icat].plotOn(frame,LineWidth(2));
+      model.plotOn(frame,LineWidth(2));
+      cout<<"chi2/ndof = "<<frame->chiSquare()<<endl;
       RooHist *hresid = frame->residHist(); 
-      //model[icat].plotOn(frame,RooFit::VisualizeError(*res,1,kFALSE),FillColor(kGray)MoveToBack());
-      model[icat].plotOn(frame,Components(*qcd_pdf[icat]),LineWidth(2),LineColor(kBlack),LineStyle(kDashed));
-      model[icat].plotOn(frame,Components(*z_pdf),LineWidth(2),LineColor(kBlue));
-      model[icat].plotOn(frame,Components(*top_pdf),LineWidth(2),LineColor(kGreen+1));
+      //model.plotOn(frame,RooFit::VisualizeError(*res,1,kFALSE),FillColor(kGray)MoveToBack());
+      model.plotOn(frame,Components(*qcd_pdf),LineWidth(2),LineColor(kBlack),LineStyle(kDashed));
+      model.plotOn(frame,Components(*z_pdf),LineWidth(2),LineColor(kBlue));
+      model.plotOn(frame,Components(*top_pdf),LineWidth(2),LineColor(kGreen+1));
       frame->Draw(); 
       gPad->Update();
       TPad* pad = new TPad("pad", "pad", 0., 0., 1., 1.);
@@ -159,30 +164,31 @@ void CreateDataTemplates(double dX,int BRN_ORDER_NOM,int BRN_ORDER_VBF)
       frame1->addPlotable(hresid,"p");
       frame1->Draw();
 
-	  TF1 *line = new TF1("line"+CATSTRING,"0.",XMIN,XMAX);
-	  line->SetLineColor(kBlack);
-	  line->Draw("same");
-
       for(int ib=0;ib<=NPAR;ib++) {
-        brn[icat][ib]->setConstant(kFALSE);
+        brn[ib]->setConstant(kFALSE);
       }
       
-//      if (icat > 0) {
-//        trans_p2.setConstant(kFALSE);
-//        trans_p1.setConstant(kFALSE);
-//        trans_p0.setConstant(kFALSE);
-//      }
-      
-//      w->import(trans_p2);
-//      w->import(trans_p1);
-//      w->import(trans_p0);
+      if (icat > 0) {
+        trans_p2.setConstant(kFALSE);
+        trans_p1.setConstant(kFALSE);
+        trans_p0.setConstant(kFALSE);
+      }
+      if (isel == 0) {
+        w->import(trans_p1);
+        w->import(trans_p0);
+      }
+      else {
+        w->import(trans_p2);
+        w->import(trans_p1);
+        w->import(trans_p0);
+      }
       w->import(*roohist[icat]);
       w->import(*roohist_blind[icat]);
-      w->import(model[icat]);
+      w->import(model);
       w->import(*Yield);
       counter++; 
     }// category loop
   }// selection loop
-  //w->Print();
-  w->writeToFile("output/data_shapes_workspace_"+TString::Format("NOMBRN%d",BRN_ORDER_NOM)+"_"+TString::Format("VBFBRN%d",BRN_ORDER_VBF)+".root");
+  w->Print();
+  w->writeToFile("data_shapes_workspace_"+TString::Format("BRN%d",BRN_ORDER)+".root");
 }

@@ -15,7 +15,7 @@ void CreateBkgTemplates()
   TString SELECTION[2] = {"NOM","VBF"};
   TString MASS_VAR[2] = {"mbbReg[1]","mbbReg[2]"};
   TString TRIG_WT[2] = {"trigWtNOM[1]","trigWtVBF"};
-  TString PATH("");
+  TString PATH("flat/");
   TFile *inf[9];
   TTree *tr;
   TH1F *hMbb[9],*hMbbYield[9],*hPass;
@@ -25,7 +25,6 @@ void CreateBkgTemplates()
   float LUMI;
   float XSEC[9] = {56.4,11.1,3.79,30.7,11.1,1.76,245.8,650,1.2*1205};
   RooDataHist *roohist_Z[5],*roohist_T[5];
-  RooRealVar *kJES[10],*kJER[10];
   RooWorkspace *w = new RooWorkspace("w","workspace");
   //RooRealVar x("mbbReg","mbbReg",XMIN,XMAX);
   int counter(0);
@@ -45,23 +44,7 @@ void CreateBkgTemplates()
     canZ->Divide(2,2);
     canT->Divide(2,2);
     TCanvas *can = new TCanvas(); 
-    
-    sprintf(name,"CMS_vbfbb_scale_mbb_sel%s",SELECTION[isel].Data()); 
-    kJES[isel] = new RooRealVar(name,name,1.0);
-    sprintf(name,"CMS_vbfbb_res_mbb_sel%s",SELECTION[isel].Data()); 
-    kJER[isel] = new RooRealVar(name,name,1.0);
-    kJES[isel]->setConstant(kTRUE);
-    kJER[isel]->setConstant(kTRUE);
-  
     for(int icat=0;icat<NCAT[isel];icat++) {
-      /*
-      sprintf(name,"CMS_vbfbb_scale_mbb_CAT%d",counter); 
-      kJES[counter] = new RooRealVar(name,name,1.0);
-      sprintf(name,"CMS_vbbb_res_mbb_CAT%d",counter); 
-      kJER[counter] = new RooRealVar(name,name,1.0);
-      kJES[counter]->setConstant(kTRUE);
-      kJER[counter]->setConstant(kTRUE);
-      */ 
       for(int i=0;i<9;i++) {
         hPass = (TH1F*)inf[i]->Get("TriggerPass");
         sprintf(name,"Hbb/events",icat);
@@ -124,20 +107,15 @@ void CreateBkgTemplates()
       sprintf(name,"roohist_Z_CAT%d",counter);
       roohist_Z[icat] = new RooDataHist(name,name,x,hZ);
 
-      sprintf(name,"Z_mean_CAT%d",counter);
-      RooRealVar mZ(name,name,95,80,110);
-      sprintf(name,"Z_sigma_CAT%d",counter);
-      RooRealVar sZ(name,name,12,9,20);
+      sprintf(name,"Z_peak_mean_CAT%d",counter);
+      RooRealVar m(name,name,95,80,110);
+      sprintf(name,"Z_peak_sigma_CAT%d",counter);
+      RooRealVar s(name,name,12,9,20);
 
-      sprintf(name,"Z_mean_shifted_CAT%d",counter);
-      RooFormulaVar mZShift(name,"@0*@1",RooArgList(mZ,*(kJES[isel])));
-      sprintf(name,"Z_sigma_shifted_CAT%d",counter);
-      RooFormulaVar sZShift(name,"@0*@1",RooArgList(sZ,*(kJER[isel])));
-
-      sprintf(name,"Z_a_CAT%d",counter);
-      RooRealVar aZ(name,name,-1,-10,10);
-      sprintf(name,"Z_n_CAT%d",counter);
-      RooRealVar nZ(name,name,1,0,10);
+      sprintf(name,"Z_peak_a_CAT%d",counter);
+      RooRealVar a(name,name,-1,-10,10);
+      sprintf(name,"Z_peak_n_CAT%d",counter);
+      RooRealVar n(name,name,1,0,10);
 
       RooRealVar Zb0("Z_b0_CAT"+TString::Format("%d",counter),"Z_b0_CAT"+TString::Format("%d",counter),0.5,0,1.);
       RooRealVar Zb1("Z_b1_CAT"+TString::Format("%d",counter),"Z_b1_CAT"+TString::Format("%d",counter),0.5,0,1.);
@@ -145,7 +123,7 @@ void CreateBkgTemplates()
       RooBernstein Zbkg("Z_bkg_CAT"+TString::Format("%d",counter),"Z_bkg_CAT"+TString::Format("%d",counter),x,RooArgSet(Zb0,Zb1,Zb2));
       
       RooRealVar fZsig("fZsig_CAT"+TString::Format("%d",counter),"fZsig_CAT"+TString::Format("%d",counter),0.7,0.,1.);
-      RooCBShape Zcore("Zcore_CAT"+TString::Format("%d",counter),"Zcore_CAT"+TString::Format("%d",counter),x,mZShift,sZShift,aZ,nZ);
+      RooCBShape Zcore("Zcore_CAT"+TString::Format("%d",counter),"Zcore_CAT"+TString::Format("%d",counter),x,m,s,a,n);
     
       RooAddPdf modelZ("Z_model_CAT"+TString::Format("%d",counter),"Z_model_CAT"+TString::Format("%d",counter),RooArgList(Zcore,Zbkg),fZsig);
     
@@ -173,54 +151,44 @@ void CreateBkgTemplates()
         roohist_T[icat] = new RooDataHist(name,name,x,hSTYield);
       }
 
-      sprintf(name,"Top_mean_CAT%d",counter);
-      RooRealVar mT(name,name,130,0,200);
-      sprintf(name,"Top_sigma_CAT%d",counter);
-      RooRealVar sT(name,name,50,0,200);
-
-      sprintf(name,"Top_mean_shifted_CAT%d",counter);
-      RooFormulaVar mTShift(name,"@0*@1",RooArgList(mT,*(kJES[isel])));
-      sprintf(name,"Top_sigma_shifted_CAT%d",counter);
-      RooFormulaVar sTShift(name,"@0*@1",RooArgList(sT,*(kJER[isel])));
+      sprintf(name,"Top_par0_CAT%d",counter);
+      RooRealVar a0(name,name,0.5,0,1);
+      sprintf(name,"Top_par1_CAT%d",counter);
+      RooRealVar a1(name,name,0.5,0,1);
+      sprintf(name,"Top_par2_CAT%d",counter);
+      RooRealVar a2(name,name,0.5,0,1);
+      sprintf(name,"Top_par3_CAT%d",counter);
+      RooRealVar a3(name,name,0.5,0,1);
+      sprintf(name,"Top_par4_CAT%d",counter);
+      RooRealVar a4(name,name,0.5,0,1);
 
       sprintf(name,"Top_model_CAT%d",counter);
-
-      RooGaussian *modelT = new RooGaussian(name,name,x,mTShift,sTShift); 
+      RooBernstein *modelT = new RooBernstein(name,name,x,RooArgSet(a0,a1,a2,a3)); 
     
       RooFitResult *resT = modelT->fitTo(*roohist_T[icat],Save(),SumW2Error(kTRUE),"q");
-      /*
-      TF1 *tmp_func = new TF1("tmpFunc","gaus",XMIN,XMAX);
-      tmp_func->SetParameters(1,a0.getVal(),a1.getVal());
-      if (icat < 3) {
-        float norm = tmp_func->Integral(XMIN,XMAX)/hTopYield->GetBinWidth(1);
-        tmp_func->SetParameter(0,hTopYield->Integral()/norm);
-      }
-      else {
-        float norm = tmp_func->Integral(XMIN,XMAX)/hSTYield->GetBinWidth(1);
-        tmp_func->SetParameter(0,hSTYield->Integral()/norm);
-      }  
-      */
+
       canT->cd(icat+1);
       RooPlot* frame = x.frame();
       roohist_T[icat]->plotOn(frame);
       modelT->plotOn(frame,RooFit::LineWidth(2));
-      //modelT->plotOn(frame,VisualizeError(*resT,1,kTRUE),FillColor(kGray),MoveToBack());
       frame->GetXaxis()->SetTitle("M_{bb} (GeV)");
       frame->Draw();
-      //tmp_func->Draw("sameL");
       pave->Draw();
 
-      mZ.setConstant(kTRUE);
-      sZ.setConstant(kTRUE);
-      aZ.setConstant(kTRUE);
-      nZ.setConstant(kTRUE);
+      m.setConstant(kTRUE);
+      s.setConstant(kTRUE);
+      a.setConstant(kTRUE);
+      n.setConstant(kTRUE);
       Zb0.setConstant(kTRUE);
       Zb1.setConstant(kTRUE);
       Zb2.setConstant(kTRUE);
       fZsig.setConstant(kTRUE);
       
-      mT.setConstant(kTRUE);
-      sT.setConstant(kTRUE);
+      a0.setConstant(kTRUE);
+      a1.setConstant(kTRUE);
+      a2.setConstant(kTRUE);
+      a3.setConstant(kTRUE);
+      a4.setConstant(kTRUE);
 
       w->import(modelZ);
       w->import(*modelT);
@@ -235,8 +203,10 @@ void CreateBkgTemplates()
       YieldST->Print();
       counter++;
     }// category loop
+	canT->SaveAs(TString::Format("plots/bkgTemplates/%s.png",canT->GetName()));
+	canZ->SaveAs(TString::Format("plots/bkgTemplates/%s.png",canZ->GetName()));
     delete can;
   }// selection loop
-  w->Print();
-  w->writeToFile("bkg_shapes_workspace.root");
+  //w->Print();
+  w->writeToFile("output/bkg_shapes_workspace.root");
 }

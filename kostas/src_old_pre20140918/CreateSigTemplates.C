@@ -28,43 +28,29 @@ void CreateSigTemplates(double dX)
   RooDataHist *RooHistFit[NMASS][NCAT[0]],*RooHistScaled[NMASS][5];
   RooAddPdf *model[NMASS][NCAT[0]];
   RooRealVar *YieldVBF[NMASS][NCAT[0]],*YieldGF[NMASS][NCAT[0]];
-  RooRealVar *kJES[10],*kJER[10];
+  
   TCanvas *can[NMASS];
   TString PATH("");
+  
+  RooWorkspace *w = new RooWorkspace("w","workspace");
+  
+  //RooRealVar x("mbbReg","mbbReg",XMIN,XMAX);
+
+  RooRealVar kJES("CMS_scale_j","CMS_scale_j",1,0.9,1.1);
+  RooRealVar kJER("CMS_res_j","CMS_res_j",1,0.8,1.2);
+  kJES.setConstant(kTRUE);
+  kJER.setConstant(kTRUE);
+
   TString ss("");
 
-  RooWorkspace *w = new RooWorkspace("w","workspace");
-
-  int counter(0);
-  /*
-  for(int isel=0;isel<NSEL;isel++) {
-    for(int icat=0;icat<NCAT[isel];icat++) {
-      sprintf(name,"CMS_vbfbb_scale_mbb_CAT%d",counter); 
-      kJES[counter] = new RooRealVar(name,name,1.0);
-      sprintf(name,"CMS_vbfbb_res_mbb_CAT%d",counter); 
-      kJER[counter] = new RooRealVar(name,name,1.0);
-      kJES[counter]->setConstant(kTRUE);
-      kJER[counter]->setConstant(kTRUE);
-      counter++;
-    }
-  }
-  */
-  for(int isel=0;isel<NSEL;isel++) {
-    sprintf(name,"CMS_vbfbb_scale_mbb_sel%s",SELECTION[isel].Data()); 
-    kJES[isel] = new RooRealVar(name,name,1.0);
-    sprintf(name,"CMS_vbfbb_res_mbb_sel%s",SELECTION[isel].Data()); 
-    kJER[isel] = new RooRealVar(name,name,1.0);
-    kJES[isel]->setConstant(kTRUE);
-    kJER[isel]->setConstant(kTRUE);
-  }
   for(int iMass=0;iMass<NMASS;iMass++) {
-    cout<<"Mass = "<<H_MASS[iMass]<<" GeV"<<endl;
-    counter = 0;
+    //cout<<"Mass = "<<H_MASS[iMass]<<" GeV"<<endl;
+    int counter(0);
     for(int isel=0;isel<NSEL;isel++) {
-      sprintf(name,"Fit_VBFPowheg%d_sel%s.root",H_MASS[iMass],SELECTION[isel].Data());
+      sprintf(name,"flat/Fit_VBFPowheg%d_sel%s.root",H_MASS[iMass],SELECTION[isel].Data());
       fVBF[iMass]  = TFile::Open(PATH+TString(name));
       hPassVBF = (TH1F*)fVBF[iMass]->Get("TriggerPass");
-      sprintf(name,"Fit_GFPowheg%d_sel%s.root",H_MASS[iMass],SELECTION[isel].Data());
+      sprintf(name,"flat/Fit_GFPowheg%d_sel%s.root",H_MASS[iMass],SELECTION[isel].Data());
       fGF[iMass]  = TFile::Open(PATH+TString(name)); 
       hPassGF = (TH1F*)fGF[iMass]->Get("TriggerPass");
       sprintf(name,"HMassTemplate_%d_sel%s",H_MASS[iMass],SELECTION[isel].Data());
@@ -88,8 +74,7 @@ void CreateSigTemplates(double dX)
         delete trVBF;
         delete trGF;
         
-        sprintf(name,"mbbReg_CAT%d",counter);
-        RooRealVar x(name,name,XMIN,XMAX);
+        RooRealVar x("mbbReg_"+TString::Format("CAT%d",counter),"mbbReg_"+TString::Format("CAT%d",counter),XMIN,XMAX);
 
         sprintf(name,"roohist_fit_mass%d_sel%s_CAT%d",H_MASS[iMass],SELECTION[isel].Data(),icat);
         RooHistFit[iMass][icat] = new RooDataHist(name,name,x,hVBF[iMass][icat]);
@@ -117,9 +102,9 @@ void CreateSigTemplates(double dX)
         RooRealVar width(name,name,25,0,100);
         
         sprintf(name,"mean_shifted_m%d_CAT%d",H_MASS[iMass],counter);
-        RooFormulaVar mShift(name,"@0*@1",RooArgList(m,*(kJES[isel])));
+        RooFormulaVar mShift(name,"@0*@1",RooArgList(m,kJES));
         sprintf(name,"sigma_shifted_m%d_CAT%d",H_MASS[iMass],counter);
-        RooFormulaVar sShift(name,"@0*@1",RooArgList(s,*(kJER[isel]))); 
+        RooFormulaVar sShift(name,"@0*@1",RooArgList(s,kJER)); 
       
         sprintf(name,"alpha_m%d_CAT%d",H_MASS[iMass],counter);
         RooRealVar a(name,name,1,-10,10);
@@ -140,8 +125,8 @@ void CreateSigTemplates(double dX)
         
         sprintf(name,"fsig_m%d_CAT%d",H_MASS[iMass],counter);
         RooRealVar fsig(name,name,0.7,0.,1.);
-      
-        sprintf(name,"signal_gauss_m%d_CAT%d",H_MASS[iMass],counter);
+        
+		sprintf(name,"signal_gauss_m%d_CAT%d",H_MASS[iMass],counter);
         RooCBShape sig(name,name,x,mShift,sShift,a,n);
         
         ss = TString::Format("signal_model_m%d_CAT%d",H_MASS[iMass],counter); 
@@ -231,8 +216,10 @@ void CreateSigTemplates(double dX)
         
         counter++;
       }// categories loop
+	  can[iMass]->SaveAs(TString::Format("plots/sigTemplates/%s.png",can[iMass]->GetName()));
     }// selection loop 
   }// mass loop
-  w->Print();
-  w->writeToFile("signal_shapes_workspace.root");
+  //w->Print();
+  //x.Print();
+  w->writeToFile("output/signal_shapes_workspace.root");
 }
