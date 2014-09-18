@@ -106,14 +106,13 @@ class info:
 				for tag in sorted(infojson['tags'].iterkeys(), key=lambda x:(-len(x),x)):
 					for possibility in infojson['tags'][tag]:
 						if possibility in os.path.split(fields[0])[1]:
-							fields[4] = tag
+							fields[4] = tag + (("NOM" if "NOM" in fields[0] else ("VBF" if "VBF." in fields[0] else "")) if opts.longtag else "")
 							new_value = raw_input("      --> sample %s: tag? [%s]"%(fields[0],fields[4]))
 							if not new_value=="": fields[4]=new_value
 							done = True
 						if done: break 
 					if done: break
-				print fields[4]
-				fields[2] = infojson['crosssections'][fields[4]]
+				fields[2] = infojson['crosssections'][fields[4].rstrip("VBF").rstrip("NOM")]
 				new_value = raw_input("      --> sample %s: cross section? [%s]"%(fields[0],fields[2]))
 				if not new_value=="": fields[2]=new_value
 #				fields[2] = str(raw_input("    --> Cross section for sample %s? "%iname))
@@ -121,7 +120,7 @@ class info:
 #				fields[4] = re.search('(VBF|QCD|RUN|TRG|OTH)',iname.upper().replace('FLATTREE','').replace('_T','_OTH').replace('_Z','_OTH').replace('_W','_OTH').replace('DATA','RUN').replace('MULTIJET','RUN').replace('BJET','RUN').replace('JET','TRG')).group(1)
 				fields[5] = ','.join(trigarray)
 #				fields[6] = str(raw_input("    --> Colour for sample %s? "%iname))
-				fields[6] = infojson['colours'][fields[4]]
+				fields[6] = infojson['colours'][fields[4].rstrip("VBF").rstrip("NOM")]
 				new_value = raw_input("      --> sample %s: colour? [%s]"%(fields[0],fields[6]))
 				if not new_value=="": fields[2]=new_value
 				if fields[6]=="": fields[6]="1"
@@ -194,6 +193,7 @@ def parser():
 	mp.add_option('-u','--update',help='Update json file.',dest='update',action='store_true',default=False)
 	mp.add_option('-b','--baseinfo',help='File with cross section info (including prefix).',dest='baseinfo',type='str',default='%s/vbfHbb_info_2013.json'%basepath)
 	mp.add_option('-G','--globalpath',help='Restate globalpath when updating.',dest='globalpath',type='str')
+	mp.add_option('-l','--longtag',help='Extra info in tag.',action='store_true',default=False)
 	return mp
 
 

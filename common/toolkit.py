@@ -86,6 +86,7 @@ def optsplitmore(option,opt,value,parser):
 		wght = tmp[2].split(';')
 		vd[(key,'lumi')] = lumi
 		vd[(key,'wght')] = wght
+		vd[(key,'old')] = [["%s"%lumi],["%s"%x for x in wght]]
 	setattr(parser.values,option.dest,vd)
 
 def setdefaults(option,opt,value,parser):
