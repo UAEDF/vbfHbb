@@ -1,12 +1,13 @@
 using namespace RooFit;
-void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH)
+void CreateSigTemplates(double dX)
 {
-  gROOT->ProcessLineSync(".x ../common/styleCMSTDR.C");
   gROOT->ForceStyle();
   RooMsgService::instance().setSilentMode(kTRUE);
   for(int i=0;i<2;i++) {
     RooMsgService::instance().setStreamStatus(i,kFALSE);
   }
+  double XMIN = 80;
+  double XMAX = 200;
   int NBINS = (XMAX-XMIN)/dX;
   float LUMI[2] = {19784,18281};
   const int NSEL(2);
@@ -19,7 +20,7 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH)
   const int NMASS(5);
   int   H_MASS[NMASS]   = {115,120,125,130,135};
   float XSEC_VBF[NMASS] = {1.215,1.069,0.911,0.746,0.585};
-  float XSEC_GF[NMASS]  = {15.93,13.52,11.12,8.82,6.69};//{16.14,13.69,11.26,8.93,6.78};
+  float XSEC_GF[NMASS]  = {16.14,13.69,11.26,8.93,6.78};
   char name[1000];
   TFile *fVBF[NMASS],*fGF[NMASS];
   TTree *trVBF,*trGF;
@@ -29,12 +30,25 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH)
   RooRealVar *YieldVBF[NMASS][NCAT[0]],*YieldGF[NMASS][NCAT[0]];
   RooRealVar *kJES[10],*kJER[10];
   TCanvas *can[NMASS];
-  TString PATH("flat/");
+  TString PATH("");
   TString ss("");
 
   RooWorkspace *w = new RooWorkspace("w","workspace");
 
   int counter(0);
+  /*
+  for(int isel=0;isel<NSEL;isel++) {
+    for(int icat=0;icat<NCAT[isel];icat++) {
+      sprintf(name,"CMS_vbfbb_scale_mbb_CAT%d",counter); 
+      kJES[counter] = new RooRealVar(name,name,1.0);
+      sprintf(name,"CMS_vbfbb_res_mbb_CAT%d",counter); 
+      kJER[counter] = new RooRealVar(name,name,1.0);
+      kJES[counter]->setConstant(kTRUE);
+      kJER[counter]->setConstant(kTRUE);
+      counter++;
+    }
+  }
+  */
   for(int isel=0;isel<NSEL;isel++) {
     sprintf(name,"CMS_vbfbb_scale_mbb_sel%s",SELECTION[isel].Data()); 
     kJES[isel] = new RooRealVar(name,name,1.0);
@@ -217,15 +231,8 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH)
         
         counter++;
       }// categories loop
-		system(TString::Format("[ ! -d %s ] && mkdir %s",OUTPATH.Data(),OUTPATH.Data()).Data());
-		system(TString::Format("[ ! -d %s/plots ] && mkdir %s/plots",OUTPATH.Data(),OUTPATH.Data()).Data());
-		system(TString::Format("[ ! -d %s/plots/sigTemplates ] && mkdir %s/plots/sigTemplates",OUTPATH.Data(),OUTPATH.Data()).Data());
-		can[iMass]->SaveAs(TString::Format("%s/plots/sigTemplates/%s.png",OUTPATH.Data(),can[iMass]->GetName()));
-		can[iMass]->SaveAs(TString::Format("%s/plots/sigTemplates/%s.pdf",OUTPATH.Data(),can[iMass]->GetName()));
     }// selection loop 
   }// mass loop
-  system(TString::Format("[ ! -d %s ] && mkdir %s",OUTPATH.Data(),OUTPATH.Data()).Data());
-  system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
   w->Print();
-  w->writeToFile(TString::Format("%s/output/signal_shapes_workspace.root",OUTPATH.Data()).Data());
+  w->writeToFile("signal_shapes_workspace.root");
 }

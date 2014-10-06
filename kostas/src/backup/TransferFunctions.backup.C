@@ -1,8 +1,5 @@
-void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, float XMIN_VBF, float XMAX_VBF, int TRORDER_VBF, TString OUTPATH)
+void TransferFunctions()
 {
-  gROOT->ProcessLineSync(".x ../common/styleCMSTDR.C");
-  gROOT->ForceStyle();
-  gStyle->SetPadRightMargin(0.04);
   const int NSEL(2);
   const int NCAT[NSEL] = {4,3};
   const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};
@@ -10,18 +7,11 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, float XM
   TString SELTAG[2] = {"NOM","PRK"};
   int STYLE[NCAT[0]] = {20,20,23,21};
   int COLOR[NCAT[0]] = {kBlack,kBlue,kRed,kGreen+2};
-  //float XMIN[NSEL]   = {80,80};
-  //float XMAX[NSEL]   = {300,200};
+  float XMIN[NSEL]   = {80,80};
+  float XMAX[NSEL]   = {300,200};
   float BINSIZE[NSEL]= {10,5};
-  TString MBB[NSEL]={"mbbReg[1]","mbbReg[2]"};
-  TString MVA[NSEL]={"mvaNOM","mvaVBF"};
-  float XMIN[NSEL]={XMIN_NOM,XMIN_VBF};
-  float XMAX[NSEL]={XMAX_NOM,XMAX_VBF};
-  int TRORDER[NSEL]={TRORDER_NOM,TRORDER_VBF};
 
-  system(TString::Format("[ ! -d %s ] && mkdir %s",OUTPATH.Data(),OUTPATH.Data()).Data());
-  system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
-  TFile *outf = TFile::Open(TString::Format("%s/output/transferFunctions.root",OUTPATH.Data()),"RECREATE");
+  TFile *outf = TFile::Open("TransferFunctions.root","RECREATE");
 
   TH1F *hData[NSEL][NCAT[0]];
   TH1F *hRatio[NSEL][NCAT[0]]; 
@@ -29,16 +19,6 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, float XM
   TGraphErrors *gUnc[NSEL][NCAT[0]],*gUnc_approx[NSEL][NCAT[0]];
   TVirtualFitter *fitter;
   TMatrixDSym COV;
-
-  for (int isel=0; isel<NSEL; isel++) {
-	  for (int icat=0; icat<NCAT[isel]; icat++) {
-		  hData[isel][icat] = NULL;
-		  hRatio[isel][icat] = NULL;
-		  fitRatio[isel][icat] = NULL;
-		  gUnc[isel][icat] = NULL;
-		  gUnc_approx[isel][icat] = NULL;
-	  }
-  }
   
   TCanvas *can1[NSEL];
   TCanvas *can2[NSEL];
@@ -56,7 +36,7 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, float XM
     ln->SetMaximum(1.2);
     ln->GetXaxis()->SetTitle("M_{bb} (GeV)");
     ln->GetYaxis()->SetTitle("Signal/Control"); 
-    TFile *infData = TFile::Open("flat/Fit_data_sel"+SELECTION[isel]+".root");
+    TFile *infData = TFile::Open("Fit_data_sel"+SELECTION[isel]+".root");
     TTree *trData = (TTree*)infData->Get("Hbb/events");
     can2[isel] = new TCanvas("transfer_sel"+SELECTION[isel],"transfer_sel"+SELECTION[isel],400*(NCAT[isel]-1),450);
     can2[isel]->Divide(NCAT[isel]-1,1);
@@ -67,16 +47,22 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, float XM
     leg->SetTextFont(42);
     leg->SetTextSize(0.05);  
     for(int icat=0;icat<NCAT[isel];icat++) { 
-      TString ss("sel"+SELTAG[isel]+TString::Format("_CAT%d",counter));
-		cout << "\n\033[1;34mWorking on: " << ss << "\033[m" << endl;
+      TString ss("sel"+SELTAG[isel]+TString::Format("_CAT%d",icat));
       hData[isel][icat] = new TH1F("hData_"+ss,"hData_"+ss,(XMAX[isel]-XMIN[isel])/BINSIZE[isel],XMIN[isel],XMAX[isel]);
       hData[isel][icat]->Sumw2();
       hData[isel][icat]->SetMarkerStyle(STYLE[icat]);
       hData[isel][icat]->SetMarkerColor(COLOR[icat]);
       hData[isel][icat]->SetLineColor(COLOR[icat]);
-		TCut cut(TString::Format("%s>%1.2f && %s<=%1.2f",MVA[isel].Data(),MVA_BND[isel][icat],MVA[isel].Data(),MVA_BND[isel][icat+1]));
-		can->cd();
-		trData->Draw(TString::Format("%s>>hData_%s",MBB[isel].Data(),ss.Data()),cut);
+      if (isel == 0) {
+        TCut cut(TString::Format("mvaNOM>%1.2f && mvaNOM<=%1.2f",MVA_BND[isel][icat],MVA_BND[isel][icat+1])); 
+        can->cd();
+        trData->Draw("mbbReg[1]>>hData_"+ss,cut);
+      }
+      else {
+        TCut cut(TString::Format("mvaVBF>%1.2f && mvaVBF<=%1.2f",MVA_BND[isel][icat],MVA_BND[isel][icat+1])); 
+        can->cd();
+        trData->Draw("mbbReg[2]>>hData_"+ss,cut);
+      }  
       Blind(hData[isel][icat],100,150);
       hData[isel][icat]->Scale(1./hData[isel][icat]->Integral());
       hData[isel][icat]->SetDirectory(0);
@@ -86,7 +72,12 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, float XM
       hRatio[isel][icat]->SetLineColor(COLOR[icat]); 
       hRatio[isel][icat]->Divide(hData[isel][0]);
       hRatio[isel][icat]->SetDirectory(0);
-		fitRatio[isel][icat] = new TF1("fitRatio_"+ss,TString::Format("pol%i",TRORDER[isel]).Data(),XMIN[isel],XMAX[isel]);
+      if (isel == 0) {
+        fitRatio[isel][icat] = new TF1("fitRatio_"+ss,"pol1",XMIN[isel],XMAX[isel]);
+      }
+      else {
+        fitRatio[isel][icat] = new TF1("fitRatio_"+ss,"pol2",XMIN[isel],XMAX[isel]);
+      }
       fitRatio[isel][icat]->SetLineColor(COLOR[icat]);
       
       if (icat > 0) {
@@ -98,23 +89,19 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, float XM
         for(int i=0;i<200;i++) {
           vx[i] = hRatio[isel][icat]->GetBinLowEdge(1)+(i+1)*dx;
           vy[i] = fitRatio[isel][icat]->Eval(vx[i]);
-          vex[i] = 0.;
-
-			 if (TRORDER[isel]==1) {
+          vex[i] = 0.0;
+          if (isel == 0) {
             vey[i] = sqrt(pow(vx[i],2)*COV(1,1)+COV(0,0)+2*COV(0,1)*vx[i]); // linear
             vey_approx[i] = 0.5*sqrt(pow(vx[i],2)*COV(1,1)+COV(0,0)); // linear
           }
-          else if (TRORDER[isel]==2) {
+          else {
             vey[i] = sqrt(COV(0,0)+2*vx[i]*COV(0,1)+(2*COV(0,2)+COV(1,1))*pow(vx[i],2)+2*COV(1,2)*pow(vx[i],3)+COV(2,2)*pow(vx[i],4));// quadratic
             // approximate quadratic error band: ignore correlations but shrink the errors
             vey_approx[i] = 0.05*sqrt(COV(0,0)+COV(1,1)*pow(vx[i],2)+COV(2,2)*pow(vx[i],4));
           } 
-			 else cout << "\033[1;31mERROR NOT DEFINED FOR THIS TRANSFER FUNCTION ORDER\033[m" << endl;
         }
         gUnc[isel][icat] = new TGraphErrors(200,vx,vy,vex,vey);
         gUnc_approx[isel][icat] = new TGraphErrors(200,vx,vy,vex,vey_approx);
-        gUnc[isel][icat]->SetName(TString::Format("gUnc_sel%s_CAT%d",SELTAG[isel].Data(),counter).Data());
-        gUnc_approx[isel][icat]->SetName(TString::Format("gUncApprox_sel%s_CAT%d",SELTAG[isel].Data(),counter).Data());
         gUnc[isel][icat]->SetFillColor(COLOR[icat]);
         gUnc[isel][icat]->SetFillColor(COLOR[icat]); 
         gUnc[isel][icat]->SetFillStyle(3004);
@@ -143,7 +130,7 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, float XM
         gUnc[isel][icat]->Draw("sameE3");
         hRatio[isel][icat]->Draw("same");
 
-    	  TLegend *leg1 = new TLegend(0.2,0.15,0.6,0.4);
+        TLegend *leg1 = new TLegend(0.2,0.15,0.6,0.4);
         leg1->SetHeader("sel"+SELTAG[isel]+TString::Format("_CAT%d",counter));
         leg1->AddEntry(hRatio[isel][icat],"data","P");
         leg1->AddEntry(fitRatio[isel][icat],"fit","L");
@@ -154,27 +141,16 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, float XM
         leg1->SetTextFont(42);
         leg1->SetTextSize(0.05);
         leg1->Draw();
-      }
 
+        
+      }
       outf->cd();
-		write(hData[isel][icat]);
-		write(hRatio[isel][icat]);
-		write(fitRatio[isel][icat]);
-		write(gUnc[isel][icat]);
-		write(gUnc_approx[isel][icat]);
-		
+      fitRatio[isel][icat]->Write();
       COV.Write("COV_"+ss);
       counter++;
     }
     can1[isel]->cd();
     leg->Draw();
-	 system(TString::Format("[ ! -d %s ] && mkdir %s",OUTPATH.Data(),OUTPATH.Data()).Data());
-	 system(TString::Format("[ ! -d %s/plots ] && mkdir %s/plots",OUTPATH.Data(),OUTPATH.Data()).Data());
-	 system(TString::Format("[ ! -d %s/plots/transferFunctions/ ] && mkdir %s/plots/transferFunctions/",OUTPATH.Data(),OUTPATH.Data()).Data());
-	 can1[isel]->SaveAs(TString::Format("%s/plots/transferFunctions/%s_%sO%d-%.f-%.f_%sO%d-%.f-%.f.png",OUTPATH.Data(),can1[isel]->GetName(),SELTAG[0].Data(),TRORDER[0],XMIN[0],XMAX[0],SELTAG[1].Data(),TRORDER[1],XMIN[1],XMAX[1]).Data());
-	 can1[isel]->SaveAs(TString::Format("%s/plots/transferFunctions/%s_%sO%d-%.f-%.f_%sO%d-%.f-%.f.pdf",OUTPATH.Data(),can1[isel]->GetName(),SELTAG[0].Data(),TRORDER[0],XMIN[0],XMAX[0],SELTAG[1].Data(),TRORDER[1],XMIN[1],XMAX[1]).Data());
-	 can2[isel]->SaveAs(TString::Format("%s/plots/transferFunctions/%s_%sO%d-%.f-%.f_%sO%d-%.f-%.f.png",OUTPATH.Data(),can2[isel]->GetName(),SELTAG[0].Data(),TRORDER[0],XMIN[0],XMAX[0],SELTAG[1].Data(),TRORDER[1],XMIN[1],XMAX[1]).Data());
-	 can2[isel]->SaveAs(TString::Format("%s/plots/transferFunctions/%s_%sO%d-%.f-%.f_%sO%d-%.f-%.f.pdf",OUTPATH.Data(),can2[isel]->GetName(),SELTAG[0].Data(),TRORDER[0],XMIN[0],XMAX[0],SELTAG[1].Data(),TRORDER[1],XMIN[1],XMAX[1]).Data());
   }
   outf->Close();
   delete can;
@@ -189,29 +165,4 @@ void Blind(TH1F *h, float X1, float X2)
       h->SetBinError(i+1,0);
     }
   }
-}
-
-void write(TH1F *obj) {
-	if (obj) {
-		obj->Write(obj->GetName());
-		cout << "\033[0;36m" << obj->GetName() << " written to file.\033[m" << endl;
-	}
-}
-void write(TGraphErrors *obj) {
-	if (obj) {
-		obj->Write(obj->GetName());
-		cout << "\033[0;36m" << obj->GetName() << " written to file.\033[m" << endl;
-	}
-}
-void write(TLegend *obj, TString name) {
-	if (obj) {
-		obj->Write(name.Data());
-		cout << "\033[0;36m" << name.Data() << " written to file.\033[m" << endl;
-	}
-}
-void write(TF1 *obj) {
-	if (obj) {
-		obj->Write(obj->GetName());
-		cout << "\033[0;36m" << obj->GetName() << " written to file.\033[m" << endl;
-	}
 }

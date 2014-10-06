@@ -1,5 +1,5 @@
 #include <iomanip.h>
-void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF, int TRORDER_NOM, int TRORDER_VBF, TString OUTPATH)
+void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF, int TRORDER_NOM, int TRORDER_VBF, TString OUTPATH, TString TRTAG)
 {
   TString PATH(TString::Format("%s/output/",OUTPATH.Data()).Data());
   const int NCAT = 7;
@@ -30,11 +30,16 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
   const float UNC_PDFGlobal_GF[NMASS]    = {1.076,1.075,1.075,1.075,1.074};
   const float UNC_SCALEGlobal_GF[NMASS]  = {1.081,1.079,1.078,1.077,1.077};
 
-  TFile *fData = TFile::Open(PATH+"data_shapes_workspace_"+TString::Format("BRN%d+%d",BRN_ORDER_NOM,BRN_ORDER_VBF)+".root");
+  TFile *fData = TFile::Open(PATH+"data_shapes_workspace_"+TString::Format("BRN%d+%d",BRN_ORDER_NOM,BRN_ORDER_VBF)+TRTAG+".root");
   TFile *fSig  = TFile::Open(PATH+"signal_shapes_workspace.root");
  
   RooWorkspace *wData = (RooWorkspace*)fData->Get("w");
   RooWorkspace *wSig  = (RooWorkspace*)fSig->Get("w");
+  
+  TString nameData = fData->GetName();
+  TString nameDataShort = nameData(nameData.Last('/')+1,nameData.Length());
+  TString nameSig  = fSig->GetName();
+  TString nameSigShort = nameSig(nameSig.Last('/')+1,nameSig.Length());
 
   char name[1000];
   int H_MASS[5] = {115,120,125,130,135};
@@ -59,7 +64,7 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
   system(TString::Format("[ ! -d %s/output/datacards ] && mkdir %s/output/datacards",OUTPATH.Data(),OUTPATH.Data()).Data());
   for(int m=0;m<5;m++) {
     ofstream datacard;
-    sprintf(name,"%s/output/datacards/datacard_m%d_BRN%d_CAT%d-CAT%d.txt",OUTPATH.Data(),H_MASS[m],BRN_ORDER_VBF,CAT_MIN,CAT_MAX);
+    sprintf(name,"%s/output/datacards/datacard_m%d_BRN%d+%d_CAT%d-CAT%d%s.txt",OUTPATH.Data(),H_MASS[m],BRN_ORDER_NOM,BRN_ORDER_VBF,CAT_MIN,CAT_MAX,TRTAG.Data());
     cout<<"======================================="<<endl; 
     cout<<"Creating datacard: "<<name<<endl;
     cout<<"======================================="<<endl; 
@@ -69,12 +74,13 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     datacard<<"jmax *"<<"\n";
     datacard<<"kmax *"<<"\n";
     datacard<<"----------------"<<"\n";
-    datacard<<"shapes data_obs   * "<<fData->GetName()<<" w:data_hist_$CHANNEL"<<"\n";
-    datacard<<"shapes qcd        * "<<fData->GetName()<<" w:qcd_model_$CHANNEL"<<"\n";
-    datacard<<"shapes top        * "<<fData->GetName()<<" w:Top_model_$CHANNEL"<<"\n";
-    datacard<<"shapes zjets      * "<<fData->GetName()<<" w:Z_model_$CHANNEL"<<"\n";
-    datacard<<"shapes qqH        * "<<fSig->GetName() <<" w:signal_model_m"<<H_MASS[m]<<"_$CHANNEL \n";
-    datacard<<"shapes ggH        * "<<fSig->GetName() <<" w:signal_model_m"<<H_MASS[m]<<"_$CHANNEL \n";
+
+    datacard<<"shapes data_obs   * "<<nameDataShort<<" w:data_hist_$CHANNEL"<<"\n";
+    datacard<<"shapes qcd        * "<<nameDataShort<<" w:qcd_model"<<TRTAG.Data()<<"_$CHANNEL"<<"\n";
+    datacard<<"shapes top        * "<<nameDataShort<<" w:Top_model_$CHANNEL"<<"\n";
+    datacard<<"shapes zjets      * "<<nameDataShort<<" w:Z_model_$CHANNEL"<<"\n";
+    datacard<<"shapes qqH        * "<<nameSigShort<<" w:signal_model_m"<<H_MASS[m]<<"_$CHANNEL \n";
+    datacard<<"shapes ggH        * "<<nameSigShort<<" w:signal_model_m"<<H_MASS[m]<<"_$CHANNEL \n";
     datacard<<"----------------"<<"\n";
     datacard<<"bin         ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) { 
@@ -265,31 +271,18 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
       
       datacard<<name<<"              param "<<sigma<<" "<<esigma<<"\n";
       
-		  if (i>0 && i < 4 && TRORDER_NOM>1) {
-	        sprintf(name,"trans_p2_CAT%d",i); 
+		for(int j=5; j>=0; j--){
+
+		  if (i>0 && i < 4 && TRORDER_NOM>j-1) {
+	        sprintf(name,"trans%s_p%d_CAT%d",TRTAG.Data(),j,i); 
    	     datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
 		  }
-		  if (i>0 && i < 4 && TRORDER_NOM>0) {
-	        sprintf(name,"trans_p1_CAT%d",i); 
+		  if (i > 4 && TRORDER_VBF>j-1) { 
+	        sprintf(name,"trans%s_p%d_CAT%d",TRTAG.Data(),j,i); 
    	     datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
 		  }
-		  if (i>0 && i < 4) { 
-        	  sprintf(name,"trans_p0_CAT%d",i); 
-        	  datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n"; 
-		  }
-		  if (i > 4 && TRORDER_VBF>1) { 
-	        sprintf(name,"trans_p2_CAT%d",i); 
-   	     datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
-		  }
-		  if (i > 4 && TRORDER_VBF>0) {
-	        sprintf(name,"trans_p1_CAT%d",i); 
-   	     datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
-		  }
-		  if (i > 4) { 
-        	  sprintf(name,"trans_p0_CAT%d",i); 
-        	  datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n"; 
-		  }
-      
+
+		} 
       
     }
     datacard.close();

@@ -1,5 +1,5 @@
 using namespace RooFit;
-void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, int BRN_ORDER_VBF, TString OUTPATH, bool withTF==true, int NTFPAR_NOM==1, int NTFPAR_VBF==1)
+void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, int BRN_ORDER_VBF, TString OUTPATH, bool withTF==true, TString TRNOM, TString TRTAGNOM, TString TRVBF, TString TRTAGVBF)
 {
   gROOT->ProcessLineSync(".x ../common/styleCMSTDR.C");
   gROOT->ForceStyle();
@@ -16,13 +16,22 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
   TString MBB[NSEL] = {"mbbReg[1]","mbbReg[2]"};
   TString MVA[NSEL] = {"mvaNOM","mvaVBF"};
   TString PATH("flat/");
-  int NTFPAR[NSEL] = {NTFPAR_NOM, NTFPAR_VBF};
+  TString TR[NSEL] = {TRNOM,TRVBF};
+  TString TRTAG[NSEL] = {TRTAGNOM,TRTAGVBF};
+  float SCALE[3][NSEL][NCAT[0]] = {
+	  {{0.5,0.5,0.5,0.5},{0.5,0.5,0.5}},
+	  {{0.05,0.05,0.05,0.05},{0.05,0.05,0.05}},
+	  {{0.01,0.01,0.01,0.01},{0.02,0.015,0.022}}
+  };
+
+  if (TRNOM=="-1" && TRVBF=="-1") withTF=false;
 
   system(TString::Format("[ ! -d %s ] && mkdir %s",OUTPATH.Data(),OUTPATH.Data()).Data());
   system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
   TFile *fBKG  = TFile::Open(TString::Format("%s/output/bkg_shapes_workspace.root",OUTPATH.Data()).Data());
   RooWorkspace *wBkg = (RooWorkspace*)fBKG->Get("w");
   RooWorkspace *w = new RooWorkspace("w","workspace");
+
   //RooRealVar x(*(RooRealVar*)wBkg->var("mbbReg"));
   TTree *tr;
   TH1F *h,*hBlind;
@@ -77,29 +86,42 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
 	    }
       
 		 RooRealVar x("mbbReg"+CATSTRING,"mbbReg"+CATSTRING,XMIN,XMAX);
-		 const int PARS=NTFPAR[isel]+1;
-		 float p[PARS], e[PARS];
-		 RooRealVar *trans_p[PARS];
+		 float p[5], e[5];
+		 RooRealVar *trans_p[5];
+		 for (int i=0; i<5; i++) {
+			 p[i]=0;
+			 e[i]=0;
+			 trans_p[i]=0;
+		 }
+		 int NPARS=0;
 
 		 if (withTF) {
-      	sprintf(name,("fitRatio_sel"+SELTAG[isel]+CATSTRING).Data());
+      	sprintf(name,"fitRatio_sel%s_CAT%d%s",SELTAG[isel].Data(),counter,TRTAG[isel].Data());
       	transFunc = (TF1*)fTransfer->Get(name);
+			NPARS = transFunc->GetNpar();
+			cout << "NPARS = " << NPARS << " for function " << TR[isel].Data() << endl;
       	// --- The error on the tranfer function parameters is shrinked because the correlations are ingored. 
       	// --- Must be consistent with TransferFunctions.C
-			for (int ipar=0; ipar<PARS; ipar++) {
+			for (int ipar=0; ipar<NPARS; ipar++) {
 				p[ipar] = transFunc->GetParameter(ipar);
 				e[ipar] = transFunc->GetParError(ipar);
 
-				trans_p[ipar] = new RooRealVar(TString::Format("trans_p%i_CAT%d",ipar,counter),TString::Format("trans_p%i_CAT%d",ipar,counter),p[ipar]);
+				trans_p[ipar] = new RooRealVar(TString::Format("trans%s_p%i_CAT%d",TRTAG[isel].Data(),ipar,counter),TString::Format("trans%s_p%i_CAT%d",TRTAG[isel].Data(),ipar,counter),p[ipar]);
 
-				if (SELECTION[isel]=="NOM") trans_p[ipar]->setError(0.5*e[ipar]);
-				else if (SELECTION[isel]=="VBF") trans_p[ipar]->setError(0.05*e[ipar]);
+				if (TR[isel]=="pol1") trans_p[ipar]->setError(SCALE[0][isel][icat]*e[ipar]);
+				else if (TR[isel]=="pol2") trans_p[ipar]->setError(SCALE[1][isel][icat]*e[ipar]);
+				else if (TR[isel]=="pol3") trans_p[ipar]->setError(SCALE[2][isel][icat]*e[ipar]);
+				else trans_p[ipar]->setError(e[ipar]); // expo, exppow, bern2, ...
+				//if (SELECTION[isel]=="NOM") trans_p[ipar]->setError(0.5*e[ipar]);
+				//else if (SELECTION[isel]=="VBF") trans_p[ipar]->setError(0.05*e[ipar]);
+				printf("Error %s: %.2g x %.2g = %.2g (sel%s,CAT%d)\n",TR[isel].Data(),e[ipar],SCALE[2][isel][icat],SCALE[2][isel][icat]*e[ipar],SELTAG[isel].Data(),icat);
 
 				trans_p[ipar]->setConstant(kTRUE);
 			}
 
-			if (NTFPAR[isel]==1) transfer[icat] = new RooGenericPdf(TString::Format("transfer_CAT%d",counter),"@2*@0+@1",RooArgList(x,*trans_p[0],*trans_p[1])); 
-			else if (NTFPAR[isel]==2) transfer[icat] = new RooGenericPdf(TString::Format("transfer_CAT%d",counter),"@3*@0*@0+@2*@0+@1",RooArgList(x,*trans_p[0],*trans_p[1],*trans_p[2])); 
+			if (TR[isel]=="pol1") transfer[icat] = new RooGenericPdf(TString::Format("transfer%s_CAT%d",TRTAG[isel].Data(),counter),"@2*@0+@1",RooArgList(x,*trans_p[0],*trans_p[1]));
+			else if (TR[isel]=="pol2") transfer[icat] = new RooGenericPdf(TString::Format("transfer%s_CAT%d",TRTAG[isel].Data(),counter),"@3*@0*@0+@2*@0+@1",RooArgList(x,*trans_p[0],*trans_p[1],*trans_p[2]));
+			else if (TR[isel]=="expo") transfer[icat] = new RooGenericPdf(TString::Format("transfer%s_CAT%d",TRTAG[isel].Data(),counter),"exp(@1+@2*@0)",RooArgList(x,*trans_p[0],*trans_p[1]));
 		 }	
             
       sprintf(name,("FitData"+SELSTRING+CATSTRING).Data());
@@ -133,22 +155,22 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
 		if (withTF) {
         if (icat == 0) {
           for(int ib=0;ib<=NPAR;ib++) brn[icat][ib]->setConstant(kFALSE); 
-          sprintf(name,("qcd_model"+CATSTRING).Data());
+          sprintf(name,"qcd_model%s_CAT%d",TRTAG[isel].Data(),counter);
           qcd_pdf_aux[icat] = new RooBernstein(name,name,x,brn_params[icat]);
           qcd_pdf[icat] = dynamic_cast<RooAbsPdf*> (qcd_pdf_aux[icat]);
      		}
      		else {
            for(int ib=0;ib<=NPAR;ib++) brn[0][ib]->setConstant(kTRUE);
-     		  sprintf(name,"qcd_model_aux1_CAT%d",counter);
+     		  sprintf(name,"qcd_model_aux1%s_CAT%d",TRTAG[isel].Data(),counter);
      		  qcd_pdf_aux1[icat] = new RooBernstein(name,name,x,brn_params[0]);
-     		  sprintf(name,"qcd_model_CAT%d",counter);
+     		  sprintf(name,"qcd_model%s_CAT%d",TRTAG[isel].Data(),counter);
      		  qcd_pdf_aux2[icat] = new RooProdPdf(name,name,RooArgSet(*transfer[icat],*qcd_pdf_aux1[icat]));
      		  qcd_pdf[icat] = dynamic_cast<RooAbsPdf*> (qcd_pdf_aux2[icat]);
      		} 
 		}
 		else {
         for(int ib=0;ib<=NPAR;ib++) brn[icat][ib]->setConstant(kFALSE); 
-        sprintf(name,("qcd_model"+CATSTRING).Data());
+        sprintf(name,"qcd_model%s_CAT%d",TRTAG[isel].Data(),counter);
         qcd_pdf_aux[icat] = new RooBernstein(name,name,x,brn_params[icat]);
         qcd_pdf[icat] = dynamic_cast<RooAbsPdf*> (qcd_pdf_aux[icat]);
 		}
@@ -168,7 +190,7 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
       nT->setConstant(kTRUE);
     
 		//qcd_pdf[icat]->Print();
-      sprintf(name,("bkg_model"+CATSTRING).Data());
+      sprintf(name,"bkg_model%s_CAT%d",TRTAG[isel].Data(),counter);
       model[icat] = new RooAddPdf(name,name,RooArgList(*z_pdf,*top_pdf,*qcd_pdf[icat]),RooArgList(*nZ,*nT,*nQCD[icat]));
 		model[icat]->Print();
       
@@ -198,12 +220,12 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
 
       for(int ib=0;ib<=NPAR;ib++) {
 		  if (withTF && icat>0) break;
-        brn[icat][ib]->setConstant(kFALSE);
+        brn[icat][ib]->setConstant((TRTAG[isel]=="" || TR[isel]=="-1" || TRTAG[isel]=="_POL3" || TRTAG[isel]=="_LIN" || TRTAG[isel]=="_POL2" || TRTAG[isel]=="_POL1") ? kFALSE : kTRUE);//kFALSE);
       }
       
 		if (withTF) {
-			for (int ipar=0; ipar<NTFPAR[isel]+1; ipar++) {
-//if (icat>0) trans_p[ipar]->setConstant(kFALSE);
+			for (int ipar=0; ipar<NPARS; ipar++) {
+				if (icat>0) trans_p[ipar]->setConstant((TRTAG[isel]=="" || TR[isel]=="-1" || TRTAG[isel]=="_POL3" || TRTAG[isel]=="_LIN" || TRTAG[isel]=="_POL2" || TRTAG[isel]=="_POL1") ? kFALSE : kTRUE);
 				w->import(*trans_p[ipar]);
 			}
 		}
@@ -223,5 +245,5 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
   system(TString::Format("[ ! -d %s ] && mkdir %s",OUTPATH.Data(),OUTPATH.Data()).Data());
   system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
   w->Print();
-  w->writeToFile(TString::Format("%s/output/data_shapes_workspace_BRN%d+%d.root",OUTPATH.Data(),BRN_ORDER_NOM,BRN_ORDER_VBF));
+  w->writeToFile(TString::Format("%s/output/data_shapes_workspace_BRN%d+%d%s.root",OUTPATH.Data(),BRN_ORDER_NOM,BRN_ORDER_VBF,TRTAG[0].Data()));
 }

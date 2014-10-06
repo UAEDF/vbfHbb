@@ -1,7 +1,6 @@
 using namespace RooFit;
-void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH)
+void CreateBkgTemplates()
 {
-  gROOT->ProcessLineSync(".x ../common/styleCMSTDR.C");
   gROOT->ForceStyle();
   RooMsgService::instance().setSilentMode(kTRUE);
   for(int i=0;i<2;i++) {
@@ -10,12 +9,13 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH)
   const int NSEL(2);
   const int NCAT[NSEL] = {4,3};
   const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};
+  float XMIN = 80;
+  float XMAX = 200;
   float LUMI[2] = {19784,18281};
   TString SELECTION[2] = {"NOM","VBF"};
-  TString SELNAME[2] = {"NOM","PRK"};
   TString MASS_VAR[2] = {"mbbReg[1]","mbbReg[2]"};
   TString TRIG_WT[2] = {"trigWtNOM[1]","trigWtVBF"};
-  TString PATH("flat/");
+  TString PATH("");
   TFile *inf[9];
   TTree *tr;
   TH1F *hMbb[9],*hMbbYield[9],*hPass;
@@ -157,18 +157,13 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH)
       modelZ.plotOn(frame,RooFit::LineWidth(2));
       frame->GetXaxis()->SetTitle("M_{bb} (GeV)");
       frame->Draw();
-      TPaveText *pave = new TPaveText(0.7,0.76,0.9,0.9,"NDC");
-		pave->SetTextAlign(11);
+      TPaveText *pave = new TPaveText(0.7,0.8,0.9,0.9,"NDC");
+      pave->AddText(TString::Format("CAT%d",counter));
       pave->SetFillColor(0);
       pave->SetBorderSize(0);
-      pave->SetTextFont(62);
-      pave->SetTextSize(0.045);
-      pave->AddText(TString::Format("%s selection",SELNAME[isel].Data()));
-		pave->AddText(TString::Format("CAT%d",counter));
-		TText *lastline = pave->AddText("Z template");
-		pave->SetY1NDC(pave->GetY2NDC()-0.055*3);
-		TPaveText *paveorig = (TPaveText*)pave->Clone();
-      paveorig->Draw();
+      pave->SetTextFont(42);
+      pave->SetTextSize(0.05);
+      pave->Draw();
     
       sprintf(name,"roohist_T_CAT%d",counter);
       if (icat < 3) { 
@@ -213,8 +208,7 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH)
       frame->GetXaxis()->SetTitle("M_{bb} (GeV)");
       frame->Draw();
       //tmp_func->Draw("sameL");
-		lastline->SetTitle("Top template");
-		pave->Draw();
+      pave->Draw();
 
       mZ.setConstant(kTRUE);
       sZ.setConstant(kTRUE);
@@ -241,18 +235,8 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH)
       YieldST->Print();
       counter++;
     }// category loop
-	 system(TString::Format("[ ! -d %s/ ] && mkdir %s/",OUTPATH.Data(),OUTPATH.Data()).Data());
-	 system(TString::Format("[ ! -d %s/plots ] && mkdir %s/plots",OUTPATH.Data(),OUTPATH.Data()).Data());
-	 system(TString::Format("[ ! -d %s/plots/bkgTemplates ] && mkdir %s/plots/bkgTemplates",OUTPATH.Data(),OUTPATH.Data()).Data());
-	 TString FULLPATH(OUTPATH+"/plots/bkgTemplates");
-	 canT->SaveAs(TString::Format("%s/%s.png",FULLPATH.Data(),canT->GetName()));
-	 canZ->SaveAs(TString::Format("%s/%s.png",FULLPATH.Data(),canZ->GetName()));
-	 canT->SaveAs(TString::Format("%s/%s.pdf",FULLPATH.Data(),canT->GetName()));
-	 canZ->SaveAs(TString::Format("%s/%s.pdf",FULLPATH.Data(),canZ->GetName()));
-	 delete can;
+    delete can;
   }// selection loop
-  system(TString::Format("[ ! -d %s/ ] && mkdir %s/",OUTPATH.Data(),OUTPATH.Data()).Data());
-  system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
   w->Print();
-  w->writeToFile(TString::Format("%s/output/bkg_shapes_workspace.root",OUTPATH.Data()).Data());
+  w->writeToFile("bkg_shapes_workspace.root");
 }
