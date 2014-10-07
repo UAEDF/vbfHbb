@@ -1,5 +1,5 @@
 #include <iomanip.h>
-void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF, int TRORDER_NOM, int TRORDER_VBF, TString OUTPATH, TString TRTAG)
+void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF, int TRORDER_NOM, int TRORDER_VBF, TString OUTPATH, TString TRTAG, TString CATVETO="")
 {
   TString PATH(TString::Format("%s/output/",OUTPATH.Data()).Data());
   const int NCAT = 7;
@@ -40,6 +40,8 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
   TString nameDataShort = nameData(nameData.Last('/')+1,nameData.Length());
   TString nameSig  = fSig->GetName();
   TString nameSigShort = nameSig(nameSig.Last('/')+1,nameSig.Length());
+
+  vector<int> vCATVETO = tokenize(CATVETO);
 
   char name[1000];
   int H_MASS[5] = {115,120,125,130,135};
@@ -84,34 +86,40 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     datacard<<"----------------"<<"\n";
     datacard<<"bin         ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) { 
+		if (veto(vCATVETO, i)) continue;
       sprintf(name,"CAT%d ",i);
       datacard<<name;
     }
     datacard<<"\n";
     datacard<<"observation ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<"-1 ";
     }  
     datacard<<"\n";
     datacard<<"----------------"<<"\n";
     datacard<<"bin  ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       sprintf(name,"CAT%d CAT%d CAT%d CAT%d CAT%d ",i,i,i,i,i);
       datacard<<name;
     }  
     datacard<<"\n";
     datacard<<"process ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<"qqH ggH qcd top zjets ";
     }  
     datacard<<"\n";
     datacard<<"process ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<"0 -1 1 1 1 ";
     }  
     datacard<<"\n";
     datacard<<"rate       ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       cout<<"cat#"<<i<<setw(8)<<nData[i]<<setw(8)<<nSigVBF[m][i]<<setw(8)<<nSigGF[m][i]<<setw(8)<<nTop[i]<<setw(8)<<nZ[i]<<setw(8)<<", S/B = "<<(nSigVBF[m][i]+nSigGF[m][i])/nData[i]<<endl;
       datacard<<nSigVBF[m][i]<<" "<<nSigGF[m][i]<<" "<<nData[i]<<" "<<nTop[i]<<" "<<nZ[i]<<" ";
     }
@@ -119,93 +127,112 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     datacard<<"----------------"<<"\n";
     datacard<<"BR                     lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<UNC_BR[m]<<setw(NF)<<UNC_BR[m]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     }  
     datacard<<"\n";
     datacard<<"QCDscale_qqh           lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<UNC_SCALEGlobal_GF[m]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     } 
     datacard<<"\n";
     datacard<<"QCDscale_ggh           lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<"-"<<setw(NF)<<UNC_SCALEGlobal_VBF[m]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     } 
     datacard<<"\n";
     datacard<<"pdf_qqbar              lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<UNC_PDFGlobal_VBF[m]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     } 
     datacard<<"\n";
     datacard<<"pdf_gg                 lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<"-"<<setw(NF)<<UNC_PDFGlobal_GF[m]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     } 
     datacard<<"\n";
     datacard<<"lumi                   lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<"1.026"<<setw(NF)<<"1.026"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     }  
     datacard<<"\n";
     datacard<<"CMS_scale_j_ACCEPT     lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<UNC_JES_VBF[i]<<setw(NF)<<UNC_JES_GF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     }  
     datacard<<"\n";
     datacard<<"pdf_ACCEPT             lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<"1.05"<<setw(NF)<<"1.05"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     }  
     datacard<<"\n";
     datacard<<"CMS_res_j_ACCEPT       lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<UNC_JER_VBF[i]<<setw(NF)<<UNC_JER_GF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     }
     datacard<<"\n";
     datacard<<"CMS_qqH_hbb_trigger    lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<UNC_TRIG_VBF[i]<<setw(NF)<<UNC_TRIG_GF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     } 
     datacard<<"\n";
     datacard<<"CMS_qqH_hbb_btag       lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<UNC_CSV_VBF[i]<<setw(NF)<<UNC_CSV_GF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     } 
     datacard<<"\n";
     datacard<<"CMS_qqH_hbb_qgl        lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<UNC_QGL_VBF[i]<<setw(NF)<<UNC_QGL_GF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     }
     datacard<<"\n";
     datacard<<"UEPS                   lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<UNC_UEPS_VBF[i]<<setw(NF)<<UNC_UEPS_GF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     }
     datacard<<"\n";
     datacard<<"CMS_qqH_hbb_QCDscale   lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<UNC_SCALE_VBF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     } 
     datacard<<"\n";
     datacard<<"CMS_ggH_hbb_QCDscale   lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<"-"<<setw(NF)<<UNC_SCALE_GF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     } 
     datacard<<"\n";
     datacard<<"CMS_qqH_hbb_pdf        lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<UNC_PDF_VBF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     }
     datacard<<"\n";
     datacard<<"CMS_ggH_hbb_pdf        lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       datacard<<setw(NF)<<"-"<<setw(NF)<<UNC_PDF_GF[i]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     }
     datacard<<"\n";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       sprintf(name,"CMS_vbfbb_qcd_norm_CAT%d    lnU ",i);
       datacard<<name<<setw(NF);
       for(int j=CAT_MIN;j<=CAT_MAX;j++) {      
+		  if (veto(vCATVETO, j)) continue;
         if (j == i) {
           datacard<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<1.5<<setw(NF)<<"-"<<setw(NF)<<"-";
         }
@@ -217,9 +244,11 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     }  
     datacard<<"\n";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       sprintf(name,"CMS_vbfbb_zjets_norm_CAT%d  lnN ",i);
       datacard<<name<<setw(NF);
       for(int j=CAT_MIN;j<=CAT_MAX;j++) {
+		  if (veto(vCATVETO, j)) continue;
         if (j == i) {
           datacard<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"1.2";
         }
@@ -231,9 +260,11 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     }
     datacard<<"\n";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       sprintf(name,"CMS_vbfbb_top_norm_CAT%d    lnN ",i);
       datacard<<name<<setw(NF);
       for(int j=CAT_MIN;j<=CAT_MAX;j++) {
+		  if (veto(vCATVETO, j)) continue;
         if (j == i) {
           datacard<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"1.2"<<setw(NF)<<"-";
         }
@@ -253,6 +284,7 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     datacard<<"CMS_vbfbb_res_mbb_selNOM     param 1.0 0.1"<<"\n";
     datacard<<"CMS_vbfbb_res_mbb_selVBF     param 1.0 0.1"<<"\n";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
+		if (veto(vCATVETO, i)) continue;
       /*
       sprintf(name,"CMS_vbfbb_scale_mbb_CAT%d",i); 
       datacard<<name<<"     param 1.0 0.02"<<"\n";
@@ -290,3 +322,27 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
   fData->Close();
   fSig->Close();
 }
+
+bool veto(vector<int> vetos, int i) {
+	bool vetoVal = false;
+	for (int j=0; j<(int)vetos.size(); j++) {
+		if (vetos[j]==i) {
+			vetoVal = true;
+			break;
+		}
+	}
+	return vetoVal;
+}
+
+vector<int> tokenize(TString s) {
+    TObjArray *t = s.Tokenize(",");
+    const int n = t->GetEntries();
+    vector<int> CATVETO;
+	 CATVETO.clear();
+	 for (int i=0; i<n; i++) {
+	     CATVETO.push_back(((TObjString*)t->At(i))->String().Atoi());
+	 }
+	 return CATVETO; 
+}
+                                                                      
+

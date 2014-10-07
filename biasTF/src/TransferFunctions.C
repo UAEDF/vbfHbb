@@ -22,10 +22,15 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, TString 
   TString TR[NSEL]={TR_NOM,TR_VBF};
   TString TRTAG[NSEL]={TRTAG_NOM,TRTAG_VBF};
   float SCALE[3][NSEL][NCAT[0]] = {
-	  {{0.5,0.5,0.5,0.5},{0.5,0.5,0.5}},
-	  {{0.05,0.05,0.05,0.05},{0.05,0.05,0.05}},
-	  {{0.01,0.01,0.01,0.01},{0.02,0.015,0.022}}
+	  {{1.0,0.5,0.62,0.67},{1.0,1.2,1.7}},
+	  {{1.0,0.04,0.05,0.07},{1.0,0.085,0.1}},
+	  {{1.0,0.01,0.01,0.01},{1.0,0.015,0.022}}
   };
+// float SCALE[3][NSEL][NCAT[0]] = {
+//	  {{0.5,0.5,0.5,0.5},{0.5,0.5,0.5}},
+//	  {{0.05,0.05,0.05,0.05},{0.05,0.05,0.05}},
+//	  {{0.01,0.01,0.01,0.01},{0.02,0.015,0.022}}
+//  };
 
   system(TString::Format("[ ! -d %s ] && mkdir %s",OUTPATH.Data(),OUTPATH.Data()).Data());
   system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
