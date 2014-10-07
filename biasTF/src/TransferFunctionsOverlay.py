@@ -21,10 +21,9 @@ def parser(mp=None):
 	if mp==None: mp = OptionParser()
 	mpTransfer = OptionGroup(mp,cyan+"Transfer function options"+plain)
 	mpTransfer.add_option('--mvaBins',help='mva bins: var#3#1;3;6;9,...',type='str',action='callback',callback=optsplitdict)
-	mpTransfer.add_option('--catTags',help='tags for categories',type='str',action='callback',callback=optsplit,default=[])
+	mpTransfer.add_option('--catTags',help='tags for categories',type='str',action='callback',callback=optsplit,default=['NOM','VBF'])
 	mpTransfer.add_option('--fBound',help='fit MIN and MAX',type='str',action='callback',callback=optsplit,default=['80','200'])	
 	mpTransfer.add_option('--scale',help='transfer function scale factors',type='str',action='callback',callback=TFscale,default=None)	
-	mpTransfer.add_option('--scaledBand',help='which band to print POL(1,2,3)',type='int',default=3)
 	mp.add_option_group(mpTransfer)
 	return mp
 
@@ -105,6 +104,7 @@ def INTERNALhistograms(opts):
 	fFit = {}
 	gUnc = {}
 	gUncScaled = {}
+	gUncDiff = {}
 	fitter = {}
 	covariant = {}
 	for iTag,Tag in enumerate(opts.catTags):
@@ -115,21 +115,24 @@ def INTERNALhistograms(opts):
 				fFit[(Tag,iCat,fitTag)]       = None
 				gUnc[(Tag,iCat,fitTag)]       = None
 				gUncScaled[(Tag,iCat,fitTag)] = None
+				gUncDiff[(Tag,iCat,fitTag)]   = None
 	for fitTag in ['_POL1','_POL2','_POL3']:
 		fitter[fitTag]    = None
 		covariant[fitTag] = None
-	return hDat, hRat, fFit, gUnc, gUncScaled, fitter, covariant
+	return hDat, hRat, fFit, gUnc, gUncScaled, gUncDiff, fitter, covariant
 
 ####################################################################################################
 
 def INTERNALcanvases(opts):
 	c1 = {}
 	c2 = {}
+	c3 = {}
 	c = None
 	for iTag,Tag in enumerate(opts.catTags):
 		c1[Tag] = None
 		c2[Tag] = None
-	return c1, c2, c
+		c3[Tag] = None
+	return c1, c2, c3, c
 
 ####################################################################################################
 
@@ -154,7 +157,7 @@ def INTERNALlegend(Tag):
 
 ####################################################################################################
 def INTERNALlegendB():
-	leg = TLegend(0.20,0.10,0.55,0.38)
+	leg = TLegend(0.17,0.10,0.55,0.38)
 	leg.SetFillColor(0)
 	leg.SetBorderSize(0)
 	leg.SetTextFont(42)
@@ -168,8 +171,8 @@ def INTERNALline(fun, min, max):
 	ln.SetLineColor(kBlack)
 	ln.SetLineWidth(1)
 	ln.SetLineStyle(2)
-	ln.SetMinimum(0.7)
-	ln.SetMaximum(1.3)
+	ln.SetMinimum(float(fun)-0.3)
+	ln.SetMaximum(float(fun)+0.3)
 	ln.GetXaxis().SetTitle("M_{bb} (GeV)")
 	ln.GetYaxis().SetTitle("Signal / Control")
 	return ln
@@ -211,6 +214,34 @@ def INTERNALgraphScaled(r,f,c,s): #ratio, function, covariant, scale
 
 ####################################################################################################
 
+def INTERNALgraphDiff(gref,f,plusmin): #ratio, function, covariant, scale
+	nBins = gref.GetN()
+	vx,vex,vy,vey = [],[],[],[]
+	for i in range(nBins):
+		x  = gref.GetX()[i]
+		ex = gref.GetEX()[i]
+		y  = gref.GetY()[i]
+		ey = gref.GetEY()[i]
+		y += plusmin*ey - f.Eval(x)
+		y *= plusmin
+		ey = 0.0
+		vx  += [x]
+		vex += [ex]
+		vy  += [y]
+		vey += [ey]
+
+	vx  = array('f',vx)
+	vex = array('f',vex)
+	vy  = array('f',vy)
+	vey = array('f',vey)
+
+	g = TGraphErrors(nBins,vx,vy,vex,vey)
+	g.SetLineColor(f.GetLineColor())
+	if plusmin < 0: g.SetLineStyle(kDashed)
+	return g
+
+####################################################################################################
+
 def mkTemplateFunctions():
 	mp = parser()
 	opts,fout,samples = main(mp,False,False,True)
@@ -219,11 +250,13 @@ def mkTemplateFunctions():
 	markers, colours = INTERNALstyle()
 	paves = []
 
-	hDat, hRat, fFit, gUnc, gUncScaled, fitter, covariant = INTERNALhistograms(opts)
-	c1, c2, c = INTERNALcanvases(opts)
+	hDat, hRat, fFit, gUnc, gUncScaled, gUncDiff, fitter, covariant = INTERNALhistograms(opts)
+	c1, c2, c3, c = INTERNALcanvases(opts)
 	can = TCanvas("main","main")
 
 	ln = INTERNALline("1",float(opts.fBound[0]),float(opts.fBound[1]))
+	ln0 = INTERNALline("0",float(opts.fBound[0]),float(opts.fBound[1]))
+	ln0.SetMinimum(-0.1)
 
 	for iTag,Tag in enumerate(opts.catTags):
 		nCat = int(opts.mvaBins['mva%s'%Tag][0])-1
@@ -234,6 +267,8 @@ def mkTemplateFunctions():
 		
 		c2[Tag] = TCanvas('transfer_sel%s'%Tag,'transfer_sel%s'%Tag,600*(nCat-1),500*3)
 		c2[Tag].Divide(nCat-1,3)
+		c3[Tag] = TCanvas('transferDiff_sel%s'%Tag,'transferDiff_sel%s'%Tag,600*(nCat-1),500*3)
+		c3[Tag].Divide(nCat-1,3)
 
 		leg = INTERNALlegend(Tag)
 		leg.SetX1(0.7)
@@ -305,6 +340,8 @@ def mkTemplateFunctions():
 					for ci in range(3):
 						c2[Tag].cd(iCat+ci*(nCat-1))
 						if ifitTag==0:
+							ln.SetMinimum(0.8 if Tag=='NOM' else 0.7)
+							ln.SetMaximum(1.2 if Tag=='NOM' else 1.3)
 							ln.Draw()
 						g.Draw('same E3')
 						if ifitTag==2: gUncScaled[(Tag,iCat,'_POL%d'%(ci+1))].Draw('same E3')
@@ -318,11 +355,11 @@ def mkTemplateFunctions():
 							llB.SetTextSize(0.03)
 							llB.SetY1(llB.GetY2()-(llB.GetNRows()+1)*0.035)
 							llB.Draw()
-							pave = TPaveText(llB.GetX1(),llB.GetY1()-0.05,llB.GetX2(),llB.GetY1()-0.01,"NDC")
+							pave = TPaveText(llB.GetX1(),llB.GetY1()-0.04-0.02,llB.GetX2(),llB.GetY1()-0.02,"NDC")
 							pave.SetFillStyle(-1)
 							pave.SetBorderSize(0)
 							pave.SetTextAlign(11)
-							pave.SetTextSize(0.035)
+							pave.SetTextSize(0.03)
 							pave.SetTextFont(42)
 							pave.AddText("Scale Factor band: %.3f"%opts.scale[(jCat,'_POL%d'%(ci+1))])
 							pave.Draw()
@@ -334,6 +371,20 @@ def mkTemplateFunctions():
 						ll.SetY1(ll.GetY2()-ll.GetNRows()*0.06)
 						ll.SetTextSize(0.04)
 						ll.Draw()
+
+					if ifitTag==2:
+						for ci in range(3):
+							c3[Tag].cd(iCat+ci*(nCat-1))
+							for cj in range(3):
+								if cj==0:
+									ln0.SetMaximum(0.15 if Tag=='NOM' else 0.3)
+									ln0.Draw()
+								gD = INTERNALgraphDiff(gUncScaled[(Tag,iCat,'_POL%d'%(ci+1))],fFit[(Tag,iCat,'_POL%d'%(cj+1))],1.0)
+								gUncDiff[(Tag,iCat,'_POL%d%d%+d'%(ci+1,cj+1,+1))] = gD
+								gD.Draw("sameL")
+								gD = INTERNALgraphDiff(gUncScaled[(Tag,iCat,'_POL%d'%(ci+1))],fFit[(Tag,iCat,'_POL%d'%(cj+1))],-1.0)
+								gUncDiff[(Tag,iCat,'_POL%d%d%+d'%(ci+1,cj+1,-1))] = gD
+								gD.Draw("sameL")
 
 				else:
 					if ifitTag==0:
@@ -356,6 +407,8 @@ def mkTemplateFunctions():
 		c1[Tag].SaveAs('plots/transfer/%s.pdf'%c1[Tag].GetName())
 		c2[Tag].SaveAs('plots/transfer/%s.png'%c2[Tag].GetName())
 		c2[Tag].SaveAs('plots/transfer/%s.pdf'%c2[Tag].GetName())
+		c3[Tag].SaveAs('plots/transfer/%s.png'%c3[Tag].GetName())
+		c3[Tag].SaveAs('plots/transfer/%s.pdf'%c3[Tag].GetName())
 
 	#c.SaveAs('plots/transfer/%s.png'%c.GetName())
 
