@@ -56,8 +56,8 @@ notext=""
 ##################################################
 if [ "$1" == "" ] || [ "$1" == "1" ]; then
 	if [ "$2" == "" ] || [ "$2" == "1" ]; then
-		$basepath/mkTransferFunctions.py -D "$defaultopts" -G "$globalpathskimslim" -S "$samplespath" -o "rootfiles/vbfHbb_transferFunctions.root" --mvaBins $mvaBins --catTags "NOM,VBF" --fBound "80,200" --complexWghts $weightBoth -s Data --typetag Data 
-		$basepath/mkTransferFunctions.py -D "$defaultopts" -G "$globalpathskimslim" -S "$samplespath" -o "rootfiles/vbfHbb_transferFunctions.root" --mvaBins $mvaBins --catTags "NOM,VBF" --fBound "80,200" --complexWghts $weightBoth -s Data --typetag Data --merge
+		echo $basepath/mkTransferFunctions.py -D "$defaultopts" -G "$globalpathskimslim" -S "$samplespath" -o "rootfiles/vbfHbb_transferFunctions.root" --mvaBins $mvaBins --catTags "NOM,VBF" --fBound "80,200" --complexWghts $weightBoth -s Data --typetag Data 
+		echo $basepath/mkTransferFunctions.py -D "$defaultopts" -G "$globalpathskimslim" -S "$samplespath" -o "rootfiles/vbfHbb_transferFunctions.root" --mvaBins $mvaBins --catTags "NOM,VBF" --fBound "80,200" --complexWghts $weightBoth -s Data --typetag Data --merge
 	fi
 	if [ "$2" == "" ] || [ "$2" == "2" ]; then
 		$basepath/mkTransferFunctions.py -D "$defaultopts" -G "$globalpathskimslim" -S "$samplespath" -o "rootfiles/vbfHbb_transferFunctions.root" --mvaBins $mvaBins --catTags "NOM,VBF" --fBound "80,200" --complexWghts $weightBoth -s QCD --typetag QCD --unblind 

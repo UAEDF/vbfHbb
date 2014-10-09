@@ -1,0 +1,677 @@
+//STANDARD ROOT INCLUDES
+#include <TROOT.h>
+#include <TH1.h>
+#include <TH2.h>
+#include <TProfile.h>
+#include <TStyle.h>
+#include <TCanvas.h>
+#include <TTree.h>
+#include <TFile.h>
+#include <TChain.h>
+#include <TDirectory.h>
+#include <THStack.h>
+#include <TLegend.h>
+
+//STANDARD C++ INCLUDES
+#include <iostream>
+#include <sstream>
+#include <cstring>
+#include <string>
+#include <math.h> 
+#include <fstream>
+#include <TMath.h>
+
+//ROOFIT INCLUDES
+#include "RooRealVar.h"
+#include "RooWorkspace.h"
+#include "RooDataHist.h"
+#include "RooGenericPdf.h"
+#include "RooArgList.h"
+#include "RooArgSet.h"
+#include "RooBernstein.h"
+#include "RooCBShape.h"
+#include "RooProdPdf.h"
+#include "RooAddPdf.h"
+#include "RooGaussian.h"
+#include "RooExponential.h"
+#include "RooFitResult.h"
+#include "RooPlot.h"
+#include "RooHist.h"
+#include "TPaveText.h"
+#include "RooCustomizer.h"
+
+using namespace std;
+using namespace RooFit;
+
+void testQCDmodels(double XMIN,double XMAX, int CAT){
+    RooMsgService::instance().setSilentMode(kTRUE);
+    for(int i=0;i<2;i++) {
+        RooMsgService::instance().setStreamStatus(i,kFALSE);
+    }
+    char name[1000];
+    TFile *file;
+    TString bestModels = "Optimal models: ";
+    TString ext = "CAT";
+    ext += CAT;
+    
+    // --------------------------
+    // --  Variables to be set --
+    // --------------------------
+    
+    bool isTransfer = false;    // Makes full model with transfer functions
+    bool addHiggs = false;       // Adds Higgs contribution in fit model
+    double DX=0.1;
+    TString ZModelStr = "Z_model_"+ext; 
+    TString TopModelStr = "Top_model_"+ext; 
+    TString HModelStr = "H_model_"+ext; 
+    TString ZYieldStr = "yield_ZJets_"+ext;
+    TString TopYieldStr = "yield_Top_"+ext;
+    TString HYieldStr = "yield_H_"+ext;
+    TString fileName = "data_shapes_workspace_0.00_0.70_0.84_BRN5.root";
+    TString workspaceName = "w";
+    TString xName = "mbbReg_"+ext;
+    TString outName = "altModels_" + ext + "_";
+    outName += XMIN;    
+    outName += "-";
+    outName += XMAX;
+    outName += ".root";
+    
+    // --------------------------
+
+    file = TFile::Open(fileName);
+    RooWorkspace *w = (RooWorkspace*)file->Get(workspaceName);
+//     w->Print();
+    RooRealVar *x = (RooRealVar*)w->var(xName);
+    
+    RooWorkspace *newWS = new RooWorkspace(workspaceName, workspaceName);
+    
+    vector<RooAbsPdf*> QCDmodels;
+    map<TString,int> ndof;
+    double NllNull=0, ndofNull=0;
+    
+    //------- Get data histogram --------------
+    RooDataHist *dataHist = (RooDataHist*) w->obj("data_hist_"+ext);
+    cout << "Retrieved RooDataHist "<< ext << endl;
+//     w->Print();
+    
+    //----------- Make QCD models ----------------      
+	//
+	static const int nOrders = 7;
+	static const int nParams = 8;
+	RooRealVar *QCD[nOrders][nParams];
+	RooBernstein *model[nOrders];
+
+	// init params to zero
+	for (int ord=0; ord<nOrders; ord++) {
+		for (int par=0; par<nParams; par++) {
+			QCD[ord][par] = NULL;
+		}
+		model[ord] = NULL;
+	}
+	// set params
+	for (int ord=2; ord<nOrders+2; ord++) {
+		for (int par=0; par<=ord; par++) {
+			sprintf(name,"QCD_Bernstein%d_p%d_%s", ord, par, ext.Data());
+			QCD[ord-2][par] = new RooRealVar(name,name,0.1,0,1);
+		}
+	}
+	
+	sprintf(name,"QCD_Bernstein%d_%s", 2, ext.Data());
+	model[0] = new RooBernstein(name,name,*x,RooArgSet(QCD[0][0],QCD[0][1],QCD[0][2]));
+	sprintf(name,"QCD_Bernstein%d_%s", 3, ext.Data());
+	model[1] = new RooBernstein(name,name,*x,RooArgSet(QCD[1][0],QCD[1][1],QCD[1][2],QCD[1][3]));
+	sprintf(name,"QCD_Bernstein%d_%s", 4, ext.Data());
+	model[2] = new RooBernstein(name,name,*x,RooArgSet(QCD[2][0],QCD[2][1],QCD[2][2],QCD[2][3],QCD[2][4]));
+	sprintf(name,"QCD_Bernstein%d_%s", 5, ext.Data());
+	model[3] = new RooBernstein(name,name,*x,RooArgSet(QCD[3][0],QCD[3][1],QCD[3][2],QCD[3][3],QCD[3][4],QCD[3][5]));
+	sprintf(name,"QCD_Bernstein%d_%s", 6, ext.Data());
+	model[4] = new RooBernstein(name,name,*x,RooArgSet(QCD[4][0],QCD[4][1],QCD[4][2],QCD[4][3],QCD[4][4],QCD[4][5],QCD[4][6]));
+	sprintf(name,"QCD_Bernstein%d_%s", 7, ext.Data());
+	model[5] = new RooBernstein(name,name,*x,RooArgSet(QCD[5][0],QCD[5][1],QCD[5][2],QCD[5][3],QCD[5][4],QCD[5][5],QCD[5][6],QCD[5][7]));
+	sprintf(name,"QCD_Bernstein%d_%s", 8, ext.Data());
+	model[6] = new RooBernstein(name,name,*x,RooArgSet(QCD[6][0],QCD[6][1],QCD[6][2],QCD[6][3],QCD[6][4],QCD[6][5],QCD[6][6],QCD[6][7],QCD[6][8]));
+	
+	// add models
+	for (int ord=0; ord<nOrders; ord++) {
+		QCDmodels.push_back(model[ord]);
+		ndof[model[ord].GetName()] = ord+3;
+	}
+
+
+//####################################################################################################
+//// exponential alternatives
+	static const int nOrders = 5;
+	static const int nParams = 5;
+	int index = -1;
+	RooRealVar *QCD_expPow[nOrders][nParams];
+	RooGenericPDF *model_ALT[nOrders];
+
+	// init params to zero
+	for (int ord=0; ord<nOrders; ord++) {
+		for (int par=0; par<nParams; par++) {
+			QCD_expPow[ord][par] = NULL;
+		}
+	}
+	// set params
+	index = 0;
+	double limits[3][3] = {{1,0.1,10},{0.1,1,10},{1,0,3}}; // value, minvalue, maxvalue
+	for (int par=0; par<=2; par++) {
+		sprintf(name,"QCD_expPow_p%d_%s", par, ext.Data());
+		QCD_expPow[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_expPow_%s", ext.Data());
+    model_ALT[index] = new RooGenericPdf(name,"pow(@0-30,@1)*exp(-@2*pow(@0,@3))",RooArgList(*x,QCD_expPow[index][0],QCD_expPow[index][1],QCD_expPow[index][2]));
+	QCDmodels.push_back(model_ALT[index]);
+	ndof[model_ALT[index]->GetName()] = 3;
+
+	// set params
+	index = 1;
+	double limits[3][4] = {{0.7,0.1,10},{1,0,10},{0.4,0,3},{50,5,100}}; // value, minvalue, maxvalue
+	for (int par=0; par<=3; par++) {
+		sprintf(name,"QCD_expPow_ext1_p%d_%s", par, ext.Data());
+		QCD_expPow[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_expPow_ext1_%s", ext.Data());
+    model_ALT[index] = new RooGenericPdf(name,"pow(@0-@4,@1)*exp(-@2*pow(@0,@3))",RooArgList(*x,QCD_expPow[index][0],QCD_expPow[index][1],QCD_expPow[index][2],QCD_expPow[index][3]));
+    QCDmodels.push_back(model_ALT[index]);
+    ndof[model_ALT[index]->GetName()] = 4;
+      
+	// set params
+	index = 2;
+	double limits[3][5] = {{0.7,0.1,10},{0,-1,1},{0,-1,1},{50,5,100},{-80,-150,-10}}; // value, minvalue, maxvalue
+	for (int par=0; par<=4; par++) {
+		sprintf(name,"QCD_expPow_ext2_p%d_%s", par, ext.Data());
+		QCD_expPow[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_expPow_ext2_%s", ext.Data());
+    model_ALT[index] = new RooGenericPdf(name,"pow(@0-@4,@1)*exp(@2*@0+@3*pow(@0,2)+@4)",RooArgList(*x,QCD_expPow[index][0],QCD_expPow[index][1],QCD_expPow[index][2],QCD_expPow[index][3],QCD_expPow[index][4]));
+    QCDmodels.push_back(model_ALT[index]);
+    ndof[model_ALT[index]->GetName()] = 5;
+
+	// set params
+	index = 3;
+	double limits[3][5] = {{0.1,0.01,5},{1,0,3},{0.01,0.001,1},{0,-0.1,0.1},{150,100,300}}; // value, minvalue, maxvalue
+	for (int par=0; par<=4; par++) {
+		sprintf(name,"QCD_expPow_Paolo_p%d_%s", par, ext.Data());
+		QCD_expPow[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_expPow_Paolo_%s", ext.Data());
+    model_ALT[index] = new RooGenericPdf(name,"(@0-30)*(@3*@0*@0-2*@3*@4*@0+@3*@4*@4+1)*exp(-@2*pow(@0,@5))",RooArgList(*x,QCD_expPow[index][0],QCD_expPow[index][1],QCD_expPow[index][2],QCD_expPow[index][3],QCD_expPow[index][4]));
+    QCDmodels.push_back(model_ALT[index]);
+    ndof[model_ALT[index]->GetName()] = 5;
+    
+	// set params
+	index = 4;
+	double limits[3][5] = {{0,0,10},{1,0,10},{-30,-50,50},{0.1,0,10},{1,0,3}}; // value, minvalue, maxvalue
+	for (int par=0; par<=4; par++) {
+		sprintf(name,"QCD_expPow_ext2b_p%d_%s", par, ext.Data());
+		QCD_expPow[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_expPow_ext2b_%s", ext.Data());
+    model_ALT[index] = new RooGenericPdf(name,"(@1*pow(@0,2)+@2*@0+@3)*exp(-@4*pow(@0,@5))",RooArgList(*x,QCD_expPow[index][0],QCD_expPow[index][1],QCD_expPow[index][2],QCD_expPow[index][3],QCD_expPow[index][4]));
+    QCDmodels.push_back(model_ALT[index]);
+    ndof[model_ALT[index]->GetName()] = 5;
+    
+//####################################################################################################
+//// tanh alternatives
+	static const int nOrders = 3;
+	static const int nParams = 5;
+	int index = -1;
+	RooRealVar *QCD_tanh[nOrders][nParams];
+	RooGenericPDF *model_ALT2[nOrders];
+
+	// init params to zero
+	for (int ord=0; ord<nOrders; ord++) {
+		for (int par=0; par<nParams; par++) {
+			QCD_tanh[ord][par] = NULL;
+		}
+	}
+
+	// set params
+	index = 0;
+	double limits[3][3] = {{1.5,1,10},{0.01,0.001,0.1},{2,-0.1,50}}; // value, minvalue, maxvalue
+	for (int par=0; par<=2; par++) {
+		sprintf(name,"QCD_tanh_p%d_%s", par, ext.Data());
+		QCD_tanh[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_tanh_%s", ext.Data());
+    model_ALT2[index] = new RooGenericPdf(name,"@1 - tanh(@2*@0-@3)",RooArgList(*x,QCD_tanh[index][0],QCD_tanh[index][1],QCD_tanh[index][2]));
+    QCDmodels.push_back(model_ALT2[index]);
+    ndof[model_ALT2[index]->GetName()] = 3;
+    
+	// set params
+	index = 1;
+	double limits[3][4] = {{1.5,-10,10},{0.01,0.001,0.1},{2,-0.1,50},{0,-1,1}}; // value, minvalue, maxvalue
+	for (int par=0; par<=3; par++) {
+		sprintf(name,"QCD_tanh_ext1_p%d_%s", par, ext.Data());
+		QCD_tanh[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_tanh_ext1_%s", ext.Data());
+    model_ALT2[index] = new RooGenericPdf(name,"@1+@4*@0 - tanh(@2*@0-@3)",RooArgList(*x,QCD_tanh[index][0],QCD_tanh[index][1],QCD_tanh[index][2],QCD_tanh[index][3]));
+    QCDmodels.push_back(model_ALT2[index]);
+    ndof[model_ALT2[index]->GetName()] = 4;
+	
+	// set params
+	index = 2;
+	double limits[3][5] = {{1,-10,10},{0.01,0.001,0.1},{1.4,-0.1,50},{0,-0.1,0.1},{200,100,300}}; // value, minvalue, maxvalue
+	for (int par=0; par<=4; par++) {
+		sprintf(name,"QCD_tanh_Paolo_p%d_%s", par, ext.Data());
+		QCD_tanh[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_tanh_Paolo_%s", ext.Data());
+    model_ALT2[index] = new RooGenericPdf(name,"@1- tanh((@2*@0-@3)*(@4*@0*@0-2*@4*@5*@0+@4*@5*@5+1))",RooArgList(*x,QCD_tanh[index][0],QCD_tanh[index][1],QCD_tanh[index][2],QCD_tanh[index][3],QCD_tanh[index][4]));
+    QCDmodels.push_back(model_ALT2[index]);
+    ndof[model_ALT2[index]->GetName()] = 5;
+
+//####################################################################################################
+//// modg alternatives
+	static const int nOrders = 5;
+	static const int nParams = 5;
+	int index = -1;
+	RooRealVar *QCD_modg[nOrders][nParams];
+	RooGenericPDF *model_ALT3[nOrders];
+
+	// init params to zero
+	for (int ord=0; ord<nOrders; ord++) {
+		for (int par=0; par<nParams; par++) {
+			QCD_modg[ord][par] = NULL;
+		}
+	}
+
+	// set params
+	index = 0;
+	double limits[3][3] = {{0.007,0.0001,0.1},{0.03,0.001,10},{0.007,0.0001,0.1}}; // value, minvalue, maxvalue
+	for (int par=0; par<=2; par++) {
+		sprintf(name,"QCD_modg_p%d_%s", par, ext.Data());
+		QCD_modg[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_modg_%s", ext.Data());
+    model_ALT3[index] = new RooGenericPdf(name,"exp(-@1*@0) * TMath::Erfc(@2-@3*@0)",RooArgList(*x,QCD_modg[index][0],QCD_modg[index][1],QCD_modg[index][2]));
+    QCDmodels.push_back(model_ALT3[index]);
+    ndof[model_ALT3[index]->GetName()] = 3;
+
+	// set params
+	index = 1;
+	double limits[3][4] = {{0.017,-0.1,0.1},{0.5,0.001,10},{0.01,0.0001,0.1},{0,-0.1,0.1}}; // value, minvalue, maxvalue
+	for (int par=0; par<=3; par++) {
+		sprintf(name,"QCD_modg_ext1_p%d_%s", par, ext.Data());
+		QCD_modg[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_modg_ext1_%s", ext.Data());
+    model_ALT3[index] = new RooGenericPdf(name,"exp(-@1*@0+@4) * TMath::Erfc(@2-@3*@0)",RooArgList(*x,QCD_modg[index][0],QCD_modg[index][1],QCD_modg[index][2],QCD_modg[index][3]));
+    QCDmodels.push_back(model_ALT3[index]);
+    ndof[model_ALT3[index]->GetName()] = 4;
+	
+	// set params
+	index = 2;
+	double limits[3][4] = {{0.03,-0.1,0.1},{1.2,0.001,10},{0.024,0.0001,0.1},{0.00004,-0.1,0.1}}; // value, minvalue, maxvalue
+	for (int par=0; par<=3; par++) {
+		sprintf(name,"QCD_modg_ext2_p%d_%s", par, ext.Data());
+		QCD_modg[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_modg_ext2_%s", ext.Data());
+    model_ALT3[index] = new RooGenericPdf(name,"exp(-@1*@0+@4*pow(@0,2)) * TMath::Erfc(@2-@3*@0)",RooArgList(*x,QCD_modg[index][0],QCD_modg[index][1],QCD_modg[index][2],QCD_modg[index][3]));
+    QCDmodels.push_back(model_ALT3[index]);
+    ndof[model_ALT3[index]->GetName()] = 4;
+	
+	// set params
+	index = 3;
+	double limits[3][5] = {{0.017,0.001,0.1},{0.5,0.1,5},{0.01,0.002,0.1},{0.001,-0.01,0.01},{150,20,250}}; // value, minvalue, maxvalue
+	for (int par=0; par<=4; par++) {
+		sprintf(name,"QCD_modg_Paolo_p%d_%s", par, ext.Data());
+		QCD_modg[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_modg_Paolo_%s", ext.Data());
+    model_ALT3[index] = new RooGenericPdf(name,"exp(-@1*@0) * TMath::Erfc((@2-@3*@0)*(@4*@0*@0-2*@4*@5*@0+@4*@5*@5+1))",RooArgList(*x,QCD_modg[index][0],QCD_modg[index][1],QCD_modg[index][2],QCD_modg[index][3],QCD_modg[index][4]));
+    QCDmodels.push_back(model_ALT3[index]);
+    ndof[model_ALT3[index]->GetName()] = 5;
+
+	// set params
+	index = 4;
+	double limits[3][4] = {{0.007,-0.1,0.1},{0.03,0.001,10},{0.007,0.0001,0.1},{0,-0.1,0.1}}; // value, minvalue, maxvalue
+	for (int par=0; par<=3; par++) {
+		sprintf(name,"QCD_modg_ext3_p%d_%s", par, ext.Data());
+		QCD_modg[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_modg_ext3_%s", ext.Data());
+    model_ALT3[index] = new RooGenericPdf(name,"exp(-@1*@0) * TMath::Erfc(@2-@3*@0+@4*pow(@0,2))",RooArgList(*x,QCD_modg[index][0],QCD_modg[index][1],QCD_modg[index][2],QCD_modg[index][3]));
+    QCDmodels.push_back(model_ALT3[index]);
+    ndof[model_ALT3[index]->GetName()] = 4;
+    
+    
+    RooRealVar QCD_erfPow_0("QCD_erfPow_0_"+ext,"QCD_erfPow_0_"+ext,30,0,60);
+    RooRealVar QCD_erfPow_1("QCD_erfPow_1_"+ext,"QCD_erfPow_1_"+ext,10,-50,50);
+    RooRealVar QCD_erfPow_2("QCD_erfPow_2_"+ext,"QCD_erfPow_2_"+ext,1,-10,10);
+    RooRealVar QCD_erfPow_3("QCD_erfPow_3_"+ext,"QCD_erfPow_3_"+ext,1,-10,10);
+    RooGenericPdf model_erfPow("QCD_erfPow_"+ext,"TMath::Erf((@0-@1)/@2)*pow(@0,-@3-@4*log(@0/8000))",RooArgList(*x,QCD_erfPow_0,QCD_erfPow_1,QCD_erfPow_2,QCD_erfPow_3));
+    QCDmodels.push_back(&model_erfPow);
+    ndof[model_erfPow.GetName()] = 4;
+    
+//####################################################################################################
+//// erfPol alternatives
+	static const int nOrders = 1;
+	static const int nParams = 5;
+	int index = -1;
+	RooRealVar *QCD_erfPol[nOrders][nParams];
+	RooGenericPDF *model_ALT4[nOrders];
+
+	// init params to zero
+	for (int ord=0; ord<nOrders; ord++) {
+		for (int par=0; par<nParams; par++) {
+			QCD_erfPol[ord][par] = NULL;
+		}
+	}
+
+	// set params
+	index = 0;
+	double limits[3][5] = {{30,0,60},{10,-50,50},{-0.005,-0.01,0.01},{-1,-5,5},{500,0,2000}}; // value, minvalue, maxvalue
+	for (int par=0; par<=4; par++) {
+		sprintf(name,"QCD_erfPol_p%d_%s", par, ext.Data());
+		QCD_erfPol[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_erfPol_%s", ext.Data());
+    model_ALT4[index] = new RooGenericPdf(name,"TMath::Erf((@0-@1)/@2)*(@3*pow(@0,2)+@4*@0+@5)",RooArgList(*x,QCD_erfPol[index][0],QCD_erfPol[index][1],QCD_erfPol[index][2],QCD_erfPol[index][3],QCD_erfPol[index][4]));
+    QCDmodels.push_back(model_ALT4[index]);
+    ndof[model_ALT4[index]->GetName()] = 5;
+    
+//####################################################################################################
+//// tanhPol alternatives
+	static const int nOrders = 1;
+	static const int nParams = 5;
+	int index = -1;
+	RooRealVar *QCD_tanhPol[nOrders][nParams];
+	RooGenericPDF *model_ALT5[nOrders];
+
+	// init params to zero
+	for (int ord=0; ord<nOrders; ord++) {
+		for (int par=0; par<nParams; par++) {
+			QCD_tanhPol[ord][par] = NULL;
+		}
+	}
+
+	// set params
+	index = 0;
+	double limits[3][5] = {{0.15,0.01,1},{53,40,65},{-0.005,-0.01,0.01},{-1,-5,5},{500,0,2000}}; // value, minvalue, maxvalue
+	for (int par=0; par<=4; par++) {
+		sprintf(name,"QCD_tanhPol_p%d_%s", par, ext.Data());
+		QCD_tanhPol[index][par] = new RooRealVar(name,name,limits[par][0],limits[par][1],limits[par][2]);
+	}
+    sprintf(name,"QCD_tanhPol_%s", ext.Data());
+    model_ALT5[index] = new RooGenericPdf(name,"tanh(@1*(@0-@2))*(@3*pow(@0,2)+@4*@0+@5)",RooArgList(*x,QCD_tanhPol[index][0],QCD_tanhPol[index][1],QCD_tanhPol[index][2],QCD_tanhPol[index][3],QCD_tanhPol[index][4]));
+    QCDmodels.push_back(model_ALT5[index]);
+    ndof[model_ALT5[index]->GetName()] = 5;
+
+
+//####################################################################################################
+    //---------- Make Building blocks new models ----------
+    const int totOrder = 4;
+    RooRealVar *expPar[totOrder], *powPar[totOrder], *sinPar[2*totOrder];
+    RooExponential *expPdf[totOrder];
+    RooGenericPdf *powPdf[totOrder];
+    RooGenericPdf *sinPdf[totOrder];
+    
+    for( int iOrder = 1; iOrder < totOrder+1; iOrder++) {
+        sprintf(name,"QCD_exp_p0_order%d_%s", iOrder, ext.Data());
+        expPar[iOrder-1] = new RooRealVar(name,name,0,-1,1);
+        sprintf(name,"QCD_exp_order%d_%s", iOrder, ext.Data());
+        expPdf[iOrder-1] = new RooExponential(name,name,*x,*expPar[iOrder-1]);
+        
+        sprintf(name,"QCD_pow_p0_order%d_%s", iOrder, ext.Data());
+        powPar[iOrder-1] = new RooRealVar(name,name,0,-1,1);
+        sprintf(name,"QCD_pow_order%d_%s", iOrder, ext.Data());
+        powPdf[iOrder-1] = new RooGenericPdf(name,name,"pow(@0,@1)",RooArgList(*x,*powPar[iOrder-1]));
+    }
+    
+    QCDmodels.push_back(expPdf[0]);
+    QCDmodels.push_back(powPdf[0]);
+    ndof[expPdf[0]->GetName()] = 1;
+    ndof[powPdf[0]->GetName()] = 1;
+    
+    
+    sprintf(name,"QCD_sin_phase_order%d_%s", 1, ext.Data());
+    sinPar[0] = new RooRealVar(name,name,0,-3.14,3.14);
+    sprintf(name,"norm_sin_order%d_%s", 1, ext.Data());
+    sinPar[1] = new RooRealVar(name,name,0.4,0.01,1);
+    sprintf(name,"QCD_sin_phase_order%d_%s", 2, ext.Data());
+    sinPar[2] = new RooRealVar(name,name,0,-3.14,3.14);
+    sprintf(name,"norm_sin_order%d_%s", 2, ext.Data());
+    sinPar[3] = new RooRealVar(name,name,0.4,0.01,1);
+    
+    sprintf(name,"QCD_sin_freq_order%d_%s", 1, ext.Data());
+    RooRealVar *sinFreqpar = new RooRealVar(name,name,0.017,0.005,0.05);
+    sprintf(name,"QCD_sin_order%d_%s", 1, ext.Data());
+    sinPdf[0] = new RooGenericPdf(name,name,"1+@2*sin(@0*@3+@1)",RooArgList(*x,*sinPar[0],*sinPar[1],*sinFreqpar));
+        QCDmodels.push_back(sinPdf[0]);
+    ndof[sinPdf[0]->GetName()] = 3;
+    sprintf(name,"QCD_sin_order%d_%s", 2, ext.Data());
+    sinPdf[1] = new RooGenericPdf(name,name,"1+@2*sin(@0*@3+@1)+@5*sin(@0*@3*2+@4)",RooArgList(*x,*sinPar[0],*sinPar[1],*sinFreqpar,*sinPar[2],*sinPar[3]));
+    QCDmodels.push_back(sinPdf[1]);
+    ndof[sinPdf[1]->GetName()] = 5;
+    
+    //---------- Build models ----------------
+        RooAddPdf *totExpPdf[totOrder-1];
+        RooAddPdf *totPowPdf[totOrder-1];
+        RooRealVar *normExpPar[totOrder-1], *normPowPar[totOrder-1];
+        
+        for( int iOrder = 1; iOrder < totOrder; iOrder++) {
+    	sprintf(name,"norm_exp_order%d_%s", iOrder, ext.Data());
+    	normExpPar[iOrder-1] = new RooRealVar(name,name,0.2,0,1);
+    	sprintf(name,"norm_pow_order%d_%s", iOrder, ext.Data());
+    	normPowPar[iOrder-1] = new RooRealVar(name,name,0.2,0,1); //will go crazy if they are allowed to be negative
+        }
+        
+        sprintf(name,"QCD_TotExp_order%d_%s", 2, ext.Data());	 //can't use loop without correlating parameters
+        totExpPdf[0] = new RooAddPdf(name,name,*expPdf[0], *expPdf[1],*normExpPar[0]);
+        QCDmodels.push_back(totExpPdf[0]);
+        ndof[totExpPdf[0]->GetName()] = 3;
+        sprintf(name,"QCD_TotExp_order%d_%s", 3, ext.Data());
+        totExpPdf[1] = new RooAddPdf(name,name,RooArgList(*expPdf[0],*expPdf[1],*expPdf[2]),RooArgList(*normExpPar[0],*normExpPar[1]));
+        QCDmodels.push_back(totExpPdf[1]);
+        ndof[totExpPdf[1]->GetName()] = 5;
+        sprintf(name,"QCD_TotExp_order%d_%s", 4, ext.Data());
+        totExpPdf[2] = new RooAddPdf(name,name,RooArgList(*expPdf[0],*expPdf[1],*expPdf[2],*expPdf[3]),RooArgList(*normExpPar[0],*normExpPar[1],*normExpPar[2]));
+        QCDmodels.push_back(totExpPdf[2]);
+        ndof[totExpPdf[2]->GetName()] = 7;
+//         sprintf(name,"QCD_TotExp_order%d_%s", 4, ext.Data());
+//         RooGenericPdf *newTotExpPdf = new RooGenericPdf(name,name, "@1*exp(@2*@0)+@3*exp(@4*@0)+@5*exp(@6*@0)+(1-@1-@3-@5)*exp(@7*@0)", RooArgList(*x, *normExpPar[0], *expPar[0],*normExpPar[1],*expPar[1],*normExpPar[2],*expPar[2],*expPar[3]));
+//         QCDmodels.push_back(newTotExpPdf);
+//         ndof[newTotExpPdf->GetName()] = 7;
+        
+        sprintf(name,"QCD_TotPow_order%d_%s", 2, ext.Data());
+        totPowPdf[0] = new RooAddPdf(name,name,*powPdf[0], *powPdf[1],*normPowPar[0]);
+        QCDmodels.push_back(totPowPdf[0]);
+        ndof[totPowPdf[0]->GetName()] = 3;
+        sprintf(name,"QCD_TotPow_order%d_%s", 3, ext.Data());
+        totPowPdf[1] = new RooAddPdf(name,name,RooArgList(*powPdf[0],*powPdf[1],*powPdf[2]),RooArgList(*normPowPar[0],*normPowPar[1]));
+        QCDmodels.push_back(totPowPdf[1]);
+        ndof[totPowPdf[1]->GetName()] = 5;
+	sprintf(name,"QCD_TotPow_order%d_%s", 4, ext.Data());
+        totPowPdf[2] = new RooAddPdf(name,name,RooArgList(*powPdf[0],*powPdf[1],*powPdf[2],*powPdf[3]),RooArgList(*normPowPar[0],*normPowPar[1],*normPowPar[2]));
+        QCDmodels.push_back(totPowPdf[2]);
+        ndof[totPowPdf[2]->GetName()] = 7;
+    
+//     if( wsModels ) QCDmodels.clear();
+//     wFixed->Print();
+    RooAbsPdf *ZPdf = (RooAbsPdf*) w->obj(ZModelStr); 
+    RooAbsPdf *topPdf = (RooAbsPdf*) w->obj(TopModelStr); 
+    RooRealVar *nZ = (RooRealVar*)w->var(ZYieldStr);
+    RooRealVar *nT = (RooRealVar*)w->var(TopYieldStr);
+    nZ->setConstant(kTRUE);
+    nT->setConstant(kTRUE);
+    
+    RooAbsPdf *HPdf;
+    RooRealVar *nH;
+    if( addHiggs) {
+        HPdf = (RooAbsPdf*) w->obj(HModelStr); 
+        nH = (RooRealVar*)w->var(HYieldStr);
+        nH->setConstant(kTRUE);
+    }
+
+    double QCD_appr = dataHist->sum(kFALSE)-nZ->getVal()-nT->getVal();
+    RooRealVar nQCD("yield_QCD_"+ext,"yield_QCD_"+ext,QCD_appr, 0.5*QCD_appr, 2*QCD_appr);
+    
+    double chiBern=-1;
+    for(vector<RooAbsPdf*>::iterator iModel = QCDmodels.begin(); iModel != QCDmodels.end(); ++iModel) {
+		RooAddPdf *totModel;
+        if( addHiggs) totModel = new RooAddPdf("totModel","totModel", RooArgList(*HPdf, *ZPdf, *topPdf, *(*iModel)),RooArgList(*nH,*nZ,*nT,nQCD));
+        else totModel = new RooAddPdf("totModel","totModel", RooArgList(*ZPdf, *topPdf, *(*iModel)),RooArgList(*nZ,*nT,nQCD));
+	// 	RooFitResult* fitResult = (*iModel)->fitTo(*dataHist,RooFit::Save());
+		RooFitResult* fitResult = totModel->fitTo(*dataHist,RooFit::Save());
+	// 	x->setRange("ZWindow",95.3 - 2*10.6, 95.3 + 2*10.6);
+	// 	RooAbsReal* QCD_integral = (*iModel)->createIntegral(*x, NormSet(*x), Range("ZWindow"));
+	// 	RooAbsReal* Z_integral = ZPdf->createIntegral(*x, NormSet(*x), Range("ZWindow"));
+	// 	cout << "S/B (2 sigma): " << Z_integral->getVal() * expZ/ QCD_integral->getVal() / dataHist->sum(kFALSE) << endl;
+	// 	cout << "S (2 sigma): " << Z_integral->getVal() * expZ << endl;
+	// 	cout << "B (2 sigma): " << QCD_integral->getVal() * dataHist->sum(kFALSE) << endl;
+		if( strstr((*iModel)->GetName(),"xp_order")  == NULL || strstr((*iModel)->GetName(),"TotExp_order4")  != NULL) {
+			newWS->import(*(*iModel));
+		}
+		
+		TCanvas *Datacan = new TCanvas((*iModel)->GetName(),(*iModel)->GetName(),600,600);
+		RooPlot* Dataframe = x->frame();
+		dataHist->plotOn(Dataframe,Name("data"),DataError(RooAbsData::SumW2));
+		totModel->plotOn(Dataframe,RooFit::LineWidth(2),LineColor(kBlue),Name("model"));
+// 		totModel->plotOn(Dataframe,Components(RooArgSet(*ZPdf)),LineColor(kBlue),LineStyle(kDashed));
+// 		totModel->plotOn(Dataframe,Components(RooArgSet(*topPdf)),LineColor(kRed),LineStyle(kDashed));
+	// 	    (*iModel)->plotOn(Dataframe,RooFit::VisualizeError(*res,2,kTRUE),RooFit::FillColor(kGreen),RooFit::MoveToBack());
+	// 	    (*iModel)->plotOn(Dataframe,RooFit::VisualizeError(*res,1,kTRUE),RooFit::FillColor(kYellow));
+		
+		RooHist* resid = Dataframe->residHist( "data","model"/*, true*/);
+		double xVal = 0,y=0, squaredSum=0, squaredSumPoisson=0;
+		int yield = 0;	
+	// 	double maxContribution=0;
+		for( int i=0; i<resid->GetN(); i++) {
+			resid->GetPoint(i,xVal,y);
+			dataHist->get(i/*+(mbbCut-75)*2-1*/);
+			double error = dataHist->weightError(RooAbsData::SumW2);
+			double lo, hi, errorPoisson;
+			dataHist->weightError(lo,hi);		
+	// 	    if( i < 5) cout << "data: " << dataHist->weight() << ", error: " << error<< " y: " << y<< endl;
+	// 	    if( y*y/(error*error) > maxContribution ) maxContribution = y*y/(error*error);
+			if( y >= 0 )  errorPoisson = lo;
+			else errorPoisson = hi;
+			if( error != 0 ) {
+			squaredSum += y*y/(error*error);
+			squaredSumPoisson += y*y/(errorPoisson*errorPoisson);
+			}
+			yield += dataHist->weight();
+	//     		cout << "Verschil: " << y << " +- " << error << endl;
+	//     		cout << "squared sum: " << squaredSum << endl;
+		}
+	// 	cout << "Maximum contribution: " << maxContribution << endl;
+	// 	cout << resid->GetN() << " should be equal to " << dataHist->numEntries() << endl;
+	// 	cout << "yield: " << yield << endl;
+		RooPlot* Dataframe2 = x->frame();
+		Dataframe2->addPlotable(resid,"P");
+		Datacan->cd();
+		Dataframe2->Draw();
+		
+		double Nll = fitResult->minNll();
+		int nBins = (int)((XMAX-XMIN)/DX);
+		double prob = TMath::Prob(squaredSum, (nBins-ndof[(*iModel)->GetName()]));
+		bool newModel=false;
+		if( strstr((*iModel)->GetName(),"QCD_Bernstein")  != NULL || strstr((*iModel)->GetName(),"QCD_expPow_CAT")  != NULL 
+		||  strstr((*iModel)->GetName(),"QCD_modG_CAT")  != NULL  ||  strstr((*iModel)->GetName(),"QCD_tanh_CAT")  != NULL
+		||  strstr((*iModel)->GetName(),"QCD_sin_order1")  != NULL ||  strstr((*iModel)->GetName(),"erfPow")  != NULL 
+        ||  strstr((*iModel)->GetName(),"tanhPol")  != NULL ) newModel = true;
+		
+		//Output fit results
+		fitResult->Print();
+		//cout << "Model name: " << (*iModel)->GetName() << "	" << endl 
+		//<< "minimized -log(L): " << Nll << endl
+		//<< "Probability NLL: "; 
+		double probNll;
+		if( (NllNull-Nll)>0)
+			probNll = TMath::Prob(2*(NllNull-Nll), ndof[(*iModel)->GetName()] - ndofNull);
+		else
+			probNll = 1;
+		cout << "probNll: " << probNll << endl;
+// 		cout << "Chi2: " << squaredSum << endl 
+		<< "Reduced chi2: " << (squaredSum/(nBins-ndof[(*iModel)->GetName()])) << "	" << (squaredSumPoisson/(nBins-ndof[(*iModel)->GetName()])) << " (Poisson)" << endl;
+		//cout << "chi2/chi2_Bern6: " << (squaredSum/(nBins-ndof[(*iModel)->GetName()])/chiBern) << endl
+		<< "Probability chi squared:: " << prob << "	" << TMath::Prob(squaredSumPoisson, (nBins-ndof[(*iModel)->GetName()])) << " (Poisson)" << endl
+		<< "------------------------------------------------------------" << endl;	
+		if( newModel ) {
+			NllNull = Nll;
+			ndofNull = ndof[(*iModel)->GetName()];
+		}
+		if( probNll < 0.05) {
+			bestModels += (*iModel)->GetName();
+			bestModels += "	";
+		}
+		sprintf(name,"red chi2: %.2f, Prob (chi^2): %.2f", squaredSum/(nBins-ndof[(*iModel)->GetName()]), prob);
+		if( strstr((*iModel)->GetName(),"QCD_Bernstein6")  != NULL )
+			chiBern = squaredSum/(nBins-ndof[(*iModel)->GetName()]);
+		
+		if( strstr((*iModel)->GetName(),"QCD_Bernstein4") != NULL) sprintf(name,"4^{th} order Bernstein polynomial");
+		if( strstr((*iModel)->GetName(),"QCD_Bernstein5") != NULL) sprintf(name,"5^{th} order Bernstein polynomial");
+		if( strstr((*iModel)->GetName(),"QCD_expPow")  != NULL) sprintf(name,"expPow");
+		if( strstr((*iModel)->GetName(),"QCD_modG")  != NULL) sprintf(name,"modG");
+		if( strstr((*iModel)->GetName(),"QCD_tanh")  != NULL) sprintf(name,"tanh");
+		if( strstr((*iModel)->GetName(),"QCD_sin_order1")  != NULL) sprintf(name,"sine");
+		
+		Dataframe->SetTitle(name);
+		Dataframe->SetXTitle("M_{bb} (GeV)");
+		Dataframe->SetTitleOffset(1.7,"Y");
+		gPad->SetLeftMargin(0.13);
+		Datacan->cd();
+		Dataframe->Draw();
+		TPaveText *pt = new TPaveText(.6,.6,.85,.85, "NDC");
+		pt->SetFillColor(0); 
+		pt->SetBorderSize(0); 
+		sprintf(name,"reduced #Chi^{2}: %.2f", squaredSum/(nBins-ndof[(*iModel)->GetName()]));
+		pt->AddText(name);
+		sprintf(name,"Probability: %.2f", prob);
+		pt->AddText(name);
+		pt->Draw();
+		
+	// 	Datacan->Print("plots/" + ext+(*iModel)->GetName()+ ".png","png");
+			
+		//Build other CAT models
+        if( isTransfer )
+        {
+            if( strstr((*iModel)->GetName(),"xp_")  == NULL || strstr((*iModel)->GetName(),"TotExp_order4")  != NULL )  {
+                int lastCat;
+                if(CAT == 0) lastCat = 3;
+                else lastCat = 6;
+
+                for( int iCat = CAT+1; iCat <=lastCat; ++iCat) {
+                    TString iCatString = "CAT";
+                    iCatString += iCat;
+                    
+                    RooRealVar *x_CATx = new  RooRealVar(*x,"mbbReg_"+iCatString);
+                    RooAbsPdf* transfer = (RooAbsPdf*) w->obj("transfer_"+iCatString);
+                    TString baseName = (*iModel)->GetName();
+                    baseName.Remove(baseName.Length()-1);
+                    baseName += iCat;
+                    RooAbsPdf* transferTemp = (RooAbsPdf*) transfer->Clone("transfer_"+baseName);
+                    RooAbsPdf* qcdTemp;
+                    
+                    if( strstr((*iModel)->GetName(),"TotExp_order4")  != NULL ) {
+                        RooExponential *expTemp1 = (RooExponential*) expPdf[0]->Clone("QCD_exp_order1_"+iCatString);
+                        RooExponential *expTemp2 = (RooExponential*) expPdf[1]->Clone("QCD_exp_order2_"+iCatString);
+                        RooExponential *expTemp3 = (RooExponential*) expPdf[2]->Clone("QCD_exp_order3_"+iCatString);
+                        RooExponential *expTemp4 = (RooExponential*) expPdf[3]->Clone("QCD_exp_order4_"+iCatString);
+                        
+                        qcdTemp = new RooAddPdf(baseName+"_aux",baseName+"_aux", RooArgList(*expTemp1, *expTemp2,*expTemp3, *expTemp4), RooArgList(*normExpPar[0],*normExpPar[1],*normExpPar[2]));
+                    }
+                    else qcdTemp = (RooAbsPdf*) (*iModel)->Clone(baseName+"_aux");
+                    
+                    RooCustomizer* cust = new RooCustomizer(*qcdTemp, "corr");
+                    cust->replaceArg(*x, *x_CATx);
+                    RooAbsPdf* new_qcdTemp = (RooAbsPdf*) cust->build(); 
+                    RooCustomizer* cust2 = new RooCustomizer(*transferTemp, "test_transfer");
+                    cust2->replaceArg(*x, *x_CATx);
+                    RooAbsPdf* new_transferTemp = (RooAbsPdf*) cust2->build(); 
+                    
+                    RooProdPdf *model_CATx = new RooProdPdf(baseName, baseName, *new_transferTemp, *new_qcdTemp);
+                    model_CATx->Print();
+                    newWS->import(*model_CATx);
+                }
+            }
+        }
+	}// end loop over QCD models
+
+    cout << bestModels << endl;
+    newWS->writeToFile(outName);
+}
