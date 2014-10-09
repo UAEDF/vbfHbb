@@ -1,12 +1,14 @@
-void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, TString TR_NOM, TString TRTAG_NOM, float XMIN_VBF, float XMAX_VBF, int TRORDER_VBF, TString TR_VBF, TString TRTAG_VBF, TString OUTPATH)
+void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, TString TR_NOM, TString TRTAG_NOM, float XMIN_VBF, float XMAX_VBF, int TRORDER_VBF, TString TR_VBF, TString TRTAG_VBF, TString OUTPATH, bool MERGE)
 {
   if (TRORDER_NOM==-1 && TRORDER_VBF==-1) return 0;
   gROOT->ProcessLineSync(".x ../common/styleCMSTDR.C");
   gROOT->ForceStyle();
   gStyle->SetPadRightMargin(0.04);
   const int NSEL(2);
-  const int NCAT[NSEL] = {4,3};
-  const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};
+  if (!MERGE) {const int NCAT[NSEL] = {4,3};}
+  else {const int NCAT[NSEL] = {4,2};}
+  if (!MERGE) {const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};}
+  else {const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,1}};}
   TString SELECTION[2] = {"NOM","VBF"};  
   TString SELTAG[2] = {"NOM","PRK"};
   int STYLE[NCAT[0]] = {20,20,23,21};
@@ -32,9 +34,12 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, TString 
 //	  {{0.01,0.01,0.01,0.01},{0.02,0.015,0.022}}
 //  };
 
+  TString tMERGE = MERGE ? "_CATmerge56" : "";
+  if (MERGE) { SCALE[0][1][1] = 1.5; SCALE[2][1][1] = 0.02; }
+
   system(TString::Format("[ ! -d %s ] && mkdir %s",OUTPATH.Data(),OUTPATH.Data()).Data());
   system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
-  TFile *outf = TFile::Open(TString::Format("%s/output/transferFunctions.root",OUTPATH.Data()),"UPDATE");
+  TFile *outf = TFile::Open(TString::Format("%s/output/transferFunctions%s.root",OUTPATH.Data(),tMERGE.Data()),"UPDATE");
 
   TH1F *hData[NSEL][NCAT[0]];
   TH1F *hRatio[NSEL][NCAT[0]]; 
@@ -61,6 +66,8 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, TString 
   
   int counter(0);
   for(int isel=0;isel<NSEL;isel++) {
+	 if (SELECTION[isel]=="NOM" && TRORDER_NOM==-1) continue;
+	 if (SELECTION[isel]=="VBF" && TRORDER_VBF==-1) continue;
     TF1 *ln = new TF1("line","1",XMIN[isel],XMAX[isel]);
     ln->SetLineColor(kBlack);
     ln->SetLineWidth(1.0);
@@ -80,6 +87,7 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, TString 
     leg->SetTextFont(42);
     leg->SetTextSize(0.05);  
     for(int icat=0;icat<NCAT[isel];icat++) { 
+		if (MERGE && SELECTION[isel]=="VBF" && icat==1) counter = 56;
       TString ss("sel"+SELTAG[isel]+TString::Format("_CAT%d",counter)+TString::Format("%s",TRTAG[isel].Data()));
 		cout << "\n\033[1;34mWorking on: " << ss << "\033[m" << endl;
       hData[isel][icat] = new TH1F("hData_"+ss,"hData_"+ss,(XMAX[isel]-XMIN[isel])/BINSIZE[isel],XMIN[isel],XMAX[isel]);

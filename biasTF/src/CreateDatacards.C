@@ -1,5 +1,5 @@
 #include <iomanip.h>
-void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF, int TRORDER_NOM, int TRORDER_VBF, TString OUTPATH, TString TRTAG, TString CATVETO="")
+void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF, int TRORDER_NOM, int TRORDER_VBF, TString OUTPATH, TString TRTAG, TString CATVETO="", bool MERGE)
 {
   TString PATH(TString::Format("%s/output/",OUTPATH.Data()).Data());
   const int NCAT = 7;
@@ -30,8 +30,23 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
   const float UNC_PDFGlobal_GF[NMASS]    = {1.076,1.075,1.075,1.075,1.074};
   const float UNC_SCALEGlobal_GF[NMASS]  = {1.081,1.079,1.078,1.077,1.077};
 
-  TFile *fData = TFile::Open(PATH+"data_shapes_workspace_"+TString::Format("BRN%d+%d",BRN_ORDER_NOM,BRN_ORDER_VBF)+TRTAG+".root");
-  TFile *fSig  = TFile::Open(PATH+"signal_shapes_workspace.root");
+  vector<int> vCATVETO = tokenize(CATVETO);
+  TString tCATVETO = tag(CATVETO);
+
+  TString TRTAG_NOM = TRTAG(0,5);
+  TString TRTAG_VBF = TRTAG(5,5);
+
+  int CAT_MAX_TAG = 0;
+  if (MERGE && CAT_MAX==6) {
+	  CAT_MAX = 5;
+	  CAT_MAX_TAG = 6;
+  }
+  else CAT_MAX_TAG = CAT_MAX;
+
+  TString tMERGE = MERGE ? "_CATmerge56" : "";
+
+  TFile *fData = TFile::Open(PATH+"data_shapes_workspace_"+TString::Format("BRN%d+%d%s",BRN_ORDER_NOM,BRN_ORDER_VBF,tMERGE.Data())+TRTAG+".root");
+  TFile *fSig  = TFile::Open(PATH+"signal_shapes_workspace"+tMERGE+".root");
  
   RooWorkspace *wData = (RooWorkspace*)fData->Get("w");
   RooWorkspace *wSig  = (RooWorkspace*)fSig->Get("w");
@@ -41,38 +56,38 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
   TString nameSig  = fSig->GetName();
   TString nameSigShort = nameSig(nameSig.Last('/')+1,nameSig.Length());
 
-  vector<int> vCATVETO = tokenize(CATVETO);
-
   char name[1000];
   int H_MASS[5] = {115,120,125,130,135};
   float nData[NCAT],nZ[NCAT],nTop[NCAT],nSigVBF[5][NCAT],nSigGF[5][NCAT];
   for(int i=CAT_MIN;i<=CAT_MAX;i++) {
-    sprintf(name,"yield_data_CAT%d",i);
+	 int j = i;
+	 if (MERGE) j = merge(i);
+    sprintf(name,"yield_data_CAT%d",j);
     nData[i] = float((RooRealVar*)wData->var(name)->getValV());
-    sprintf(name,"yield_ZJets_CAT%d",i);
+    sprintf(name,"yield_ZJets_CAT%d",j);
     nZ[i]  = ((RooRealVar*)wData->var(name))->getValV();
-    sprintf(name,"yield_Top_CAT%d",i);
+    sprintf(name,"yield_Top_CAT%d",j);
     nTop[i]  = ((RooRealVar*)wData->var(name))->getValV(); 
     for(int m=0;m<5;m++) {
-      sprintf(name,"yield_signalVBF_mass%d_CAT%d",H_MASS[m],i);
+      sprintf(name,"yield_signalVBF_mass%d_CAT%d",H_MASS[m],j);
       nSigVBF[m][i] = ((RooRealVar*)wSig->var(name))->getValV();
-      sprintf(name,"yield_signalGF_mass%d_CAT%d",H_MASS[m],i);
+      sprintf(name,"yield_signalGF_mass%d_CAT%d",H_MASS[m],j);
       nSigGF[m][i]  = ((RooRealVar*)wSig->var(name))->getValV();
     }
   }
-
+  
   system(TString::Format("[ ! -d %s ] && mkdir %s",OUTPATH.Data(),OUTPATH.Data()).Data());
   system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
   system(TString::Format("[ ! -d %s/output/datacards ] && mkdir %s/output/datacards",OUTPATH.Data(),OUTPATH.Data()).Data());
   for(int m=0;m<5;m++) {
     ofstream datacard;
-    sprintf(name,"%s/output/datacards/datacard_m%d_BRN%d+%d_CAT%d-CAT%d%s.txt",OUTPATH.Data(),H_MASS[m],BRN_ORDER_NOM,BRN_ORDER_VBF,CAT_MIN,CAT_MAX,TRTAG.Data());
+    sprintf(name,"%s/output/datacards/datacard_m%d_BRN%d+%d_CAT%d-CAT%d%s%s%s.txt",OUTPATH.Data(),H_MASS[m],BRN_ORDER_NOM,BRN_ORDER_VBF,CAT_MIN,CAT_MAX_TAG,tCATVETO.Data(),tMERGE.Data(),TRTAG.Data());
     cout<<"======================================="<<endl; 
     cout<<"Creating datacard: "<<name<<endl;
     cout<<"======================================="<<endl; 
     datacard.open(name);
     datacard.setf(ios::right);
-    datacard<<"imax "<<CAT_MAX-CAT_MIN+1<<"\n";
+    datacard<<"imax "<<CAT_MAX-CAT_MIN+1-vCATVETO.size()<<"\n";
     datacard<<"jmax *"<<"\n";
     datacard<<"kmax *"<<"\n";
     datacard<<"----------------"<<"\n";
@@ -87,6 +102,7 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     datacard<<"bin         ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) { 
 		if (veto(vCATVETO, i)) continue;
+		if (MERGE) i = merge(i);
       sprintf(name,"CAT%d ",i);
       datacard<<name;
     }
@@ -101,6 +117,7 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     datacard<<"bin  ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
 		if (veto(vCATVETO, i)) continue;
+		if (MERGE) i = merge(i);
       sprintf(name,"CAT%d CAT%d CAT%d CAT%d CAT%d ",i,i,i,i,i);
       datacard<<name;
     }  
@@ -229,7 +246,7 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     datacard<<"\n";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
 		if (veto(vCATVETO, i)) continue;
-      sprintf(name,"CMS_vbfbb_qcd_norm_CAT%d    lnU ",i);
+      sprintf(name,"CMS_vbfbb_qcd_norm_CAT%d    lnU ",MERGE ? merge(i) : i);
       datacard<<name<<setw(NF);
       for(int j=CAT_MIN;j<=CAT_MAX;j++) {      
 		  if (veto(vCATVETO, j)) continue;
@@ -245,7 +262,7 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     datacard<<"\n";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
 		if (veto(vCATVETO, i)) continue;
-      sprintf(name,"CMS_vbfbb_zjets_norm_CAT%d  lnN ",i);
+      sprintf(name,"CMS_vbfbb_zjets_norm_CAT%d  lnN ",MERGE ? merge(i) : i);
       datacard<<name<<setw(NF);
       for(int j=CAT_MIN;j<=CAT_MAX;j++) {
 		  if (veto(vCATVETO, j)) continue;
@@ -261,7 +278,7 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     datacard<<"\n";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
 		if (veto(vCATVETO, i)) continue;
-      sprintf(name,"CMS_vbfbb_top_norm_CAT%d    lnN ",i);
+      sprintf(name,"CMS_vbfbb_top_norm_CAT%d    lnN ",MERGE ? merge(i) : i);
       datacard<<name<<setw(NF);
       for(int j=CAT_MIN;j<=CAT_MAX;j++) {
 		  if (veto(vCATVETO, j)) continue;
@@ -285,6 +302,7 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     datacard<<"CMS_vbfbb_res_mbb_selVBF     param 1.0 0.1"<<"\n";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
 		if (veto(vCATVETO, i)) continue;
+		if (MERGE) i = merge(i);
       /*
       sprintf(name,"CMS_vbfbb_scale_mbb_CAT%d",i); 
       datacard<<name<<"     param 1.0 0.02"<<"\n";
@@ -306,11 +324,11 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
 		for(int j=5; j>=0; j--){
 
 		  if (i>0 && i < 4 && TRORDER_NOM>j-1) {
-	        sprintf(name,"trans%s_p%d_CAT%d",TRTAG.Data(),j,i); 
+	        sprintf(name,"trans%s_p%d_CAT%d",TRTAG_NOM.Data(),j,i); 
    	     datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
 		  }
 		  if (i > 4 && TRORDER_VBF>j-1) { 
-	        sprintf(name,"trans%s_p%d_CAT%d",TRTAG.Data(),j,i); 
+	        sprintf(name,"trans%s_p%d_CAT%d",TRTAG_VBF.Data(),j,i); 
    	     datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
 		  }
 
@@ -345,4 +363,18 @@ vector<int> tokenize(TString s) {
 	 return CATVETO; 
 }
                                                                       
+TString tag(TString s) {
+    TObjArray *t = s.Tokenize(",");
+    const int n = t->GetEntries();
+	 TString tCATVETO = "";
+	 for (int i=0; i<n; i++) {
+	     tCATVETO += TString::Format("%d",((TObjString*)t->At(i))->String().Atoi());
+	 }
+	 if (n>0): tCATVETO = "_CATveto"+tCATVETO;
+	 return tCATVETO; 
+}
 
+int merge(int i) {
+	if (i==5) {return 56;}
+	else {return i;}
+}

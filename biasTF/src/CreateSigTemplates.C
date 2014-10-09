@@ -1,5 +1,5 @@
 using namespace RooFit;
-void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH)
+void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH, bool MERGE)
 {
   gROOT->ProcessLineSync(".x ../common/styleCMSTDR.C");
   gROOT->ForceStyle();
@@ -10,8 +10,10 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH)
   int NBINS = (XMAX-XMIN)/dX;
   float LUMI[2] = {19784,18281};
   const int NSEL(2);
-  const int NCAT[NSEL] = {4,3};
-  const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};
+  if (!MERGE) {const int NCAT[NSEL] = {4,3};}
+  else {const int NCAT[NSEL] = {4,2};}
+  if (!MERGE) {const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};}
+  else {const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,1}};}
   TString SELECTION[NSEL] = {"NOM","VBF"};
   TString SELTAG[NSEL] = {"NOM","PRK"};
   TString MASS_VAR[NSEL] = {"mbbReg[1]","mbbReg[2]"};
@@ -31,6 +33,8 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH)
   TCanvas *can[NMASS];
   TString PATH("flat/");
   TString ss("");
+
+  TString tMERGE = MERGE ? "_CATmerge56" : "";
 
   RooWorkspace *w = new RooWorkspace("w","workspace");
 
@@ -57,6 +61,7 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH)
       can[iMass] = new TCanvas(name,name,900,600);
       can[iMass]->Divide(2,2);
       for(int icat=0;icat<NCAT[isel];icat++) {       
+		  if (MERGE && SELECTION[isel]=="VBF" && icat==1) counter = 56;
         sprintf(name,"Hbb/events",icat);
         trVBF = (TTree*)fVBF[iMass]->Get(name);
         trGF  = (TTree*)fGF[iMass]->Get(name);
@@ -71,8 +76,6 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH)
         hGF[iMass][icat] = new TH1F(name,name,NBINS,XMIN,XMAX);
         hGF[iMass][icat]->Sumw2();
         trGF->Draw(MASS_VAR[isel]+">>"+TString(hGF[iMass][icat]->GetName()),cut);
-        delete trVBF;
-        delete trGF;
         
         sprintf(name,"mbbReg_CAT%d",counter);
         RooRealVar x(name,name,XMIN,XMAX);
@@ -227,5 +230,5 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH)
   system(TString::Format("[ ! -d %s ] && mkdir %s",OUTPATH.Data(),OUTPATH.Data()).Data());
   system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
   w->Print();
-  w->writeToFile(TString::Format("%s/output/signal_shapes_workspace.root",OUTPATH.Data()).Data());
+  w->writeToFile(TString::Format("%s/output/signal_shapes_workspace%s.root",OUTPATH.Data(),tMERGE.Data()).Data());
 }

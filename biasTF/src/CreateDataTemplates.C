@@ -1,5 +1,5 @@
 using namespace RooFit;
-void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, int BRN_ORDER_VBF, TString OUTPATH, bool withTF==true, TString TRNOM, TString TRTAGNOM, TString TRVBF, TString TRTAGVBF)
+void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, int BRN_ORDER_VBF, TString OUTPATH, bool withTF==true, TString TRNOM, TString TRTAGNOM, TString TRVBF, TString TRTAGVBF, bool MERGE)
 {
   gROOT->ProcessLineSync(".x ../common/styleCMSTDR.C");
   gROOT->ForceStyle();
@@ -8,8 +8,10 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
     RooMsgService::instance().setStreamStatus(i,kFALSE);
   }
   const int NSEL(2);
-  const int NCAT[NSEL] = {4,3};
-  const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};
+  if (!MERGE) {const int NCAT[NSEL] = {4,3};}
+  else {const int NCAT[NSEL] = {4,2};}
+  if (!MERGE) {const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};}
+  else {const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,1}};}
   char name[1000];
   TString SELECTION[NSEL] = {"NOM","VBF"};
   TString SELTAG[NSEL]    = {"NOM","PRK"};
@@ -28,15 +30,20 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
   //   {{0.05,0.05,0.05,0.05},{0.05,0.05,0.05}},
   //   {{0.01,0.01,0.01,0.01},{0.02,0.015,0.022}}
   //};
+  TString tag="";
+  if (TRTAG[0]==TRTAG[1]) tag = TRTAG[0];
+  else tag = TRTAG[0]+TRTAG[1];
 
   if (TRNOM=="-1" && TRVBF=="-1") withTF=false;
+  TString tMERGE = MERGE ? "_CATmerge56" : "";
+  if (MERGE) { SCALE[0][1][1] = 1.5; SCALE[2][1][1] = 0.02; }
 
   system(TString::Format("[ ! -d %s ] && mkdir %s",OUTPATH.Data(),OUTPATH.Data()).Data());
   system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
-  TFile *fBKG  = TFile::Open(TString::Format("%s/output/bkg_shapes_workspace.root",OUTPATH.Data()).Data());
+  TFile *fBKG  = TFile::Open(TString::Format("%s/output/bkg_shapes_workspace%s.root",OUTPATH.Data(),tMERGE.Data()).Data());
   RooWorkspace *wBkg = (RooWorkspace*)fBKG->Get("w");
   RooWorkspace *w = new RooWorkspace("w","workspace");
-
+  
   //RooRealVar x(*(RooRealVar*)wBkg->var("mbbReg"));
   TTree *tr;
   TH1F *h,*hBlind;
@@ -44,7 +51,7 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
   RooDataHist *roohist[5],*roohist_blind[5];
 
   if (withTF) {
-		TFile *fTransfer = TFile::Open(TString::Format("%s/output/transferFunctions.root",OUTPATH.Data()).Data());
+		TFile *fTransfer = TFile::Open(TString::Format("%s/output/transferFunctions%s.root",OUTPATH.Data(),tMERGE.Data()).Data());
 		TF1 *transFunc;
   }
 
@@ -53,6 +60,13 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
   TString CATSTRING(""), SELSTRING(""), BRNSTRING("");
 
   for(int isel=0;isel<NSEL;isel++) {
+	 // force boolean TF usage
+	 if (SELECTION[isel]=="NOM" && TRNOM=="-1") withTF=false;
+	 else if (SELECTION[isel]=="NOM" && TRNOM!="-1") withTF=true;
+	 else if (SELECTION[isel]=="VBF" && TRVBF=="-1") withTF=false;
+	 else if (SELECTION[isel]=="VBF" && TRVBF!="-1") withTF=true;
+	 else withTF=true;
+
 	 SELSTRING = TString::Format("_sel%s",SELECTION[isel].Data());
 	 int BRN_ORDER = (SELECTION[isel]=="NOM" ? BRN_ORDER_NOM : BRN_ORDER_VBF);
 	 NPAR = BRN_ORDER;
@@ -80,6 +94,7 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
 	 }
 
 	 for(int icat=0; icat<NCAT[isel]; icat++) {
+		 if (MERGE && SELECTION[isel]=="VBF" && icat==1) counter = 56;
 	 	 printf("\n\n\033[1;31mCurrent selection: %s\033[m\n",SELECTION[isel].Data());
 	 	 printf("\033[1;31mCurrent category: %d(%d)\033[m\n",counter,icat);
 		 CATSTRING = TString::Format("_CAT%d",counter);	
@@ -160,22 +175,22 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
 		if (withTF) {
         if (icat == 0) {
           for(int ib=0;ib<=NPAR;ib++) brn[icat][ib]->setConstant(kFALSE); 
-          sprintf(name,"qcd_model%s_CAT%d",TRTAG[isel].Data(),counter);
+          sprintf(name,"qcd_model%s_CAT%d",tag.Data(),counter);
           qcd_pdf_aux[icat] = new RooBernstein(name,name,x,brn_params[icat]);
           qcd_pdf[icat] = dynamic_cast<RooAbsPdf*> (qcd_pdf_aux[icat]);
      		}
      		else {
            for(int ib=0;ib<=NPAR;ib++) brn[0][ib]->setConstant(kTRUE);
-     		  sprintf(name,"qcd_model_aux1%s_CAT%d",TRTAG[isel].Data(),counter);
+     		  sprintf(name,"qcd_model_aux1%s_CAT%d",tag.Data(),counter);
      		  qcd_pdf_aux1[icat] = new RooBernstein(name,name,x,brn_params[0]);
-     		  sprintf(name,"qcd_model%s_CAT%d",TRTAG[isel].Data(),counter);
+     		  sprintf(name,"qcd_model%s_CAT%d",tag.Data(),counter);
      		  qcd_pdf_aux2[icat] = new RooProdPdf(name,name,RooArgSet(*transfer[icat],*qcd_pdf_aux1[icat]));
      		  qcd_pdf[icat] = dynamic_cast<RooAbsPdf*> (qcd_pdf_aux2[icat]);
      		} 
 		}
 		else {
         for(int ib=0;ib<=NPAR;ib++) brn[icat][ib]->setConstant(kFALSE); 
-        sprintf(name,"qcd_model%s_CAT%d",TRTAG[isel].Data(),counter);
+        sprintf(name,"qcd_model%s_CAT%d",tag.Data(),counter);
         qcd_pdf_aux[icat] = new RooBernstein(name,name,x,brn_params[icat]);
         qcd_pdf[icat] = dynamic_cast<RooAbsPdf*> (qcd_pdf_aux[icat]);
 		}
@@ -195,7 +210,7 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
       nT->setConstant(kTRUE);
     
 		//qcd_pdf[icat]->Print();
-      sprintf(name,"bkg_model%s_CAT%d",TRTAG[isel].Data(),counter);
+      sprintf(name,"bkg_model%s_CAT%d",tag.Data(),counter);
       model[icat] = new RooAddPdf(name,name,RooArgList(*z_pdf,*top_pdf,*qcd_pdf[icat]),RooArgList(*nZ,*nT,*nQCD[icat]));
 		model[icat]->Print();
       
@@ -246,9 +261,10 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int BRN_ORDER_NOM, i
 		system(TString::Format("[ ! -d %s/plots/datTemplates ] && mkdir %s/plots/datTemplates",OUTPATH.Data(),OUTPATH.Data()).Data());
 		canFit[icat]->SaveAs(TString::Format("%s/plots/datTemplates/%s.png",OUTPATH.Data(),h->GetName()));
     }// category loop
+	 withTF=false;
   }// selection loop
   system(TString::Format("[ ! -d %s ] && mkdir %s",OUTPATH.Data(),OUTPATH.Data()).Data());
   system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
   w->Print();
-  w->writeToFile(TString::Format("%s/output/data_shapes_workspace_BRN%d+%d%s.root",OUTPATH.Data(),BRN_ORDER_NOM,BRN_ORDER_VBF,TRTAG[0].Data()));
+  w->writeToFile(TString::Format("%s/output/data_shapes_workspace_BRN%d+%d%s%s.root",OUTPATH.Data(),BRN_ORDER_NOM,BRN_ORDER_VBF,tMERGE.Data(),tag.Data()));
 }

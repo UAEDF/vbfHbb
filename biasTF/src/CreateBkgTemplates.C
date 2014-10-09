@@ -1,5 +1,5 @@
 using namespace RooFit;
-void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH)
+void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH, bool MERGE)
 {
   gROOT->ProcessLineSync(".x ../common/styleCMSTDR.C");
   gROOT->ForceStyle();
@@ -8,8 +8,10 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH)
     RooMsgService::instance().setStreamStatus(i,kFALSE);
   }
   const int NSEL(2);
-  const int NCAT[NSEL] = {4,3};
-  const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};
+  if (!MERGE) {const int NCAT[NSEL] = {4,3};}
+  else {const int NCAT[NSEL] = {4,2};}
+  if (!MERGE) {const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};}
+  else {const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,1}};}
   float LUMI[2] = {19784,18281};
   TString SELECTION[2] = {"NOM","VBF"};
   TString SELNAME[2] = {"NOM","PRK"};
@@ -27,6 +29,9 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH)
   RooDataHist *roohist_Z[5],*roohist_T[5];
   RooRealVar *kJES[10],*kJER[10];
   RooWorkspace *w = new RooWorkspace("w","workspace");
+  
+  TString tMERGE = MERGE ? "_CATmerge56" : "";
+  
   //RooRealVar x("mbbReg","mbbReg",XMIN,XMAX);
   int counter(0);
   for(int isel=0;isel<NSEL;isel++) {
@@ -54,6 +59,7 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH)
     kJER[isel]->setConstant(kTRUE);
   
     for(int icat=0;icat<NCAT[isel];icat++) {
+		if (MERGE && SELECTION[isel]=="VBF" && icat==1) counter = 56;
       /*
       sprintf(name,"CMS_vbfbb_scale_mbb_CAT%d",counter); 
       kJES[counter] = new RooRealVar(name,name,1.0);
@@ -80,7 +86,6 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH)
         hMbbYield[i] = new TH1F(name,name,NBINS,XMIN,XMAX);
         hMbbYield[i]->Sumw2();
         tr->Draw(MASS_VAR[isel]+">>"+hMbbYield[i]->GetName(),cut);
-        delete tr;
         hMbbYield[i]->Scale(LUMI[isel]*XSEC[i]/hPass->GetBinContent(1)); 
       }
       hZ  = (TH1F*)hMbb[7]->Clone("Z");
@@ -254,5 +259,5 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH)
   system(TString::Format("[ ! -d %s/ ] && mkdir %s/",OUTPATH.Data(),OUTPATH.Data()).Data());
   system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
   w->Print();
-  w->writeToFile(TString::Format("%s/output/bkg_shapes_workspace.root",OUTPATH.Data()).Data());
+  w->writeToFile(TString::Format("%s/output/bkg_shapes_workspace%s.root",OUTPATH.Data(),tMERGE.Data()).Data());
 }
