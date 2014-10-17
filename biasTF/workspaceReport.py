@@ -61,7 +61,7 @@ for fname in args:
 			else: print "%4s |"%"- ",
 	for j in [5,6]:
 		for i in range(4):
-			key = keys1[1]
+			key = keys1[1] if len(keys1)>1 else keys1[0]
 			a = w.obj("trans%s_p%d_CAT%d"%("_%s"%key if not key=="" else "",i,j))
 			if a: print " %4s |"%symbols[a.isConstant()],
 			else: print "%4s |"%"- ",
@@ -88,11 +88,11 @@ for fname in args:
 	for i in range(6):
 		a = w.obj("b%d_selNOM_CAT0"%i)
 		if a: print "%6.3g |"%a.getVal(),
-		else: print "%6.3g |"%"- ",
+		else: print "%6s |"%"- ",
 	for i in range(5):
 		a = w.obj("b%d_selVBF_CAT4"%i)
 		if a: print "%6.3g |"%a.getVal(),
-		else: print "%6.3g |"%"- ",
+		else: print "%6s |"%"- ",
 	print	
 
 print
@@ -116,11 +116,11 @@ for fname in args:
 	for i in range(6):
 		a = w.obj("b%d_selNOM_CAT0"%i)
 		if a: print "%6.3g |"%a.getError(),
-		else: print "%6.3g |"%"- ",
+		else: print "%6s |"%"- ",
 	for i in range(5):
 		a = w.obj("b%d_selVBF_CAT4"%i)
 		if a: print "%6.3g |"%a.getError(),
-		else: print "%6.3g |"%"- ",
+		else: print "%6s |"%"- ",
 	print	
 
 print
@@ -160,7 +160,7 @@ for fname in args:
 	w = fopen.Get("w")
 	keys0 = [x for x in os.path.split(fname)[1].replace('.root','').split("_")]
 	keys1 = keys0[keys0.index([x for x in keys0 if 'BRN' in x][0])+1:]
-	key = keys1[1] 
+	key = keys1[1] if len(keys1)>1 else keys1[0]
 	print "%52s |"%os.path.split(fname)[1],
 	print "%8s |"%key,
 	for j in [5,6]:
@@ -207,7 +207,7 @@ for fname in args:
 	w = fopen.Get("w")
 	keys0 = [x for x in os.path.split(fname)[1].replace('.root','').split("_")]
 	keys1 = keys0[keys0.index([x for x in keys0 if 'BRN' in x][0])+1:]
-	key = keys1[1] 
+	key = keys1[1] if len(keys1)>1 else keys1[0]
 	print "%52s |"%os.path.split(fname)[1],
 	print "%8s |"%key,
 	for j in [5,6]:

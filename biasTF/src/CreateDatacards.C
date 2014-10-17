@@ -1,5 +1,5 @@
 #include <iomanip.h>
-void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF, int TRORDER_NOM, int TRORDER_VBF, TString OUTPATH, TString TRTAG, TString CATVETO="", bool MERGE)
+void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF, int TRORDER_NOM, int TRORDER_VBF, TString OUTPATH, TString TRTAG, TString BRTAG, TString CATVETO="", bool MERGE, int FREETF=-1)
 {
   TString PATH(TString::Format("%s/output/",OUTPATH.Data()).Data());
   const int NCAT = 7;
@@ -35,6 +35,16 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
 
   TString TRTAG_NOM = TRTAG(0,5);
   TString TRTAG_VBF = TRTAG(5,5);
+  TString TRTAGsplit[2] = {TRTAG_NOM,TRTAG_VBF};
+  if (TRTAG_VBF=="_BIDP" && BRTAG!="") TRTAG_VBF = "";
+  TRTAG = TRTAG_NOM+TRTAG_VBF;
+  if (CAT_MAX<4) TRTAG = TRTAG_NOM;
+  if (CAT_MIN>3 && TRTAG_VBF!="") TRTAG = TRTAG_VBF;
+  else if (CAT_MIN>3) {
+	  TRTAG = TRTAG_NOM;
+	  TRTAG_VBF = TRTAG_NOM;
+  }
+  if (CAT_MIN==0 && CAT_MAX==6 && TRTAG_VBF=="") TRTAG_VBF = TRTAG_NOM;
 
   int CAT_MAX_TAG = 0;
   if (MERGE && CAT_MAX==6) {
@@ -45,7 +55,7 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
 
   TString tMERGE = MERGE ? "_CATmerge56" : "";
 
-  TFile *fData = TFile::Open(PATH+"data_shapes_workspace_"+TString::Format("BRN%d+%d%s",BRN_ORDER_NOM,BRN_ORDER_VBF,tMERGE.Data())+TRTAG+".root");
+  TFile *fData = TFile::Open(PATH+"data_shapes_workspace_"+TString::Format("BRN%d+%d%s",BRN_ORDER_NOM,BRN_ORDER_VBF,tMERGE.Data())+TRTAG+BRTAG+".root");
   TFile *fSig  = TFile::Open(PATH+"signal_shapes_workspace"+tMERGE+".root");
  
   RooWorkspace *wData = (RooWorkspace*)fData->Get("w");
@@ -80,8 +90,12 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
   system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
   system(TString::Format("[ ! -d %s/output/datacards ] && mkdir %s/output/datacards",OUTPATH.Data(),OUTPATH.Data()).Data());
   for(int m=0;m<5;m++) {
+	  cout << m << endl;
     ofstream datacard;
-    sprintf(name,"%s/output/datacards/datacard_m%d_BRN%d+%d_CAT%d-CAT%d%s%s%s.txt",OUTPATH.Data(),H_MASS[m],BRN_ORDER_NOM,BRN_ORDER_VBF,CAT_MIN,CAT_MAX_TAG,tCATVETO.Data(),tMERGE.Data(),TRTAG.Data());
+	 TString tFREETF = "";
+    if (FREETF > 0 && (TRTAGsplit[0]=="" || TRTAGsplit[0]=="_BIDP" || TRTAGsplit[0]=="_POL3" || TRTAGsplit[0]=="_LIN" || TRTAGsplit[0]=="_POL2" || TRTAGsplit[0]=="_POL1" || TRTAGsplit[1]=="" || TRTAGsplit[1]=="_BIDP" || TRTAGsplit[1]=="_POL3" || TRTAGsplit[1]=="_LIN" || TRTAGsplit[1]=="_POL2" || TRTAGsplit[1]=="_POL1")) { tFREETF = TString::Format("_freeTF%d",FREETF); }
+	 else if (FREETF == 0) { tFREETF = "_Free"; }
+    sprintf(name,"%s/output/datacards/datacard_m%d_BRN%d+%d_CAT%d-CAT%d%s%s%s%s%s.txt",OUTPATH.Data(),H_MASS[m],BRN_ORDER_NOM,BRN_ORDER_VBF,CAT_MIN,CAT_MAX_TAG,tCATVETO.Data(),tMERGE.Data(),TRTAG.Data(),BRTAG.Data(),tFREETF.Data());
     cout<<"======================================="<<endl; 
     cout<<"Creating datacard: "<<name<<endl;
     cout<<"======================================="<<endl; 
@@ -93,7 +107,7 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     datacard<<"----------------"<<"\n";
 
     datacard<<"shapes data_obs   * "<<nameDataShort<<" w:data_hist_$CHANNEL"<<"\n";
-    datacard<<"shapes qcd        * "<<nameDataShort<<" w:qcd_model"<<TRTAG.Data()<<"_$CHANNEL"<<"\n";
+    datacard<<"shapes qcd        * "<<nameDataShort<<" w:qcd_model"<<TRTAG.Data()<<BRTAG.Data()<<"_$CHANNEL"<<"\n";
     datacard<<"shapes top        * "<<nameDataShort<<" w:Top_model_$CHANNEL"<<"\n";
     datacard<<"shapes zjets      * "<<nameDataShort<<" w:Z_model_$CHANNEL"<<"\n";
     datacard<<"shapes qqH        * "<<nameSigShort<<" w:signal_model_m"<<H_MASS[m]<<"_$CHANNEL \n";
@@ -300,9 +314,12 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
     datacard<<"CMS_vbfbb_scale_mbb_selVBF   param 1.0 0.02"<<"\n";
     datacard<<"CMS_vbfbb_res_mbb_selNOM     param 1.0 0.1"<<"\n";
     datacard<<"CMS_vbfbb_res_mbb_selVBF     param 1.0 0.1"<<"\n";
+	 
+
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
 		if (veto(vCATVETO, i)) continue;
 		if (MERGE) i = merge(i);
+		cout << "CAT" << i << endl;
       /*
       sprintf(name,"CMS_vbfbb_scale_mbb_CAT%d",i); 
       datacard<<name<<"     param 1.0 0.02"<<"\n";
@@ -323,13 +340,17 @@ void CreateDatacards(int CAT_MIN,int CAT_MAX,int BRN_ORDER_NOM,int BRN_ORDER_VBF
       
 		for(int j=5; j>=0; j--){
 
-		  if (i>0 && i < 4 && TRORDER_NOM>j-1) {
+  	 	  float enlarge = 1.0;
+
+		  if (i>0 && i < 4 && TRORDER_NOM>j-1 && FREETF!=0) {
+	   	  if (FREETF > 0 && (TRTAGsplit[0]=="" || TRTAGsplit[0]=="_BIDP" || TRTAGsplit[0]=="_POL3" || TRTAGsplit[0]=="_LIN" || TRTAGsplit[0]=="_POL2" || TRTAGsplit[0]=="_POL1")) { enlarge = FREETF; cout << "FreeTF: enlarged error x" << FREETF << endl; }
 	        sprintf(name,"trans%s_p%d_CAT%d",TRTAG_NOM.Data(),j,i); 
-   	     datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
+   	     datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()*enlarge<<"\n";
 		  }
-		  if (i > 4 && TRORDER_VBF>j-1) { 
+		  if (i > 4 && TRORDER_VBF>j-1 && FREETF!=0) { 
+	   	  if (FREETF > 0 && (TRTAGsplit[1]=="" || TRTAGsplit[1]=="_BIDP" || TRTAGsplit[1]=="_POL3" || TRTAGsplit[1]=="_LIN" || TRTAGsplit[1]=="_POL2" || TRTAGsplit[1]=="_POL1")) { enlarge = FREETF; cout << "FreeTF: enlarged error x" << FREETF << endl; }
 	        sprintf(name,"trans%s_p%d_CAT%d",TRTAG_VBF.Data(),j,i); 
-   	     datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()<<"\n";
+   	     datacard<<name<<"                param "<<((RooRealVar*)wData->var(name))->getVal()<<" "<<((RooRealVar*)wData->var(name))->getError()*enlarge<<"\n";
 		  }
 
 		} 

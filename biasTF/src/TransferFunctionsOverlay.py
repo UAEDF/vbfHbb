@@ -409,6 +409,12 @@ def mkTemplateFunctions():
 		c2[Tag].SaveAs('plots/transfer/%s.pdf'%c2[Tag].GetName())
 		c3[Tag].SaveAs('plots/transfer/%s.png'%c3[Tag].GetName())
 		c3[Tag].SaveAs('plots/transfer/%s.pdf'%c3[Tag].GetName())
+		c1[Tag].SaveAs('plots/transfer/%s.root'%c1[Tag].GetName())
+		c2[Tag].SaveAs('plots/transfer/%s.root'%c2[Tag].GetName())
+		c3[Tag].SaveAs('plots/transfer/%s.root'%c3[Tag].GetName())
+		c1[Tag].SaveAs('plots/transfer/%s.C'%c1[Tag].GetName())
+		c2[Tag].SaveAs('plots/transfer/%s.C'%c2[Tag].GetName())
+		c3[Tag].SaveAs('plots/transfer/%s.C'%c3[Tag].GetName())
 
 	#c.SaveAs('plots/transfer/%s.png'%c.GetName())
 

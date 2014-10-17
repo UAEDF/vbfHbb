@@ -1,4 +1,4 @@
-void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, TString TR_NOM, TString TRTAG_NOM, float XMIN_VBF, float XMAX_VBF, int TRORDER_VBF, TString TR_VBF, TString TRTAG_VBF, TString OUTPATH, bool MERGE)
+void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int CATMIN, int CATMAX, int TRORDER_NOM, TString TR_NOM, TString TRTAG_NOM, float XMIN_VBF, float XMAX_VBF, int TRORDER_VBF, TString TR_VBF, TString TRTAG_VBF, TString OUTPATH, bool MERGE)
 {
   if (TRORDER_NOM==-1 && TRORDER_VBF==-1) return 0;
   gROOT->ProcessLineSync(".x ../common/styleCMSTDR.C");
@@ -64,8 +64,10 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, TString 
  
   float vx[200],vy[200],vex[200],vey[200],vey_approx[200];
   
-  int counter(0);
+  int counter(CATMIN);
   for(int isel=0;isel<NSEL;isel++) {
+	 if (isel==0 && NCAT[0]<=CATMIN) continue;
+	 if (isel==1 && CATMAX<NCAT[0]) continue;
 	 if (SELECTION[isel]=="NOM" && TRORDER_NOM==-1) continue;
 	 if (SELECTION[isel]=="VBF" && TRORDER_VBF==-1) continue;
     TF1 *ln = new TF1("line","1",XMIN[isel],XMAX[isel]);
@@ -197,7 +199,7 @@ void TransferFunctions(float XMIN_NOM, float XMAX_NOM, int TRORDER_NOM, TString 
 		  pave->SetTextSize(0.035);
 		  for (int i=0; i<fitRatio[isel][icat]->GetNpar(); i++) pave->AddText(TString::Format("p%d = %.2g #pm %.2g",i,fitRatio[isel][icat]->GetParameter(i),fitRatio[isel][icat]->GetParError(i)).Data());
 		  pave->SetY1NDC(pave->GetY2NDC()-0.04*(fitRatio[isel][icat]->GetNpar()+1));
-		  pave->Draw();
+			//pave->Draw();
       }
 
       outf->cd();

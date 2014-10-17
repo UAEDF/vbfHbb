@@ -43,7 +43,7 @@
 using namespace std;
 using namespace RooFit;
 
-void testQCDmodels(double XMIN,double XMAX, int CAT){
+void testQCDmodels(double XMIN,double XMAX, int CAT, TString FNAME){
     RooMsgService::instance().setSilentMode(kTRUE);
     for(int i=0;i<2;i++) {
         RooMsgService::instance().setStreamStatus(i,kFALSE);
@@ -67,7 +67,7 @@ void testQCDmodels(double XMIN,double XMAX, int CAT){
     TString ZYieldStr = "yield_ZJets_"+ext;
     TString TopYieldStr = "yield_Top_"+ext;
     TString HYieldStr = "yield_H_"+ext;
-    TString fileName = "data_shapes_workspace_0.00_0.70_0.84_BRN5.root";
+    TString fileName = FNAME; //"data_shapes_workspace_0.00_0.70_0.84_BRN5.root";
     TString workspaceName = "w";
     TString xName = "mbbReg_"+ext;
     TString outName = "altModels_" + ext + "_";
