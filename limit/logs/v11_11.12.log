@@ -1,0 +1,314 @@
+nohup: ignoring input
+[3g   H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H
+tst
+	combine -M ChannelCompatibilityCheck --saveFitResult --stepSize=0.05 --preFitValue=1.5 --robustFit=1 --X-rtd FITTER_NEW_CROSSING_ALGO --minimizerAlgoForMinos=Minuit2 --minimizerToleranceForMinos=0.01 --X-rtd FITTER_NEVER_GIVE_UP --X-rtd FITTER_BOUND --minimizerAlgo=Minuit2 --minimizerStrategy=1 --minimizerTolerance=0.01 --cminFallbackAlgo Minuit,0.001 --rMin=-50 --rMax=50 datacards/datacard_m125_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2 -m 125 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_GetChannelCompatibility_125.log
+>>> including systematics
+Configured fallback algorithm Minuit, strategy 0, tolerance -1
+>>> method used to compute upper limit is ChannelCompatibilityCheck
+>>> random number generator seed is 123456
+Turning on runtime-define FITTER_NEW_CROSSING_ALGO
+Turning on runtime-define FITTER_NEVER_GIVE_UP
+Turning on runtime-define FITTER_BOUND
+[?1034hComputing limit starting from observation
+Searching for crossing at nll = -8.53578e+06 in the interval [ 2.15368 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 2.15368 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 36.9429 , 50 ]
+Error: closed range at _ChannelCompatibilityCheck_r_CAT0 = 49.6083 without finding any crossing 
+Searching for crossing at nll = -8.53579e+06 in the interval [ 36.9429 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 7.65468 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 7.65468 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 4.16494 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 4.16494 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 1.86181 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 1.86181 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 11.8557 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 11.8557 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 9.18925 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 9.18925 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 3.17193 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 3.17193 , -50 ]
+
+ --- ChannelCompatibilityCheck --- 
+Nominal fit  : r =  2.1537  -1.6749/+1.8330
+Alternate fit: r = 36.9429  -18.4602/+12.6654   in channel CAT0
+Alternate fit: r =  7.6547  -5.9358/+6.8428   in channel CAT1
+Alternate fit: r =  4.1649  -3.6192/+3.9621   in channel CAT2
+Alternate fit: r =  1.8618  -1.9655/+2.2477   in channel CAT3
+Alternate fit: r = 11.8557  -24.1477/+24.8822   in channel CAT4
+Alternate fit: r =  9.1892  -8.2027/+9.1268   in channel CAT5
+Alternate fit: r =  3.1719  -4.7778/+5.1640   in channel CAT6
+Chi2-like compatibility variable: 6.2218
+Done in 11.83 min (cpu), 11.84 min (real)
+	mv higgsCombine*_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2*ChannelCompatibility*mH125*root combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_GetChannelCompatibility_125.log logs/
+
+	root -l /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C'(125)' -q 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_125.log
+root: can't figure out DISPLAY, set it manually
+In case you run a remote ssh session, restart your ssh session with:
+=========>  ssh -Y
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/PrintChannelCompatibility.py 125 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PrintChannelCompatibility_125.log
+[?1034h
+CAT0 36.943 +- (-18.460/+12.665)
+CAT1 7.655 +- (-5.936/+6.843)
+CAT2 4.165 +- (-3.619/+3.962)
+CAT3 1.862 +- (-1.966/+2.248)
+CAT4 11.856 +- (-24.148/+24.882)
+CAT5 9.189 +- (-8.203/+9.127)
+CAT6 3.172 +- (-4.778/+5.164)
+
+	mv channelComp_mH125.{pdf,png} plots/
+mv: cannot stat `channelComp_mH125.pdf': No such file or directory
+mv: cannot stat `channelComp_mH125.png': No such file or directory
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_125.log logs/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PrintChannelCompatibility_125.log logs/
+
+tst
+	combine -M ChannelCompatibilityCheck --saveFitResult --stepSize=0.05 --preFitValue=1.5 --robustFit=1 --X-rtd FITTER_NEW_CROSSING_ALGO --minimizerAlgoForMinos=Minuit2 --minimizerToleranceForMinos=0.01 --X-rtd FITTER_NEVER_GIVE_UP --X-rtd FITTER_BOUND --minimizerAlgo=Minuit2 --minimizerStrategy=1 --minimizerTolerance=0.01 --cminFallbackAlgo Minuit,0.001 --rMin=-50 --rMax=50 datacards/datacard_m115_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2 -m 115 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_GetChannelCompatibility_115.log
+>>> including systematics
+Configured fallback algorithm Minuit, strategy 0, tolerance -1
+>>> method used to compute upper limit is ChannelCompatibilityCheck
+>>> random number generator seed is 123456
+Turning on runtime-define FITTER_NEW_CROSSING_ALGO
+Turning on runtime-define FITTER_NEVER_GIVE_UP
+Turning on runtime-define FITTER_BOUND
+[?1034hComputing limit starting from observation
+Searching for crossing at nll = -8.53578e+06 in the interval [ 2.43648 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 2.43648 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 17.5847 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 17.5847 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 4.69779 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 4.69779 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 3.73422 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 3.73422 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 1.98458 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 1.98458 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 38.038 , 50 ]
+Error: closed range at _ChannelCompatibilityCheck_r_CAT4 = 49.7309 without finding any crossing 
+Searching for crossing at nll = -8.53579e+06 in the interval [ 38.038 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 9.83849 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 9.83849 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 2.21042 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 2.21042 , -50 ]
+
+ --- ChannelCompatibilityCheck --- 
+Nominal fit  : r =  2.4365  -1.1941/+1.3336
+Alternate fit: r = 17.5847  -10.8740/+12.4932   in channel CAT0
+Alternate fit: r =  4.6978  -3.5182/+3.8086   in channel CAT1
+Alternate fit: r =  3.7342  -2.4221/+2.6624   in channel CAT2
+Alternate fit: r =  1.9846  -1.4314/+1.6226   in channel CAT3
+Alternate fit: r = 38.0380  -20.7150/+11.6929   in channel CAT4
+Alternate fit: r =  9.8385  -6.5178/+7.3602   in channel CAT5
+Alternate fit: r =  2.2104  -3.4933/+3.6312   in channel CAT6
+Chi2-like compatibility variable: 6.17425
+Done in 13.20 min (cpu), 13.20 min (real)
+	mv higgsCombine*_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2*ChannelCompatibility*mH115*root combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_GetChannelCompatibility_115.log logs/
+
+	root -l /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C'(115)' -q 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_115.log
+root: can't figure out DISPLAY, set it manually
+In case you run a remote ssh session, restart your ssh session with:
+=========>  ssh -Y
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/PrintChannelCompatibility.py 115 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PrintChannelCompatibility_115.log
+[?1034h
+CAT0 17.585 +- (-10.874/+12.493)
+CAT1 4.698 +- (-3.518/+3.809)
+CAT2 3.734 +- (-2.422/+2.662)
+CAT3 1.985 +- (-1.431/+1.623)
+CAT4 38.038 +- (-20.715/+11.693)
+CAT5 9.838 +- (-6.518/+7.360)
+CAT6 2.210 +- (-3.493/+3.631)
+
+	mv channelComp_mH115.{pdf,png} plots/
+mv: cannot stat `channelComp_mH115.pdf': No such file or directory
+mv: cannot stat `channelComp_mH115.png': No such file or directory
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_115.log logs/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PrintChannelCompatibility_115.log logs/
+
+tst
+	combine -M ChannelCompatibilityCheck --saveFitResult --stepSize=0.05 --preFitValue=1.5 --robustFit=1 --X-rtd FITTER_NEW_CROSSING_ALGO --minimizerAlgoForMinos=Minuit2 --minimizerToleranceForMinos=0.01 --X-rtd FITTER_NEVER_GIVE_UP --X-rtd FITTER_BOUND --minimizerAlgo=Minuit2 --minimizerStrategy=1 --minimizerTolerance=0.01 --cminFallbackAlgo Minuit,0.001 --rMin=-50 --rMax=50 datacards/datacard_m135_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2 -m 135 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_GetChannelCompatibility_135.log
+>>> including systematics
+Configured fallback algorithm Minuit, strategy 0, tolerance -1
+>>> method used to compute upper limit is ChannelCompatibilityCheck
+>>> random number generator seed is 123456
+Turning on runtime-define FITTER_NEW_CROSSING_ALGO
+Turning on runtime-define FITTER_NEVER_GIVE_UP
+Turning on runtime-define FITTER_BOUND
+[?1034hComputing limit starting from observation
+Searching for crossing at nll = -8.53578e+06 in the interval [ -0.347527 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ -0.347527 , -50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ -4.7021 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ -4.7021 , -50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ -4.87372 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ -4.87372 , -50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ -4.10259 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ -4.10259 , -50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 0.613632 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 0.613632 , -50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ -28.3163 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ -28.3163 , -50 ]
+Error: closed range at _ChannelCompatibilityCheck_r_CAT4 = -49.5392 without finding any crossing 
+Searching for crossing at nll = -8.53578e+06 in the interval [ 9.79917 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 9.79917 , -50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ -0.908813 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ -0.908813 , -50 ]
+
+ --- ChannelCompatibilityCheck --- 
+Nominal fit  : r = -0.3475  -2.5266/+2.5521
+Alternate fit: r = -4.7021  -26.9618/+28.9505   in channel CAT0
+Alternate fit: r = -4.8737  -8.5369/+8.3460   in channel CAT1
+Alternate fit: r = -4.1026  -5.9125/+5.6778   in channel CAT2
+Alternate fit: r =  0.6136  -3.1226/+3.2339   in channel CAT3
+Alternate fit: r = -28.3163  -21.2230/+42.1518   in channel CAT4
+Alternate fit: r =  9.7992  -13.2452/+14.2997   in channel CAT5
+Alternate fit: r = -0.9088  -8.3052/+8.2504   in channel CAT6
+Chi2-like compatibility variable: 2.62918
+Done in 12.31 min (cpu), 12.32 min (real)
+	mv higgsCombine*_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2*ChannelCompatibility*mH135*root combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_GetChannelCompatibility_135.log logs/
+
+	root -l /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C'(135)' -q 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_135.log
+root: can't figure out DISPLAY, set it manually
+In case you run a remote ssh session, restart your ssh session with:
+=========>  ssh -Y
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/PrintChannelCompatibility.py 135 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PrintChannelCompatibility_135.log
+[?1034h
+CAT0 -4.702 +- (-26.962/+28.950)
+CAT1 -4.874 +- (-8.537/+8.346)
+CAT2 -4.103 +- (-5.912/+5.678)
+CAT3 0.614 +- (-3.123/+3.234)
+CAT4 -28.316 +- (-21.223/+42.152)
+CAT5 9.799 +- (-13.245/+14.300)
+CAT6 -0.909 +- (-8.305/+8.250)
+
+	mv channelComp_mH135.{pdf,png} plots/
+mv: cannot stat `channelComp_mH135.pdf': No such file or directory
+mv: cannot stat `channelComp_mH135.png': No such file or directory
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_135.log logs/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PrintChannelCompatibility_135.log logs/
+
+tst
+	combine -M ChannelCompatibilityCheck --saveFitResult --stepSize=0.05 --preFitValue=1.5 --robustFit=1 --X-rtd FITTER_NEW_CROSSING_ALGO --minimizerAlgoForMinos=Minuit2 --minimizerToleranceForMinos=0.01 --X-rtd FITTER_NEVER_GIVE_UP --X-rtd FITTER_BOUND --minimizerAlgo=Minuit2 --minimizerStrategy=1 --minimizerTolerance=0.01 --cminFallbackAlgo Minuit,0.001 --rMin=-50 --rMax=50 datacards/datacard_m120_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2 -m 120 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_GetChannelCompatibility_120.log
+>>> including systematics
+Configured fallback algorithm Minuit, strategy 0, tolerance -1
+>>> method used to compute upper limit is ChannelCompatibilityCheck
+>>> random number generator seed is 123456
+Turning on runtime-define FITTER_NEW_CROSSING_ALGO
+Turning on runtime-define FITTER_NEVER_GIVE_UP
+Turning on runtime-define FITTER_BOUND
+[?1034hComputing limit starting from observation
+Searching for crossing at nll = -8.53578e+06 in the interval [ 2.48896 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 2.48896 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 30.3612 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 30.3612 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 6.8267 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 6.8267 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 4.2197 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 4.2197 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 1.89515 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 1.89515 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 27.8164 , 50 ]
+Error: closed range at _ChannelCompatibilityCheck_r_CAT4 = 49.279 without finding any crossing 
+Searching for crossing at nll = -8.53579e+06 in the interval [ 27.8164 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 9.24102 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 9.24102 , -50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 2.89274 , 50 ]
+Searching for crossing at nll = -8.53579e+06 in the interval [ 2.89274 , -50 ]
+
+ --- ChannelCompatibilityCheck --- 
+Nominal fit  : r =  2.4890  -1.3699/+1.5189
+Alternate fit: r = 30.3612  -14.7504/+18.5219   in channel CAT0
+Alternate fit: r =  6.8267  -4.5101/+5.2394   in channel CAT1
+Alternate fit: r =  4.2197  -2.8602/+3.1814   in channel CAT2
+Alternate fit: r =  1.8951  -1.6160/+1.8055   in channel CAT3
+Alternate fit: r = 27.8164  -21.3511/+21.4627   in channel CAT4
+Alternate fit: r =  9.2410  -6.9229/+7.7763   in channel CAT5
+Alternate fit: r =  2.8927  -3.9566/+4.1417   in channel CAT6
+Chi2-like compatibility variable: 6.87007
+Done in 11.65 min (cpu), 11.66 min (real)
+	mv higgsCombine*_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2*ChannelCompatibility*mH120*root combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_GetChannelCompatibility_120.log logs/
+
+	root -l /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C'(120)' -q 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_120.log
+root: can't figure out DISPLAY, set it manually
+In case you run a remote ssh session, restart your ssh session with:
+=========>  ssh -Y
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/PrintChannelCompatibility.py 120 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PrintChannelCompatibility_120.log
+[?1034h
+CAT0 30.361 +- (-14.750/+18.522)
+CAT1 6.827 +- (-4.510/+5.239)
+CAT2 4.220 +- (-2.860/+3.181)
+CAT3 1.895 +- (-1.616/+1.805)
+CAT4 27.816 +- (-21.351/+21.463)
+CAT5 9.241 +- (-6.923/+7.776)
+CAT6 2.893 +- (-3.957/+4.142)
+
+	mv channelComp_mH120.{pdf,png} plots/
+mv: cannot stat `channelComp_mH120.pdf': No such file or directory
+mv: cannot stat `channelComp_mH120.png': No such file or directory
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_120.log logs/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PrintChannelCompatibility_120.log logs/
+
+tst
+	combine -M ChannelCompatibilityCheck --saveFitResult --stepSize=0.05 --preFitValue=1.5 --robustFit=1 --X-rtd FITTER_NEW_CROSSING_ALGO --minimizerAlgoForMinos=Minuit2 --minimizerToleranceForMinos=0.01 --X-rtd FITTER_NEVER_GIVE_UP --X-rtd FITTER_BOUND --minimizerAlgo=Minuit2 --minimizerStrategy=1 --minimizerTolerance=0.01 --cminFallbackAlgo Minuit,0.001 --rMin=-50 --rMax=50 datacards/datacard_m130_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2 -m 130 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_GetChannelCompatibility_130.log
+>>> including systematics
+Configured fallback algorithm Minuit, strategy 0, tolerance -1
+>>> method used to compute upper limit is ChannelCompatibilityCheck
+>>> random number generator seed is 123456
+Turning on runtime-define FITTER_NEW_CROSSING_ALGO
+Turning on runtime-define FITTER_NEVER_GIVE_UP
+Turning on runtime-define FITTER_BOUND
+[?1034hComputing limit starting from observation
+Searching for crossing at nll = -8.53578e+06 in the interval [ 0.79802 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 0.79802 , -50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 29.9915 , 50 ]
+Error: closed range at _ChannelCompatibilityCheck_r_CAT0 = 49.2809 without finding any crossing 
+Searching for crossing at nll = -8.53578e+06 in the interval [ 29.9915 , -50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 4.23794 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 4.23794 , -50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 2.24901 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 2.24901 , -50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 1.07919 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 1.07919 , -50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ -11.369 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ -11.369 , -50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 9.29277 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 9.29277 , -50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 1.59251 , 50 ]
+Searching for crossing at nll = -8.53578e+06 in the interval [ 1.59251 , -50 ]
+
+ --- ChannelCompatibilityCheck --- 
+Nominal fit  : r =  0.7980  -1.8425/+1.9687
+Alternate fit: r = 29.9915  -23.6679/+19.2894   in channel CAT0
+Alternate fit: r =  4.2379  -7.1341/+8.1006   in channel CAT1
+Alternate fit: r =  2.2490  -4.3979/+4.5494   in channel CAT2
+Alternate fit: r =  1.0792  -2.2761/+2.4305   in channel CAT3
+Alternate fit: r = -11.3690  -30.6933/+29.6793   in channel CAT4
+Alternate fit: r =  9.2928  -10.0837/+11.1066   in channel CAT5
+Alternate fit: r =  1.5925  -5.7254/+5.8415   in channel CAT6
+Chi2-like compatibility variable: 3.33495
+Done in 11.17 min (cpu), 11.17 min (real)
+	mv higgsCombine*_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2*ChannelCompatibility*mH130*root combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_GetChannelCompatibility_130.log logs/
+
+	root -l /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C'(130)' -q 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_130.log
+root: can't figure out DISPLAY, set it manually
+In case you run a remote ssh session, restart your ssh session with:
+=========>  ssh -Y
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/PrintChannelCompatibility.py 130 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PrintChannelCompatibility_130.log
+[?1034h
+CAT0 29.991 +- (-23.668/+19.289)
+CAT1 4.238 +- (-7.134/+8.101)
+CAT2 2.249 +- (-4.398/+4.549)
+CAT3 1.079 +- (-2.276/+2.430)
+CAT4 -11.369 +- (-30.693/+29.679)
+CAT5 9.293 +- (-10.084/+11.107)
+CAT6 1.593 +- (-5.725/+5.842)
+
+	mv channelComp_mH130.{pdf,png} plots/
+mv: cannot stat `channelComp_mH130.pdf': No such file or directory
+mv: cannot stat `channelComp_mH130.png': No such file or directory
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_130.log logs/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PrintChannelCompatibility_130.log logs/
+
+
+[1;31mDone.[m

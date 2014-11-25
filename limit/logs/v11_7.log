@@ -1,0 +1,361 @@
+nohup: ignoring input
+[3g   H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/plotLimit.py -t _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2 combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH115.root combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH120.root combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH125.root combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH130.root combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH135.root combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH115.root combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH120.root combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH125.root combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH130.root combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH135.root 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_limitplots.log
+Info in <TCanvas::Print>: pdf file limit_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.pdf has been created
+[?1034h/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output/combine
+Limit files:
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH115.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH120.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH125.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH130.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH135.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH115.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH120.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH125.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH130.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH135.root
+
+x[0]=115, y[0]=2.42969, exl[0]=0, exh[0]=0, eyl[0]=1.16264, eyh[0]=2.6723
+x[1]=120, y[1]=2.73438, exl[1]=0, exh[1]=0, eyl[1]=1.31912, eyh[1]=3.04104
+x[2]=125, y[2]=3.32812, exl[2]=0, exh[2]=0, eyl[2]=1.60556, eyh[2]=3.75776
+x[3]=130, y[3]=3.73438, exl[3]=0, exh[3]=0, eyl[3]=1.80154, eyh[3]=4.27926
+x[4]=135, y[4]=5.23438, exl[4]=0, exh[4]=0, eyl[4]=2.54562, eyh[4]=5.99812
+None
+x[0]=115, y[0]=2.42969, exl[0]=0, exh[0]=0, eyl[0]=0.722111, eyh[0]=1.13313
+x[1]=120, y[1]=2.73438, exl[1]=0, exh[1]=0, eyl[1]=0.819299, eyh[1]=1.27522
+x[2]=125, y[2]=3.32812, exl[2]=0, exh[2]=0, eyl[2]=0.997203, eyh[2]=1.57866
+x[3]=130, y[3]=3.73438, exl[3]=0, exh[3]=0, eyl[3]=1.11893, eyh[3]=1.80113
+x[4]=135, y[4]=5.23438, exl[4]=0, exh[4]=0, eyl[4]=1.60096, eyh[4]=2.5246
+None
+x[0]=115, y[0]=2.42969
+x[1]=120, y[1]=2.73438
+x[2]=125, y[2]=3.32812
+x[3]=130, y[3]=3.73438
+x[4]=135, y[4]=5.23438
+None
+x[0]=115, y[0]=4.79564
+x[1]=120, y[1]=5.18937
+x[2]=125, y[2]=5.47516
+x[3]=130, y[3]=4.60817
+x[4]=135, y[4]=5.08877
+None
+x[0]=115, y[0]=2.70279
+x[1]=120, y[1]=3.26445
+x[2]=125, y[2]=4.06788
+x[3]=130, y[3]=4.43986
+x[4]=135, y[4]=5.7158
+None
+/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output
+	mv limit*{png,pdf} limitplots/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_limitplots.log logs/
+
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/plotLimit.py -t _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto456 combine/higgsCombine*CATveto456*Asymptotic*root 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto456_limitplots.log
+Info in <TCanvas::Print>: pdf file limit_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto456.pdf has been created
+[?1034h/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output/combine
+Limit files:
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto456.Asymptotic.mH115.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto456.Asymptotic.mH120.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto456.Asymptotic.mH125.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto456.Asymptotic.mH130.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto456.Asymptotic.mH135.root
+
+x[0]=115, y[0]=2.61719, exl[0]=0, exh[0]=0, eyl[0]=1.26259, eyh[0]=2.95505
+x[1]=120, y[1]=2.94531, exl[1]=0, exh[1]=0, eyl[1]=1.42088, eyh[1]=3.36832
+x[2]=125, y[2]=3.60938, exl[2]=0, exh[2]=0, eyl[2]=1.75534, eyh[2]=4.22391
+x[3]=130, y[3]=4.04688, exl[3]=0, exh[3]=0, eyl[3]=1.96811, eyh[3]=4.77844
+x[4]=135, y[4]=5.64062, exl[4]=0, exh[4]=0, eyl[4]=2.76523, eyh[4]=6.76278
+None
+x[0]=115, y[0]=2.61719, exl[0]=0, exh[0]=0, eyl[0]=0.784186, eyh[0]=1.24143
+x[1]=120, y[1]=2.94531, exl[1]=0, exh[1]=0, eyl[1]=0.882502, eyh[1]=1.40882
+x[2]=125, y[2]=3.60938, exl[2]=0, exh[2]=0, eyl[2]=1.10394, eyh[2]=1.74084
+x[3]=130, y[3]=4.04688, exl[3]=0, exh[3]=0, eyl[3]=1.23776, eyh[3]=1.98412
+x[4]=135, y[4]=5.64062, exl[4]=0, exh[4]=0, eyl[4]=1.73907, eyh[4]=2.7655
+None
+x[0]=115, y[0]=2.61719
+x[1]=120, y[1]=2.94531
+x[2]=125, y[2]=3.60938
+x[3]=130, y[3]=4.04688
+x[4]=135, y[4]=5.64062
+None
+x[0]=115, y[0]=4.95902
+x[1]=120, y[1]=5.13417
+x[2]=125, y[2]=5.28886
+x[3]=130, y[3]=4.53465
+x[4]=135, y[4]=5.1906
+None
+x[0]=115, y[0]=0
+x[1]=120, y[1]=0
+x[2]=125, y[2]=0
+x[3]=130, y[3]=0
+x[4]=135, y[4]=0
+None
+/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output
+	mv limit*{png,pdf} limitplots/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto456_limitplots.log logs/
+
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/plotLimit.py -t _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto0123 combine/higgsCombine*CATveto0123*Asymptotic*root 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto0123_limitplots.log
+Info in <TCanvas::Print>: pdf file limit_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto0123.pdf has been created
+[?1034h/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output/combine
+Limit files:
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto0123.Asymptotic.mH115.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto0123.Asymptotic.mH120.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto0123.Asymptotic.mH125.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto0123.Asymptotic.mH130.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto0123.Asymptotic.mH135.root
+
+x[0]=115, y[0]=7.03125, exl[0]=0, exh[0]=0, eyl[0]=3.44696, eyh[0]=8.34489
+x[1]=120, y[1]=7.78125, exl[1]=0, exh[1]=0, eyl[1]=3.78424, eyh[1]=9.34611
+x[2]=125, y[2]=9.28125, exl[2]=0, exh[2]=0, eyl[2]=4.51373, eyh[2]=11.1679
+x[3]=130, y[3]=10.5938, exl[3]=0, exh[3]=0, eyl[3]=5.19342, eyh[3]=12.7472
+x[4]=135, y[4]=15.1875, exl[4]=0, exh[4]=0, eyl[4]=7.4751, eyh[4]=18.8867
+None
+x[0]=115, y[0]=7.03125, exl[0]=0, exh[0]=0, eyl[0]=2.16782, eyh[0]=3.4473
+x[1]=120, y[1]=7.78125, exl[1]=0, exh[1]=0, eyl[1]=2.36515, eyh[1]=3.84603
+x[2]=125, y[2]=9.28125, exl[2]=0, exh[2]=0, eyl[2]=2.83871, eyh[2]=4.62443
+x[3]=130, y[3]=10.5938, exl[3]=0, exh[3]=0, eyl[3]=3.26617, eyh[3]=5.27839
+x[4]=135, y[4]=15.1875, exl[4]=0, exh[4]=0, eyl[4]=4.70114, eyh[4]=7.68833
+None
+x[0]=115, y[0]=7.03125
+x[1]=120, y[1]=7.78125
+x[2]=125, y[2]=9.28125
+x[3]=130, y[3]=10.5938
+x[4]=135, y[4]=15.1875
+None
+x[0]=115, y[0]=9.19486
+x[1]=120, y[1]=11.2333
+x[2]=125, y[2]=13.3537
+x[3]=130, y[3]=13.6939
+x[4]=135, y[4]=17.6277
+None
+x[0]=115, y[0]=0
+x[1]=120, y[1]=0
+x[2]=125, y[2]=0
+x[3]=130, y[3]=0
+x[4]=135, y[4]=0
+None
+/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output
+	mv limit*{png,pdf} limitplots/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto0123_limitplots.log logs/
+
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/plotLimit.py -t _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto1 combine/higgsCombine*CATveto1*Asymptotic*root 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto1_limitplots.log
+Info in <TCanvas::Print>: pdf file limit_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto1.pdf has been created
+[?1034h/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output/combine
+Limit files:
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto1.Asymptotic.mH115.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto1.Asymptotic.mH120.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto1.Asymptotic.mH125.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto1.Asymptotic.mH130.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto1.Asymptotic.mH135.root
+
+x[0]=115, y[0]=2.50781, exl[0]=0, exh[0]=0, eyl[0]=1.20982, eyh[0]=2.78907
+x[1]=120, y[1]=2.78906, exl[1]=0, exh[1]=0, eyl[1]=1.3455, eyh[1]=3.14911
+x[2]=125, y[2]=3.39062, exl[2]=0, exh[2]=0, eyl[2]=1.64896, eyh[2]=3.8126
+x[3]=130, y[3]=3.76562, exl[3]=0, exh[3]=0, eyl[3]=1.81662, eyh[3]=4.31507
+x[4]=135, y[4]=5.26562, exl[4]=0, exh[4]=0, eyl[4]=2.56082, eyh[4]=6.09804
+None
+x[0]=115, y[0]=2.50781, exl[0]=0, exh[0]=0, eyl[0]=0.75614, eyh[0]=1.16956
+x[1]=120, y[1]=2.78906, exl[1]=0, exh[1]=0, eyl[1]=0.835685, eyh[1]=1.32296
+x[2]=125, y[2]=3.39062, exl[2]=0, exh[2]=0, eyl[2]=1.03704, eyh[2]=1.58128
+x[3]=130, y[3]=3.76562, exl[3]=0, exh[3]=0, eyl[3]=1.12829, eyh[3]=1.8162
+x[4]=135, y[4]=5.26562, exl[4]=0, exh[4]=0, eyl[4]=1.59051, eyh[4]=2.53967
+None
+x[0]=115, y[0]=2.50781
+x[1]=120, y[1]=2.78906
+x[2]=125, y[2]=3.39062
+x[3]=130, y[3]=3.76562
+x[4]=135, y[4]=5.26562
+None
+x[0]=115, y[0]=4.80534
+x[1]=120, y[1]=5.11921
+x[2]=125, y[2]=5.42655
+x[3]=130, y[3]=4.63547
+x[4]=135, y[4]=5.24807
+None
+x[0]=115, y[0]=0
+x[1]=120, y[1]=0
+x[2]=125, y[2]=0
+x[3]=130, y[3]=0
+x[4]=135, y[4]=0
+None
+/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output
+	mv limit*{png,pdf} limitplots/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto1_limitplots.log logs/
+
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/plotLimit.py -t _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto2 combine/higgsCombine*CATveto2*Asymptotic*root 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto2_limitplots.log
+Info in <TCanvas::Print>: pdf file limit_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto2.pdf has been created
+[?1034h/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output/combine
+Limit files:
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto2.Asymptotic.mH115.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto2.Asymptotic.mH120.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto2.Asymptotic.mH125.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto2.Asymptotic.mH130.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto2.Asymptotic.mH135.root
+
+x[0]=115, y[0]=2.66406, exl[0]=0, exh[0]=0, eyl[0]=1.2852, eyh[0]=2.91738
+x[1]=120, y[1]=2.96094, exl[1]=0, exh[1]=0, eyl[1]=1.42842, eyh[1]=3.29301
+x[2]=125, y[2]=3.57812, exl[2]=0, exh[2]=0, eyl[2]=1.72617, eyh[2]=4.08383
+x[3]=130, y[3]=4.04688, exl[3]=0, exh[3]=0, eyl[3]=1.96811, eyh[3]=4.5693
+x[4]=135, y[4]=5.70312, exl[4]=0, exh[4]=0, eyl[4]=2.77359, eyh[4]=6.60471
+None
+x[0]=115, y[0]=2.66406, exl[0]=0, exh[0]=0, eyl[0]=0.798231, eyh[0]=1.22119
+x[1]=120, y[1]=2.96094, exl[1]=0, exh[1]=0, eyl[1]=0.887183, eyh[1]=1.38088
+x[2]=125, y[2]=3.57812, exl[2]=0, exh[2]=0, eyl[2]=1.07211, eyh[2]=1.69724
+x[3]=130, y[3]=4.04688, exl[3]=0, exh[3]=0, eyl[3]=1.22238, eyh[3]=1.91959
+x[4]=135, y[4]=5.70312, exl[4]=0, exh[4]=0, eyl[4]=1.72266, eyh[4]=2.75068
+None
+x[0]=115, y[0]=2.66406
+x[1]=120, y[1]=2.96094
+x[2]=125, y[2]=3.57812
+x[3]=130, y[3]=4.04688
+x[4]=135, y[4]=5.70312
+None
+x[0]=115, y[0]=4.71891
+x[1]=120, y[1]=5.10402
+x[2]=125, y[2]=5.55052
+x[3]=130, y[3]=4.93026
+x[4]=135, y[4]=6.12143
+None
+x[0]=115, y[0]=0
+x[1]=120, y[1]=0
+x[2]=125, y[2]=0
+x[3]=130, y[3]=0
+x[4]=135, y[4]=0
+None
+/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output
+	mv limit*{png,pdf} limitplots/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto2_limitplots.log logs/
+
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/plotLimit.py -t _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto3 combine/higgsCombine*CATveto3*Asymptotic*root 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto3_limitplots.log
+Info in <TCanvas::Print>: pdf file limit_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto3.pdf has been created
+[?1034h/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output/combine
+Limit files:
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto3.Asymptotic.mH115.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto3.Asymptotic.mH120.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto3.Asymptotic.mH125.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto3.Asymptotic.mH130.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto3.Asymptotic.mH135.root
+
+x[0]=115, y[0]=3.70312, exl[0]=0, exh[0]=0, eyl[0]=1.75754, eyh[0]=3.89957
+x[1]=120, y[1]=4.26562, exl[1]=0, exh[1]=0, eyl[1]=2.02451, eyh[1]=4.56576
+x[2]=125, y[2]=5.26562, exl[2]=0, exh[2]=0, eyl[2]=2.51968, eyh[2]=5.76632
+x[3]=130, y[3]=6.01562, exl[3]=0, exh[3]=0, eyl[3]=2.89032, eyh[3]=6.58764
+x[4]=135, y[4]=8.09375, exl[4]=0, exh[4]=0, eyl[4]=3.9046, eyh[4]=9.00149
+None
+x[0]=115, y[0]=3.70312, exl[0]=0, exh[0]=0, eyl[0]=1.0916, eyh[0]=1.66797
+x[1]=120, y[1]=4.26562, exl[1]=0, exh[1]=0, eyl[1]=1.25741, eyh[1]=1.95534
+x[2]=125, y[2]=5.26562, exl[2]=0, exh[2]=0, eyl[2]=1.56496, eyh[2]=2.41374
+x[3]=130, y[3]=6.01562, exl[3]=0, exh[3]=0, eyl[3]=1.79516, eyh[3]=2.75753
+x[4]=135, y[4]=8.09375, exl[4]=0, exh[4]=0, eyl[4]=2.42512, eyh[4]=3.77466
+None
+x[0]=115, y[0]=3.70312
+x[1]=120, y[1]=4.26562
+x[2]=125, y[2]=5.26562
+x[3]=130, y[3]=6.01562
+x[4]=135, y[4]=8.09375
+None
+x[0]=115, y[0]=6.64097
+x[1]=120, y[1]=7.84354
+x[2]=125, y[2]=8.60913
+x[3]=130, y[3]=7.61773
+x[4]=135, y[4]=7.21375
+None
+x[0]=115, y[0]=0
+x[1]=120, y[1]=0
+x[2]=125, y[2]=0
+x[3]=130, y[3]=0
+x[4]=135, y[4]=0
+None
+/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output
+	mv limit*{png,pdf} limitplots/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto3_limitplots.log logs/
+
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/plotLimit.py -t _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto5 combine/higgsCombine*CATveto5*Asymptotic*root 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto5_limitplots.log
+Info in <TCanvas::Print>: pdf file limit_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto5.pdf has been created
+[?1034h/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output/combine
+Limit files:
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto5.Asymptotic.mH115.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto5.Asymptotic.mH120.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto5.Asymptotic.mH125.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto5.Asymptotic.mH130.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto5.Asymptotic.mH135.root
+
+x[0]=115, y[0]=2.46094, exl[0]=0, exh[0]=0, eyl[0]=1.1776, eyh[0]=2.73694
+x[1]=120, y[1]=2.77344, exl[1]=0, exh[1]=0, eyl[1]=1.33797, eyh[1]=3.10154
+x[2]=125, y[2]=3.39062, exl[2]=0, exh[2]=0, eyl[2]=1.64896, eyh[2]=3.82833
+x[3]=130, y[3]=3.79688, exl[3]=0, exh[3]=0, eyl[3]=1.84653, eyh[3]=4.33349
+x[4]=135, y[4]=5.29688, exl[4]=0, exh[4]=0, eyl[4]=2.57602, eyh[4]=6.19873
+None
+x[0]=115, y[0]=2.46094, exl[0]=0, exh[0]=0, eyl[0]=0.731398, eyh[0]=1.1477
+x[1]=120, y[1]=2.77344, exl[1]=0, exh[1]=0, eyl[1]=0.831003, eyh[1]=1.29344
+x[2]=125, y[2]=3.39062, exl[2]=0, exh[2]=0, eyl[2]=1.0306, eyh[2]=1.60831
+x[3]=130, y[3]=3.79688, exl[3]=0, exh[3]=0, eyl[3]=1.14687, eyh[3]=1.80101
+x[4]=135, y[4]=5.29688, exl[4]=0, exh[4]=0, eyl[4]=1.59995, eyh[4]=2.55474
+None
+x[0]=115, y[0]=2.46094
+x[1]=120, y[1]=2.77344
+x[2]=125, y[2]=3.39062
+x[3]=130, y[3]=3.79688
+x[4]=135, y[4]=5.29688
+None
+x[0]=115, y[0]=4.65498
+x[1]=120, y[1]=5.01462
+x[2]=125, y[2]=5.2689
+x[3]=130, y[3]=4.44435
+x[4]=135, y[4]=4.93294
+None
+x[0]=115, y[0]=0
+x[1]=120, y[1]=0
+x[2]=125, y[2]=0
+x[3]=130, y[3]=0
+x[4]=135, y[4]=0
+None
+/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output
+	mv limit*{png,pdf} limitplots/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto5_limitplots.log logs/
+
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/plotLimit.py -t _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto6 combine/higgsCombine*CATveto6*Asymptotic*root 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto6_limitplots.log
+Info in <TCanvas::Print>: pdf file limit_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto6.pdf has been created
+[?1034h/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output/combine
+Limit files:
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto6.Asymptotic.mH115.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto6.Asymptotic.mH120.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto6.Asymptotic.mH125.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto6.Asymptotic.mH130.root
+	 - higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto6.Asymptotic.mH135.root
+
+x[0]=115, y[0]=2.57031, exl[0]=0, exh[0]=0, eyl[0]=1.23997, eyh[0]=2.85858
+x[1]=120, y[1]=2.88281, exl[1]=0, exh[1]=0, eyl[1]=1.39073, eyh[1]=3.25496
+x[2]=125, y[2]=3.51562, exl[2]=0, exh[2]=0, eyl[2]=1.70288, eyh[2]=4.07139
+x[3]=130, y[3]=3.95312, exl[3]=0, exh[3]=0, eyl[3]=1.92252, eyh[3]=4.59591
+x[4]=135, y[4]=5.51562, exl[4]=0, exh[4]=0, eyl[4]=2.70395, eyh[4]=6.45472
+None
+x[0]=115, y[0]=2.57031, exl[0]=0, exh[0]=0, eyl[0]=0.770141, eyh[0]=1.19871
+x[1]=120, y[1]=2.88281, exl[1]=0, exh[1]=0, eyl[1]=0.869207, eyh[1]=1.36743
+x[2]=125, y[2]=3.51562, exl[2]=0, exh[2]=0, eyl[2]=1.05765, eyh[2]=1.69563
+x[3]=130, y[3]=3.95312, exl[3]=0, exh[3]=0, eyl[3]=1.19406, eyh[3]=1.93815
+x[4]=135, y[4]=5.51562, exl[4]=0, exh[4]=0, eyl[4]=1.68997, eyh[4]=2.66025
+None
+x[0]=115, y[0]=2.57031
+x[1]=120, y[1]=2.88281
+x[2]=125, y[2]=3.51562
+x[3]=130, y[3]=3.95312
+x[4]=135, y[4]=5.51562
+None
+x[0]=115, y[0]=5.15133
+x[1]=120, y[1]=5.38773
+x[2]=125, y[2]=5.56176
+x[3]=130, y[3]=4.71424
+x[4]=135, y[4]=5.37005
+None
+x[0]=115, y[0]=0
+x[1]=120, y[1]=0
+x[2]=125, y[2]=0
+x[3]=130, y[3]=0
+x[4]=135, y[4]=0
+None
+/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/BiasV11_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output
+	mv limit*{png,pdf} limitplots/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CATveto6_limitplots.log logs/
+
+
+[1;31mDone.[m

@@ -1,0 +1,74 @@
+nohup: ignoring input
+[3g   H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H
+	root -l /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C'(125)' -q 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_125.log
+
+Processing /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C(125)...
+CAT0 36.9429 -18.4602 +12.6654
+CAT1 7.65468 -5.93579 +6.84284
+CAT2 4.16494 -3.61917 +3.96212
+CAT3 1.86181 -1.96554 +2.24769
+CAT4 11.8557 -24.1477 +24.8822
+CAT5 9.18925 -8.20273 +9.12678
+CAT6 3.17193 -4.77779 +5.16402
+Combined fit: 2.15368 -1.67487 +1.83302
+	mv channelComp_mH125{,_2}.{pdf,png} plots/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_125.log logs/
+
+	root -l /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C'(115)' -q 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_115.log
+
+Processing /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C(115)...
+CAT0 17.5847 -10.874 +12.4932
+CAT1 4.69779 -3.51821 +3.80861
+CAT2 3.73422 -2.42209 +2.66237
+CAT3 1.98458 -1.43143 +1.62264
+CAT4 38.038 -20.715 +11.6929
+CAT5 9.83849 -6.5178 +7.36017
+CAT6 2.21042 -3.49328 +3.63121
+Combined fit: 2.43648 -1.19407 +1.33357
+	mv channelComp_mH115{,_2}.{pdf,png} plots/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_115.log logs/
+
+	root -l /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C'(135)' -q 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_135.log
+
+Processing /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C(135)...
+CAT0 -4.7021 -26.9618 +28.9505
+CAT1 -4.87372 -8.53688 +8.34603
+CAT2 -4.10259 -5.91249 +5.67778
+CAT3 0.613632 -3.12258 +3.23394
+CAT4 -28.3163 -21.223 +42.1518
+CAT5 9.79917 -13.2452 +14.2997
+CAT6 -0.908813 -8.30524 +8.25037
+Combined fit: -0.347527 -2.52655 +2.55214
+	mv channelComp_mH135{,_2}.{pdf,png} plots/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_135.log logs/
+
+	root -l /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C'(120)' -q 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_120.log
+
+Processing /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C(120)...
+CAT0 30.3612 -14.7504 +18.5219
+CAT1 6.8267 -4.51013 +5.23944
+CAT2 4.2197 -2.86015 +3.18144
+CAT3 1.89515 -1.61601 +1.80545
+CAT4 27.8164 -21.3511 +21.4627
+CAT5 9.24102 -6.9229 +7.77634
+CAT6 2.89274 -3.95662 +4.14174
+Combined fit: 2.48896 -1.36993 +1.51894
+	mv channelComp_mH120{,_2}.{pdf,png} plots/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_120.log logs/
+
+	root -l /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C'(130)' -q 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_130.log
+
+Processing /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawChannelCompatibility.C(130)...
+CAT0 29.9915 -23.6679 +19.2894
+CAT1 4.23794 -7.13414 +8.10061
+CAT2 2.24901 -4.39794 +4.5494
+CAT3 1.07919 -2.27613 +2.4305
+CAT4 -11.369 -30.6933 +29.6793
+CAT5 9.29277 -10.0837 +11.1066
+CAT6 1.59251 -5.72542 +5.84152
+Combined fit: 0.79802 -1.84251 +1.96868
+	mv channelComp_mH130{,_2}.{pdf,png} plots/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotChannelCompatibility_130.log logs/
+
+
+[1;31mDone.[m

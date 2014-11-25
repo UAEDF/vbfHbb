@@ -1,0 +1,28 @@
+nohup: ignoring input
+[3g   H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H
+	combine -M ProfileLikelihood --significance datacards/datacard_m125_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt -m 125 -t -1 --expectSignal=1 --toysFreq 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_SignifExp_125.log
+>>> including systematics
+>>> method used to compute upper limit is ProfileLikelihood
+>>> random number generator seed is 123456
+[?1034hComputing limit starting from expected outcome
+
+ -- Profile Likelihood -- 
+Significance: 0.639548
+       (p-value = 0.261233)
+Done in 0.41 min (cpu), 0.41 min (real)
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_SignifExp_125.log logs/
+
+	combine -M ProfileLikelihood --significance datacards/datacard_m125_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt -m 125 --bruteForce --preFit 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_SignifObs_125.log
+>>> including systematics
+>>> method used to compute upper limit is ProfileLikelihood
+>>> random number generator seed is 123456
+[?1034hComputing limit starting from observation
+
+ -- Profile Likelihood -- 
+Significance: 1.45748
+       (p-value = 0.0724916)
+Done in 23.86 min (cpu), 23.88 min (real)
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_SignifObs_125.log logs/
+
+
+[1;31mDone.[m

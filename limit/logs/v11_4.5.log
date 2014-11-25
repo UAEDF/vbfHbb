@@ -1,0 +1,8 @@
+nohup: ignoring input
+[3g   H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H
+	combine -M Asymptotic --minimizerTolerance=0.0001 --rMin=-1 --rMax=6 -m 125 -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2 datacards/datacard_m125_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineExpObs_125.log
+>>> including systematics
+>>> method used to compute upper limit is Asymptotic
+>>> random number generator seed is 123456
+[?1034hComputing limit starting from observation
+Will compute both limit(s) using minimizer Minuit2 with strategy 0 and tolerance 0.0001

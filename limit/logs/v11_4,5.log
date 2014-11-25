@@ -1,0 +1,367 @@
+nohup: ignoring input
+[3g   H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H
+	combine -M Asymptotic -m 125 -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2 datacards/datacard_m125_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineExpObs_125.log
+>>> including systematics
+>>> method used to compute upper limit is Asymptotic
+>>> random number generator seed is 123456
+[?1034hComputing limit starting from observation
+Will compute both limit(s) using minimizer Minuit2 with strategy 0 and tolerance 0.01
+Median for expected limits: 3.32812
+Sigma  for expected limits: 1.69805
+Restricting r to positive values.
+
+Make global fit of real data
+NLL at global minimum of data: -8.53578e+06 (r = 2.16098)
+
+Make global fit of asimov data
+NLL at global minimum of asimov: -8.53581e+06 (r = 0.0291308)
+At r = 6.769794:	q_mu = 5.03933	q_A  = 12.21172	CLsb = 0.01239	CLb  = 0.89429	CLs  = 0.01385
+At r = 4.465388:	q_mu = 1.51394	q_A  = 6.34725	CLsb = 0.10927	CLb  = 0.90129	CLs  = 0.12124
+At r = 5.617591:	q_mu = 3.10459	q_A  = 9.19043	CLsb = 0.03904	CLb  = 0.89788	CLs  = 0.04348
+At r = 5.261474:	q_mu = 2.56977	q_A  = 8.28750	CLsb = 0.05446	CLb  = 0.89898	CLs  = 0.06058
+At r = 5.426308:	q_mu = 2.81284	q_A  = 8.70299	CLsb = 0.04676	CLb  = 0.89848	CLs  = 0.05204
+At r = 5.498591:	q_mu = 2.92175	q_A  = 8.88636	CLsb = 0.04370	CLb  = 0.89826	CLs  = 0.04865
+At r = 5.460591:	q_mu = 2.86412	q_A  = 8.78971	CLsb = 0.04529	CLb  = 0.89838	CLs  = 0.05041
+At r = 5.475163:	q_mu = 2.88611	q_A  = 8.82670	CLsb = 0.04467	CLb  = 0.89833	CLs  = 0.04973
+
+ -- Asymptotic -- 
+Observed Limit: r < 5.4752
+Expected  2.5%: r < 1.7226
+Expected 16.0%: r < 2.3309
+Expected 50.0%: r < 3.3281
+Expected 84.0%: r < 4.9068
+Expected 97.5%: r < 7.0859
+
+Done in 10.62 min (cpu), 10.63 min (real)
+	mv higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH125* combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineExpObs_125.log logs/
+
+	combine -M Asymptotic -m 125 -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125 datacards/datacard_m125_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt --toysFile combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.GenerateOnly.mH125.123456.root -t -1 --expectSignal=1 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineInj125_125.log
+>>> including systematics
+>>> method used to compute upper limit is Asymptotic
+>>> random number generator seed is 123456
+[?1034hComputing limit starting from expected outcome
+Will compute both limit(s) using minimizer Minuit2 with strategy 0 and tolerance 0.01
+Median for expected limits: 3.23438
+Sigma  for expected limits: 1.65022
+Restricting r to positive values.
+
+Make global fit of real data
+NLL at global minimum of data: -8.63381e+06 (r = 1.01365)
+
+Make global fit of asimov data
+NLL at global minimum of asimov: -8.63381e+06 (r = 0.0152548)
+At r = 4.266383:	q_mu = 3.59206	q_A  = 6.17004	CLsb = 0.02903	CLb  = 0.72196	CLs  = 0.04021
+At r = 2.640015:	q_mu = 1.02838	q_A  = 2.66462	CLsb = 0.15527	CLb  = 0.73180	CLs  = 0.21217
+At r = 3.453199:	q_mu = 2.16288	q_A  = 4.30209	CLsb = 0.07069	CLb  = 0.72690	CLs  = 0.09725
+At r = 3.943192:	q_mu = 2.99357	q_A  = 5.40385	CLsb = 0.04180	CLb  = 0.72389	CLs  = 0.05774
+At r = 4.110662:	q_mu = 3.29961	q_A  = 5.79750	CLsb = 0.03465	CLb  = 0.72285	CLs  = 0.04793
+At r = 4.046783:	q_mu = 3.18119	q_A  = 5.64603	CLsb = 0.03725	CLb  = 0.72326	CLs  = 0.05150
+At r = 4.080574:	q_mu = 3.24351	q_A  = 5.72588	CLsb = 0.03585	CLb  = 0.72304	CLs  = 0.04959
+At r = 4.067880:	q_mu = 3.21997	q_A  = 5.69578	CLsb = 0.03637	CLb  = 0.72313	CLs  = 0.05030
+
+ -- Asymptotic -- 
+Observed Limit: r < 4.0679
+Expected  2.5%: r < 1.6740
+Expected 16.0%: r < 2.2653
+Expected 50.0%: r < 3.2344
+Expected 84.0%: r < 4.7686
+Expected 97.5%: r < 6.8863
+
+Done in 10.85 min (cpu), 10.86 min (real)
+	mv higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH125* combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineInj125_125.log logs/
+
+	combine -M Asymptotic -m 115 -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2 datacards/datacard_m115_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineExpObs_115.log
+>>> including systematics
+>>> method used to compute upper limit is Asymptotic
+>>> random number generator seed is 123456
+[?1034hComputing limit starting from observation
+Will compute both limit(s) using minimizer Minuit2 with strategy 0 and tolerance 0.01
+Median for expected limits: 2.42969
+Sigma  for expected limits: 1.23966
+Restricting r to positive values.
+
+Make global fit of real data
+NLL at global minimum of data: -8.53579e+06 (r = 2.43685)
+
+Make global fit of asimov data
+NLL at global minimum of asimov: -8.53581e+06 (r = 0.00976663)
+At r = 5.947259:	q_mu = 5.38256	q_A  = 16.31528	CLsb = 0.01017	CLb  = 0.95721	CLs  = 0.01062
+At r = 4.192053:	q_mu = 1.63320	q_A  = 9.63797	CLsb = 0.10063	CLb  = 0.96612	CLs  = 0.10416
+At r = 5.069656:	q_mu = 3.32946	q_A  = 12.91814	CLsb = 0.03402	CLb  = 0.96159	CLs  = 0.03538
+At r = 4.669288:	q_mu = 2.50316	q_A  = 11.40264	CLsb = 0.05681	CLb  = 0.96364	CLs  = 0.05895
+At r = 4.852704:	q_mu = 2.87153	q_A  = 12.09341	CLsb = 0.04508	CLb  = 0.96271	CLs  = 0.04683
+At r = 4.774231:	q_mu = 2.71173	q_A  = 11.79711	CLsb = 0.04981	CLb  = 0.96311	CLs  = 0.05171
+At r = 4.811237:	q_mu = 2.78658	q_A  = 11.93660	CLsb = 0.04753	CLb  = 0.96292	CLs  = 0.04936
+At r = 4.795637:	q_mu = 2.75491	q_A  = 11.87774	CLsb = 0.04848	CLb  = 0.96300	CLs  = 0.05034
+
+ -- Asymptotic -- 
+Observed Limit: r < 4.7956
+Expected  2.5%: r < 1.2670
+Expected 16.0%: r < 1.7076
+Expected 50.0%: r < 2.4297
+Expected 84.0%: r < 3.5628
+Expected 97.5%: r < 5.1020
+
+Done in 9.63 min (cpu), 9.64 min (real)
+	mv higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH115* combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineExpObs_115.log logs/
+
+	combine -M Asymptotic -m 115 -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125 datacards/datacard_m115_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt --toysFile combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.GenerateOnly.mH125.123456.root -t -1 --expectSignal=1 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineInj125_115.log
+>>> including systematics
+>>> method used to compute upper limit is Asymptotic
+>>> random number generator seed is 123456
+[?1034hComputing limit starting from expected outcome
+Will compute both limit(s) using minimizer Minuit2 with strategy 0 and tolerance 0.01
+Median for expected limits: 2.36719
+Sigma  for expected limits: 1.20777
+Restricting r to positive values.
+
+Make global fit of real data
+NLL at global minimum of data: -8.63381e+06 (r = 0.430024)
+
+Make global fit of asimov data
+NLL at global minimum of asimov: -8.63381e+06 (r = 0.000381868)
+At r = 3.537638:	q_mu = 5.91785	q_A  = 7.67997	CLsb = 0.00749	CLb  = 0.63255	CLs  = 0.01185
+At r = 1.983831:	q_mu = 1.72152	q_A  = 2.78989	CLsb = 0.09475	CLb  = 0.63991	CLs  = 0.14806
+At r = 2.760734:	q_mu = 3.60390	q_A  = 5.04645	CLsb = 0.02882	CLb  = 0.63609	CLs  = 0.04531
+At r = 2.553666:	q_mu = 3.05309	q_A  = 4.40169	CLsb = 0.04029	CLb  = 0.63710	CLs  = 0.06324
+At r = 2.670397:	q_mu = 3.35924	q_A  = 4.76138	CLsb = 0.03341	CLb  = 0.63654	CLs  = 0.05249
+At r = 2.712368:	q_mu = 3.47233	q_A  = 4.89332	CLsb = 0.03120	CLb  = 0.63633	CLs  = 0.04903
+At r = 2.694364:	q_mu = 3.42359	q_A  = 4.83652	CLsb = 0.03214	CLb  = 0.63642	CLs  = 0.05049
+At r = 2.702791:	q_mu = 3.44635	q_A  = 4.86306	CLsb = 0.03170	CLb  = 0.63638	CLs  = 0.04981
+
+ -- Asymptotic -- 
+Observed Limit: r < 2.7028
+Expected  2.5%: r < 1.2345
+Expected 16.0%: r < 1.6637
+Expected 50.0%: r < 2.3672
+Expected 84.0%: r < 3.4712
+Expected 97.5%: r < 4.9707
+
+Done in 9.52 min (cpu), 9.53 min (real)
+	mv higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH115* combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineInj125_115.log logs/
+
+	combine -M Asymptotic -m 135 -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2 datacards/datacard_m135_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineExpObs_135.log
+>>> including systematics
+>>> method used to compute upper limit is Asymptotic
+>>> random number generator seed is 123456
+[?1034hComputing limit starting from observation
+Will compute both limit(s) using minimizer Minuit2 with strategy 0 and tolerance 0.01
+Median for expected limits: 5.23438
+Sigma  for expected limits: 2.67065
+Restricting r to positive values.
+
+Make global fit of real data
+NLL at global minimum of data: -8.53578e+06 (r = 3.20453e-05)
+
+Make global fit of asimov data
+NLL at global minimum of asimov: -8.53581e+06 (r = 0.00359765)
+At r = 41.134988:	q_mu = 57.98993	q_A  = 60.05674	CLsb = 0.00000	CLb  = 0.55350	CLs  = 0.00000
+At r = 20.567510:	q_mu = 28.03712	q_A  = 28.78947	CLsb = 0.00000	CLb  = 0.52813	CLs  = 0.00000
+At r = 10.283771:	q_mu = 11.52206	q_A  = 11.46963	CLsb = 0.00034	CLb  = 0.49691	CLs  = 0.00069
+At r = 5.141902:	q_mu = 4.00449	q_A  = 3.73048	CLsb = 0.02262	CLb  = 0.47172	CLs  = 0.04796
+At r = 2.570967:	q_mu = 1.26058	q_A  = 1.04125	CLsb = 0.12968	CLb  = 0.45721	CLs  = 0.28364
+At r = 3.856434:	q_mu = 2.49294	q_A  = 2.22603	CLsb = 0.05689	CLb  = 0.46436	CLs  = 0.12251
+At r = 4.839042:	q_mu = 3.62799	q_A  = 3.35251	CLsb = 0.02831	CLb  = 0.47002	CLs  = 0.06023
+At r = 5.036967:	q_mu = 3.87281	q_A  = 3.59812	CLsb = 0.02446	CLb  = 0.47114	CLs  = 0.05192
+At r = 5.097760:	q_mu = 3.94942	q_A  = 3.67513	CLsb = 0.02337	CLb  = 0.47148	CLs  = 0.04957
+At r = 5.076564:	q_mu = 3.92254	q_A  = 3.64810	CLsb = 0.02375	CLb  = 0.47136	CLs  = 0.05038
+At r = 5.088772:	q_mu = 3.93797	q_A  = 3.66362	CLsb = 0.02353	CLb  = 0.47143	CLs  = 0.04992
+
+ -- Asymptotic -- 
+Observed Limit: r < 5.0888
+Expected  2.5%: r < 2.6888
+Expected 16.0%: r < 3.6334
+Expected 50.0%: r < 5.2344
+Expected 84.0%: r < 7.7590
+Expected 97.5%: r < 11.2325
+
+Done in 13.86 min (cpu), 13.90 min (real)
+	mv higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH135* combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineExpObs_135.log logs/
+
+	combine -M Asymptotic -m 135 -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125 datacards/datacard_m135_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt --toysFile combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.GenerateOnly.mH125.123456.root -t -1 --expectSignal=1 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineInj125_135.log
+>>> including systematics
+>>> method used to compute upper limit is Asymptotic
+>>> random number generator seed is 123456
+[?1034hComputing limit starting from expected outcome
+Will compute both limit(s) using minimizer Minuit2 with strategy 0 and tolerance 0.01
+Median for expected limits: 5.01562
+Sigma  for expected limits: 2.55904
+Restricting r to positive values.
+
+Make global fit of real data
+NLL at global minimum of data: -8.63381e+06 (r = 0.851321)
+
+Make global fit of asimov data
+NLL at global minimum of asimov: -8.63381e+06 (r = 0.0273485)
+At r = 7.104775:	q_mu = 5.27171	q_A  = 6.88777	CLsb = 0.01084	CLb  = 0.62871	CLs  = 0.01724
+At r = 3.978048:	q_mu = 1.55914	q_A  = 2.53568	CLsb = 0.10590	CLb  = 0.63447	CLs  = 0.16690
+At r = 5.541412:	q_mu = 3.23404	q_A  = 4.55436	CLsb = 0.03606	CLb  = 0.63147	CLs  = 0.05711
+At r = 5.992848:	q_mu = 3.79029	q_A  = 5.20044	CLsb = 0.02578	CLb  = 0.63065	CLs  = 0.04087
+At r = 5.775186:	q_mu = 3.51799	q_A  = 4.88536	CLsb = 0.03035	CLb  = 0.63106	CLs  = 0.04810
+At r = 5.686197:	q_mu = 3.40837	q_A  = 4.75795	CLsb = 0.03243	CLb  = 0.63122	CLs  = 0.05138
+At r = 5.733384:	q_mu = 3.46600	q_A  = 4.82504	CLsb = 0.03132	CLb  = 0.63114	CLs  = 0.04963
+At r = 5.715803:	q_mu = 3.44437	q_A  = 4.79992	CLsb = 0.03173	CLb  = 0.63118	CLs  = 0.05028
+
+ -- Asymptotic -- 
+Observed Limit: r < 5.7158
+Expected  2.5%: r < 2.5764
+Expected 16.0%: r < 3.5006
+Expected 50.0%: r < 5.0156
+Expected 84.0%: r < 7.4347
+Expected 97.5%: r < 10.8241
+
+Done in 11.51 min (cpu), 11.52 min (real)
+	mv higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH135* combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineInj125_135.log logs/
+
+	combine -M Asymptotic -m 120 -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2 datacards/datacard_m120_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineExpObs_120.log
+>>> including systematics
+>>> method used to compute upper limit is Asymptotic
+>>> random number generator seed is 123456
+[?1034hComputing limit starting from observation
+Will compute both limit(s) using minimizer Minuit2 with strategy 0 and tolerance 0.01
+Median for expected limits: 2.73438
+Sigma  for expected limits: 1.39511
+Restricting r to positive values.
+
+Make global fit of real data
+NLL at global minimum of data: -8.53578e+06 (r = 2.48997)
+
+Make global fit of asimov data
+NLL at global minimum of asimov: -8.53581e+06 (r = 0.000173607)
+At r = 6.417653:	q_mu = 5.20543	q_A  = 15.25739	CLsb = 0.01126	CLb  = 0.94787	CLs  = 0.01188
+At r = 4.453812:	q_mu = 1.58109	q_A  = 8.77216	CLsb = 0.10430	CLb  = 0.95584	CLs  = 0.10912
+At r = 5.435733:	q_mu = 3.22079	q_A  = 11.95120	CLsb = 0.03635	CLb  = 0.95178	CLs  = 0.03820
+At r = 5.037829:	q_mu = 2.50725	q_A  = 10.64286	CLsb = 0.05666	CLb  = 0.95342	CLs  = 0.05943
+At r = 5.241823:	q_mu = 2.86523	q_A  = 11.31055	CLsb = 0.04526	CLb  = 0.95258	CLs  = 0.04751
+At r = 5.163775:	q_mu = 2.72630	q_A  = 11.05410	CLsb = 0.04935	CLb  = 0.95290	CLs  = 0.05179
+At r = 5.204870:	q_mu = 2.79900	q_A  = 11.18889	CLsb = 0.04716	CLb  = 0.95273	CLs  = 0.04950
+At r = 5.189372:	q_mu = 2.77145	q_A  = 11.13798	CLsb = 0.04798	CLb  = 0.95280	CLs  = 0.05036
+
+ -- Asymptotic -- 
+Observed Limit: r < 5.1894
+Expected  2.5%: r < 1.4153
+Expected 16.0%: r < 1.9151
+Expected 50.0%: r < 2.7344
+Expected 84.0%: r < 4.0096
+Expected 97.5%: r < 5.7754
+
+Done in 10.00 min (cpu), 10.05 min (real)
+	mv higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH120* combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineExpObs_120.log logs/
+
+	combine -M Asymptotic -m 120 -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125 datacards/datacard_m120_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt --toysFile combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.GenerateOnly.mH125.123456.root -t -1 --expectSignal=1 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineInj125_120.log
+>>> including systematics
+>>> method used to compute upper limit is Asymptotic
+>>> random number generator seed is 123456
+[?1034hComputing limit starting from expected outcome
+Will compute both limit(s) using minimizer Minuit2 with strategy 0 and tolerance 0.01
+Median for expected limits: 2.66406
+Sigma  for expected limits: 1.35924
+Restricting r to positive values.
+
+Make global fit of real data
+NLL at global minimum of data: -8.63381e+06 (r = 0.728999)
+
+Make global fit of asimov data
+NLL at global minimum of asimov: -8.63381e+06 (r = 0.0063404)
+At r = 4.384034:	q_mu = 6.12278	q_A  = 8.92633	CLsb = 0.00667	CLb  = 0.69612	CLs  = 0.00959
+At r = 2.556517:	q_mu = 1.81942	q_A  = 3.57558	CLsb = 0.08869	CLb  = 0.70611	CLs  = 0.12561
+At r = 3.470276:	q_mu = 3.76275	q_A  = 6.08583	CLsb = 0.02620	CLb  = 0.70096	CLs  = 0.03738
+At r = 3.112100:	q_mu = 2.94085	q_A  = 5.05317	CLsb = 0.04318	CLb  = 0.70300	CLs  = 0.06143
+At r = 3.302480:	q_mu = 3.36897	q_A  = 5.59501	CLsb = 0.03322	CLb  = 0.70191	CLs  = 0.04732
+At r = 3.232290:	q_mu = 3.20838	q_A  = 5.39297	CLsb = 0.03663	CLb  = 0.70232	CLs  = 0.05216
+At r = 3.270721:	q_mu = 3.29596	q_A  = 5.50332	CLsb = 0.03473	CLb  = 0.70210	CLs  = 0.04946
+At r = 3.256742:	q_mu = 3.26393	q_A  = 5.46303	CLsb = 0.03541	CLb  = 0.70218	CLs  = 0.05043
+At r = 3.264454:	q_mu = 3.28156	q_A  = 5.48523	CLsb = 0.03503	CLb  = 0.70213	CLs  = 0.04989
+
+ -- Asymptotic -- 
+Observed Limit: r < 3.2645
+Expected  2.5%: r < 1.3789
+Expected 16.0%: r < 1.8658
+Expected 50.0%: r < 2.6641
+Expected 84.0%: r < 3.9065
+Expected 97.5%: r < 5.6269
+
+Done in 9.77 min (cpu), 9.78 min (real)
+	mv higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH120* combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineInj125_120.log logs/
+
+	combine -M Asymptotic -m 130 -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2 datacards/datacard_m130_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineExpObs_130.log
+>>> including systematics
+>>> method used to compute upper limit is Asymptotic
+>>> random number generator seed is 123456
+[?1034hComputing limit starting from observation
+Will compute both limit(s) using minimizer Minuit2 with strategy 0 and tolerance 0.01
+Median for expected limits: 3.73438
+Sigma  for expected limits: 1.90533
+Restricting r to positive values.
+
+Make global fit of real data
+NLL at global minimum of data: -8.53578e+06 (r = 0.799536)
+
+Make global fit of asimov data
+NLL at global minimum of asimov: -8.53581e+06 (r = 0.0325284)
+At r = 5.989750:	q_mu = 5.54121	q_A  = 8.42946	CLsb = 0.00929	CLb  = 0.70863	CLs  = 0.01311
+At r = 3.394643:	q_mu = 1.65531	q_A  = 3.22871	CLsb = 0.09912	CLb  = 0.69507	CLs  = 0.14260
+At r = 4.692197:	q_mu = 3.40944	q_A  = 5.66163	CLsb = 0.03241	CLb  = 0.70297	CLs  = 0.04611
+At r = 4.358179:	q_mu = 2.91505	q_A  = 4.99583	CLsb = 0.04388	CLb  = 0.70118	CLs  = 0.06258
+At r = 4.554493:	q_mu = 3.20190	q_A  = 5.38408	CLsb = 0.03678	CLb  = 0.70228	CLs  = 0.05237
+At r = 4.622062:	q_mu = 3.30349	q_A  = 5.51933	CLsb = 0.03457	CLb  = 0.70256	CLs  = 0.04920
+At r = 4.594581:	q_mu = 3.26188	q_A  = 5.46411	CLsb = 0.03545	CLb  = 0.70246	CLs  = 0.05047
+At r = 4.608167:	q_mu = 3.28238	q_A  = 5.49136	CLsb = 0.03501	CLb  = 0.70251	CLs  = 0.04984
+
+ -- Asymptotic -- 
+Observed Limit: r < 4.6082
+Expected  2.5%: r < 1.9328
+Expected 16.0%: r < 2.6154
+Expected 50.0%: r < 3.7344
+Expected 84.0%: r < 5.5355
+Expected 97.5%: r < 8.0136
+
+Done in 11.01 min (cpu), 11.02 min (real)
+	mv higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.Asymptotic.mH130* combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineExpObs_130.log logs/
+
+	combine -M Asymptotic -m 130 -n _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125 datacards/datacard_m130_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt --toysFile combine/higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.GenerateOnly.mH125.123456.root -t -1 --expectSignal=1 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineInj125_130.log
+>>> including systematics
+>>> method used to compute upper limit is Asymptotic
+>>> random number generator seed is 123456
+[?1034hComputing limit starting from expected outcome
+Will compute both limit(s) using minimizer Minuit2 with strategy 0 and tolerance 0.01
+Median for expected limits: 3.625
+Sigma  for expected limits: 1.84952
+Restricting r to positive values.
+
+Make global fit of real data
+NLL at global minimum of data: -8.63381e+06 (r = 0.985904)
+
+Make global fit of asimov data
+NLL at global minimum of asimov: -8.63381e+06 (r = 0.00152019)
+At r = 5.619674:	q_mu = 5.42528	q_A  = 8.01735	CLsb = 0.00992	CLb  = 0.69226	CLs  = 0.01434
+At r = 3.302789:	q_mu = 1.61287	q_A  = 3.25617	CLsb = 0.10204	CLb  = 0.70350	CLs  = 0.14505
+At r = 4.461231:	q_mu = 3.33287	q_A  = 5.49107	CLsb = 0.03395	CLb  = 0.69766	CLs  = 0.04867
+At r = 4.206635:	q_mu = 2.91687	q_A  = 4.96957	CLsb = 0.04383	CLb  = 0.69894	CLs  = 0.06271
+At r = 4.388619:	q_mu = 3.21183	q_A  = 5.34046	CLsb = 0.03655	CLb  = 0.69804	CLs  = 0.05237
+At r = 4.425295:	q_mu = 3.27279	q_A  = 5.41637	CLsb = 0.03522	CLb  = 0.69785	CLs  = 0.05047
+At r = 4.439857:	q_mu = 3.29633	q_A  = 5.44595	CLsb = 0.03472	CLb  = 0.69780	CLs  = 0.04975
+
+ -- Asymptotic -- 
+Observed Limit: r < 4.4399
+Expected  2.5%: r < 1.8621
+Expected 16.0%: r < 2.5300
+Expected 50.0%: r < 3.6250
+Expected 84.0%: r < 5.3445
+Expected 97.5%: r < 7.7623
+
+Done in 10.60 min (cpu), 10.63 min (real)
+	mv higgsCombine_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_Inj125.Asymptotic.mH130* combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_CombineInj125_130.log logs/
+
+
+[1;31mDone.[m

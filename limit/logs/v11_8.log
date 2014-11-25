@@ -1,0 +1,38 @@
+nohup: ignoring input
+[3g   H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H
+	text2workspace.py datacards/datacard_m115_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.txt
+[?1034h	root -l /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawBestFit.C'(2.5,false,"115")' -q 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_fitplots.log
+
+Processing /afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawBestFit.C(2.5,false,"115")...
+QCD normalization = 539827 +/- 1332.64
+chi2/ndof = 1.06321
+Info in <TCanvas::Print>: pdf file ./plots/Fit_mH115_CAT0.pdf has been created
+Info in <TCanvas::Print>: png file ./plots/Fit_mH115_CAT0.png has been created
+QCD normalization = 317323 +/- 838.347
+chi2/ndof = 0.83346
+Info in <TCanvas::Print>: pdf file ./plots/Fit_mH115_CAT1.pdf has been created
+Info in <TCanvas::Print>: png file ./plots/Fit_mH115_CAT1.png has been created
+QCD normalization = 32235.6 +/- 208.004
+chi2/ndof = 0.767983
+Info in <TCanvas::Print>: pdf file ./plots/Fit_mH115_CAT2.pdf has been created
+Info in <TCanvas::Print>: png file ./plots/Fit_mH115_CAT2.png has been created
+QCD normalization = 10588.5 +/- 130.254
+chi2/ndof = 0.82336
+Info in <TCanvas::Print>: pdf file ./plots/Fit_mH115_CAT3.pdf has been created
+Info in <TCanvas::Print>: png file ./plots/Fit_mH115_CAT3.png has been created
+QCD normalization = 202557 +/- 500.488
+chi2/ndof = 1.38358
+Info in <TCanvas::Print>: pdf file ./plots/Fit_mH115_CAT4.pdf has been created
+Info in <TCanvas::Print>: png file ./plots/Fit_mH115_CAT4.png has been created
+QCD normalization = 107394 +/- 361.758
+chi2/ndof = 0.730484
+Info in <TCanvas::Print>: pdf file ./plots/Fit_mH115_CAT5.pdf has been created
+Info in <TCanvas::Print>: png file ./plots/Fit_mH115_CAT5.png has been created
+QCD normalization = 14937.2 +/- 132.224
+chi2/ndof = 0.746002
+Info in <TCanvas::Print>: pdf file ./plots/Fit_mH115_CAT6.pdf has been created
+Info in <TCanvas::Print>: png file ./plots/Fit_mH115_CAT6.png has been created
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_fitplots.log logs/
+
+
+[1;31mDone.[m

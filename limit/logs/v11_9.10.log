@@ -1,0 +1,13 @@
+nohup: ignoring input
+[3g   H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H    H
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/diffNuisances.py -a -f text combine/mlfit_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.mH115.root -g pulls_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_mH115.root > nuissances_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.mH115.txt 2> vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_GetNuissances_115.log
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/diffNuisances.py -a -f latex combine/mlfit_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.mH115.root > nuissances_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2.mH115.tex 2>> vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_GetNuissances_115.log
+	mv pulls_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2*115*.root combine/
+	mv nuissances_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2*115*{tex,txt} combine/
+	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_GetNuissances_115.log logs/
+
+	/afs/cern.ch/work/s/salderwe/private/2014/vbfHbb/limit/DrawNuissances.py _vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2 115 2>&1 | tee vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotNuissances_115.log
+[?1034h	mv vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL2-POL2_PlotNuissances_115.log logs/
+
+
+[1;31mDone.[m
