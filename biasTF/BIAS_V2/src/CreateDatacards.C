@@ -148,13 +148,13 @@ void CreateDatacards(float XMIN, float XMAX, int CAT_MIN,int CAT_MAX,int BRN_ORD
     datacard<<"QCDscale_qqh           lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
 		if (veto(vCATVETO, i)) continue;
-      datacard<<setw(NF)<<UNC_SCALEGlobal_GF[m]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
+      datacard<<setw(NF)<<UNC_SCALEGlobal_VBF[m]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     } 
     datacard<<"\n";
     datacard<<"QCDscale_ggh           lnN ";
     for(int i=CAT_MIN;i<=CAT_MAX;i++) {
 		if (veto(vCATVETO, i)) continue;
-      datacard<<setw(NF)<<"-"<<setw(NF)<<UNC_SCALEGlobal_VBF[m]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
+      datacard<<setw(NF)<<"-"<<setw(NF)<<UNC_SCALEGlobal_GF[m]<<setw(NF)<<"-"<<setw(NF)<<"-"<<setw(NF)<<"-";
     } 
     datacard<<"\n";
     datacard<<"pdf_qqbar              lnN ";
