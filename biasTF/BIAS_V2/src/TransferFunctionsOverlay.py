@@ -74,7 +74,7 @@ def INTERNALblind(h,min,max):
 
 def INTERNALstyle():
 	gROOT.ProcessLine("TH1::SetDefaultSumw2(1);")
-	gROOT.ProcessLine(".x %s/styleCMSTDR.C++"%basepath)
+	gROOT.ProcessLine(".x %s/../../../common/styleCMSTDR.C++"%basepath)
 	gROOT.ProcessLine('gROOT->ForceStyle();')
 	
 	markers = [20, 21, 20 , 23]

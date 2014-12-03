@@ -95,11 +95,11 @@ fi
 if [ "$1" == "" ] || [ "$1" == "2" ];then
 	if [ "$2" == "" ] || [ "$2" == "1" ]; then
 	# NOM
-	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathskimslim" -V "$variablesslim" -o "rootfiles/vbfHbb_yields_NOM.root" -t "None" --datatrigger "None" -p "MBBREG1,MBBREG1;mvaNOMC0,MBBREG1;mvaNOMC1,MBBREG1;mvaNOMC2,MBBREG1;mvaNOMC3,MBBREG1;mvaNOMC4" --nosample "JetMon,DataV" -w "$weightNOM" $usebool $notext $flatprefix $flatsuffixNOM -y --latex #-K
+	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathskimslim" -I ../common/vbfHbb_info_2013.json -V "$variablesslim" -o "rootfiles/vbfHbb_yields_NOM.root" -t "None" --datatrigger "None" -p "MBBREG1,MBBREG1;mvaNOMC0,MBBREG1;mvaNOMC1,MBBREG1;mvaNOMC2,MBBREG1;mvaNOMC3,MBBREG1;mvaNOMC4" --nosample "JetMon,DataV" -w "$weightNOM" $usebool $notext $flatprefix $flatsuffixNOM -y --latex #-K
 	fi
 	if [ "$2" == "" ] || [ "$2" == "2" ]; then
 	# VBF
-	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathskimslim" -V "$variablesslim" -o "rootfiles/vbfHbb_yields_VBF.root" -t "None" --datatrigger "None" -p "MBBREG2,MBBREG2;mvaVBFC0,MBBREG2;mvaVBFC1,MBBREG2;mvaVBFC2,MBBREG2;mvaVBFC3" --nosample "JetMon,DataA,DataB,DataC,DataD" -w "$weightVBF" $usebool $notext $flatprefix $flatsuffixVBF -y --latex #-K
+	$basepath/../common/main.py -d -D "$defaultopts" -G "$globalpathskimslim" -I ../common/vbfHbb_info_2013.json -V "$variablesslim" -o "rootfiles/vbfHbb_yields_VBF.root" -t "None" --datatrigger "None" -p "MBBREG2,MBBREG2;mvaVBFC0,MBBREG2;mvaVBFC1,MBBREG2;mvaVBFC2,MBBREG2;mvaVBFC3" --nosample "JetMon,DataA,DataB,DataC,DataD" -w "$weightVBF" $usebool $notext $flatprefix $flatsuffixVBF -y --latex #-K
 	fi
 fi
 
