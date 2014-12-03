@@ -68,6 +68,12 @@ def optsplitlist(option,opt,value,parser):
 def optsplit(option,opt,value,parser):
 	setattr(parser.values, option.dest, value.split(','))
 
+def optsplitfloat(option,opt,value,parser):
+	setattr(parser.values, option.dest, [float(x) for x in value.split(',')])
+
+def optsplitint(option,opt,value,parser):
+	setattr(parser.values, option.dest, [int(x) for x in value.split(',')])
+
 def optsplitdict(option,opt,value,parser):
 	vd = {}
 	for v in value.split(','):
@@ -323,3 +329,41 @@ def trigData(opts,s,trg):
 	#print "out: ",trg,trg_orig
 	return trg, trg_orig
 	
+# CATsetup ########################################################################################
+class CATsetupClass:
+	def __init__(self,tcat,lcat,bcat):
+		self.ncat       = len(bcat)-1
+		self.tag        = tcat
+		self.label      = lcat
+		self.boundaries = bcat
+
+class SELsetupClass:
+	def __init__(self,nsel):
+		self.nsel       = nsel
+		self.selections = []
+		self.seldict    = {}
+			
+	def addCAT(self,tcat,lcat,bcat):
+		self.selections += [CATsetupClass(tcat,lcat,bcat)]
+		self.seldict[tcat] = [self.selections[-1]]
+	
+	def reeval(self):
+		self.ncats      = [x.ncat for x in self.selections]
+		self.labels     = [x.label for x in self.selections]
+		self.tags       = [x.tag for x in self.selections]
+		self.mva        = ["mva%s"%x.tag for x in self.selections]
+
+def SELsetup(option,opt=None,value=None,parser=None):
+	if not parser: value = option
+	l1 = value.split(',')
+	nsel = len(l1)
+	s = SELsetupClass(nsel)
+	for l in l1:
+		l2 = l.split(';')
+		tcat = l2[0]
+		lcat = l2[1]
+		bcat = [float(x) for x in l2[2].split('#')]
+		s.addCAT(tcat,lcat,bcat)
+	s.reeval()
+	if parser: setattr(parser.values, option.dest, s)
+	else: return s
