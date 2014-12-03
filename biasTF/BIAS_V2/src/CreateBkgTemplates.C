@@ -3,6 +3,7 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH, float XMAXDIFF=
 {
   gROOT->ProcessLineSync(".x ../../common/styleCMSTDR.C");
   gROOT->ForceStyle();
+  gStyle->SetPadRightMargin(0.04);
   RooMsgService::instance().setSilentMode(kTRUE);
   for(int i=0;i<2;i++) {
     RooMsgService::instance().setStreamStatus(i,kFALSE);
@@ -158,6 +159,7 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH, float XMAXDIFF=
       modelZ.plotOn(frame,RooFit::LineWidth(2));
       frame->GetXaxis()->SetTitle("M_{bb} (GeV)");
       frame->Draw();
+		frame->GetYaxis()->SetRangeUser(0.,(hZ->GetBinContent(hZ->GetMaximumBin())+hZ->GetBinError(hZ->GetMaximumBin()))*1.05);
       TPaveText *pave = new TPaveText(0.7,0.76,0.9,0.9,"NDC");
 		pave->SetTextAlign(11);
       pave->SetFillColor(0);
@@ -179,7 +181,7 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH, float XMAXDIFF=
       paveZ->SetTextSize(0.030);
 		paveZ->AddText(TString::Format("mZ: %.2f #pm %.2f",mZ.getValV(),mZ.getError()));
 		paveZ->AddText(TString::Format("sZ: %.2f #pm %.2f",sZ.getValV(),sZ.getError()));
-		paveZ->Draw();
+		//paveZ->Draw();
 		gPad->Update();
 		paveZ->SetY2NDC(paveZ->GetY1NDC()+paveZ->GetListOfLines()->GetSize()*0.032);
 
@@ -224,6 +226,7 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH, float XMAXDIFF=
       */
       canT->cd(icat+1);
       RooPlot* frame = x.frame();
+		frame->GetYaxis()->SetRangeUser(0.,hTopYield->GetBinContent(hTopYield->GetMaximumBin())*1.1);
       roohist_T[icat]->plotOn(frame);
       modelT->plotOn(frame,RooFit::LineWidth(2));
       //modelT->plotOn(frame,VisualizeError(*resT,1,kTRUE),FillColor(kGray),MoveToBack());
@@ -243,7 +246,7 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH, float XMAXDIFF=
 		paveT->AddText(TString::Format("sT: %.2f #pm %.2f",sT.getValV(),sT.getError()));
 		//paveT->AddText(TString::Format("mTShift: %.2f %.2f",mTShift.getValV(),mTShift.getValV()));
 		//paveT->AddText(TString::Format("sTShift: %.2f %.2f",sTShift.getValV(),sTShift.getValV()));
-		paveT->Draw();
+		//paveT->Draw();
 		gPad->Update();
 		paveT->SetY2NDC(paveT->GetY1NDC()+paveT->GetListOfLines()->GetSize()*0.032);
 

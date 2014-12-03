@@ -53,6 +53,8 @@ else                TFile *outf = TFile::Open(TString::Format("%s/output/transfe
   TCanvas *can1[NSEL];
   TCanvas *can2[NSEL];
   TCanvas *can = new TCanvas("aux","aux");
+  gStyle->SetPadTopMargin(0.06);
+  gStyle->SetPadLeftMargin(0.12);
  
   float vx[200],vy[200],vex[200],vey[200],vey_approx[200];
   
@@ -79,7 +81,7 @@ else                TFile *outf = TFile::Open(TString::Format("%s/output/transfe
 
     TFile *infData = TFile::Open("flat/Fit_data_sel"+SELECTION[isel]+".root");
     TTree *trData = (TTree*)infData->Get("Hbb/events");
-    can2[isel] = new TCanvas("transfer_sel"+SELECTION[isel],"transfer_sel"+SELECTION[isel],400*(NCAT[isel]-1),450);
+    can2[isel] = new TCanvas("transfer_sel"+SELECTION[isel],"transfer_sel"+SELECTION[isel],400*(NCAT[isel]-1),400);
     can2[isel]->Divide(NCAT[isel]-1,1);
     TLegend *leg = new TLegend(0.6,0.6,0.9,0.9);
     leg->SetHeader(SELTAG[isel]+" selection");
@@ -142,9 +144,11 @@ else                TFile *outf = TFile::Open(TString::Format("%s/output/transfe
         can1[isel]->cd();
         hData[isel][icat]->SetFillColor(kGray);
         hData[isel][icat]->GetXaxis()->SetTitle("M_{bb} (GeV)"); 
+        hData[isel][icat]->GetXaxis()->SetTitleOffset(1.015); 
+        hData[isel][icat]->GetYaxis()->SetTitleOffset(1.0); 
         hData[isel][icat]->GetYaxis()->SetTitle("PDF"); 
         hData[isel][icat]->GetYaxis()->SetNdivisions(505);
-        hData[isel][icat]->SetMaximum(0.25);
+        hData[isel][icat]->SetMaximum(isel==0 ? 0.30 : 0.20);
         hData[isel][icat]->Draw("HIST");
         leg->AddEntry(hData[isel][icat],TString::Format("CAT%d",counter),"F");
       }
@@ -153,14 +157,16 @@ else                TFile *outf = TFile::Open(TString::Format("%s/output/transfe
         hData[isel][icat]->Draw("same E");
         leg->AddEntry(hData[isel][icat],TString::Format("CAT%d",counter),"P");
         can2[isel]->cd(icat);
+		  gPad->SetLeftMargin(0.17);
+		  ln->GetYaxis()->SetTitleOffset(1.5);
         ln->Draw();
         gUnc_approx[isel][icat]->Draw("sameE3");
         ln->Draw("same");
         gUnc[isel][icat]->Draw("sameE3");
         hRatio[isel][icat]->Draw("same");
 
-    	  TLegend *leg1 = new TLegend(0.2,0.15,0.6,0.4);
-        leg1->SetHeader(ss); 
+    	  TLegend *leg1 = new TLegend(gPad->GetLeftMargin()+0.02,gPad->GetBottomMargin()+0.02,0.6,0.4);
+        leg1->SetHeader(TString::Format("%s selection CAT%d/CAT%d",SELTAG[isel].Data(),icat+(isel==0 ? 0 : NCAT[isel-1]),(isel==0 ? 0 : 4)).Data());//ss); 
         leg1->AddEntry(hRatio[isel][icat],"data","P");
         leg1->AddEntry(fitRatio[isel][icat],"fit","L");
         leg1->AddEntry(gUnc_approx[isel][icat],"uncert.","F");
@@ -168,8 +174,11 @@ else                TFile *outf = TFile::Open(TString::Format("%s/output/transfe
         leg1->SetFillColor(0);
         leg1->SetBorderSize(0);
         leg1->SetTextFont(42);
-        leg1->SetTextSize(0.05);
+        leg1->SetTextSize(gPad->GetTopMargin()*2.8/4.0);//0.05);
         leg1->Draw();
+		  gPad->Update();
+		  leg1->SetY2(leg1->GetY1()+leg1->GetNRows()*gPad->GetTopMargin());
+		  gPad->Update();
 		  TPaveText *pave = new TPaveText(0.2,0.75,0.6,0.9,"NDC");
 		  pave->SetTextAlign(11);
 		  pave->SetTextSize(0.05);
@@ -180,8 +189,39 @@ else                TFile *outf = TFile::Open(TString::Format("%s/output/transfe
 		  pave->SetTextSize(0.035);
 		  for (int i=0; i<fitRatio[isel][icat]->GetNpar(); i++) pave->AddText(TString::Format("p%d = %.2g #pm %.2g",i,fitRatio[isel][icat]->GetParameter(i),fitRatio[isel][icat]->GetParError(i)).Data());
 		  pave->SetY1NDC(pave->GetY2NDC()-0.04*(fitRatio[isel][icat]->GetNpar()+1));
-		  pave->Draw();
+		  //pave->Draw();
+		  gPad->RedrawAxis();
       }
+
+    TPaveText *paveCMS = new TPaveText(gPad->GetLeftMargin()+0.01,1.-gPad->GetTopMargin(),gPad->GetLeftMargin()+0.15,1.,"NDC");
+	 paveCMS->SetTextFont(62);
+	 paveCMS->SetTextSize(gStyle->GetPadTopMargin()*3./4.);
+	 paveCMS->SetBorderSize(0);
+	 paveCMS->SetFillStyle(-1);
+	 paveCMS->SetTextAlign(12);
+	 paveCMS->AddText("CMS");
+	 paveCMS->Draw();
+	 gPad->Update();
+	 float scale= (float)gPad->GetCanvas()->GetWindowHeight()/(float)(gPad->GetCanvas()->GetWindowWidth()*gPad->GetAbsWNDC());
+	 scale = (float)floor(scale*3)/3.);
+    TPaveText *paveCMS2 = new TPaveText(gPad->GetLeftMargin()+0.105*scale,1.-gPad->GetTopMargin(),gPad->GetLeftMargin()+0.32,1.-0.008,"NDC");
+	 paveCMS2->SetTextFont(52);
+	 paveCMS2->SetTextSize(gStyle->GetPadTopMargin()*2.55/4.);
+	 paveCMS2->SetBorderSize(0);
+	 paveCMS2->SetFillStyle(-1);
+	 paveCMS2->SetTextAlign(12);
+    paveCMS2->AddText("Preliminary");
+	 //paveCMS2->Draw();
+	 gPad->Update();
+
+	 TPaveText *paveLumi = new TPaveText(0.5,1.-gStyle->GetPadTopMargin(),0.98,1.00,"NDC");
+	 paveLumi->SetTextFont(42);
+	 paveLumi->SetTextSize(gStyle->GetPadTopMargin()*3./4.);
+	 paveLumi->SetBorderSize(0);
+	 paveLumi->SetFillStyle(-1);
+	 paveLumi->SetTextAlign(32);
+	 paveLumi->AddText("19.8 fb^{-1} (8TeV)");//+ 18.2 ;
+	 paveLumi->Draw();
 
       outf->cd();
 		write(hData[isel][icat]);
@@ -201,10 +241,10 @@ else                TFile *outf = TFile::Open(TString::Format("%s/output/transfe
 	 makeDirs(OUTPATH+"/plots");
 	 makeDirs(OUTPATH+"/plots/transferFunctions");
 	 TString n="";
-	 n = TString::Format("%s/plots/transferFunctions/%s_%s_%s-%.f-%.f",OUTPATH.Data(),can1[isel]->GetName(),SELTAG[0].Data(),TR.Data(),XMIN,XMAX);
+	 n = TString::Format("%s/plots/transferFunctions/%s_%s-%.f-%.f",OUTPATH.Data(),can1[isel]->GetName(),TR.Data(),XMIN,XMAX);
 	 can1[isel]->SaveAs(n+".png");
 	 can1[isel]->SaveAs(n+".pdf");
-	 n = TString::Format("%s/plots/transferFunctions/%s_%s_%s-%.f-%.f",OUTPATH.Data(),can2[isel]->GetName(),SELTAG[0].Data(),TR.Data(),XMIN,XMAX);
+	 n = TString::Format("%s/plots/transferFunctions/%s_%s-%.f-%.f",OUTPATH.Data(),can2[isel]->GetName(),TR.Data(),XMIN,XMAX);
 	 can2[isel]->SaveAs(n+".png");
 	 can2[isel]->SaveAs(n+".pdf");
   } // --end isel

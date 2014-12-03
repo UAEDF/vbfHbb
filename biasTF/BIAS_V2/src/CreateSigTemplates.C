@@ -3,6 +3,7 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH, TStr
 {
   gROOT->ProcessLineSync(".x ../../common/styleCMSTDR.C");
   gROOT->ForceStyle();
+  gStyle->SetPadTopMargin(0.05);
   RooMsgService::instance().setSilentMode(kTRUE);
   for(int i=0;i<2;i++) {
     RooMsgService::instance().setStreamStatus(i,kFALSE);
@@ -139,6 +140,11 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH, TStr
         model[iMass][icat] = new RooAddPdf(ss,ss,RooArgList(sig,bkg),fsig);
          
         model[iMass][icat]->fitTo(*RooHistFit[iMass][icat],SumW2Error(kFALSE),"q");
+			
+		  hGF[iMass][icat]->Rebin(25);
+		  hVBF[iMass][icat]->Rebin(25);
+		  hTOT[iMass][icat]->Rebin(25);
+        RooHistScaled[iMass][icat] = new RooDataHist(name,name,x,hTOT[iMass][icat]);
 
         RooPlot* frame = x.frame();
         RooHistScaled[iMass][icat]->plotOn(frame);
@@ -147,7 +153,8 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH, TStr
         model[iMass][icat]->plotOn(frame,RooFit::Components(bkg),LineColor(kBlue),LineWidth(2),LineStyle(kDashed)); 
         frame->GetXaxis()->SetNdivisions(505); 
         frame->GetXaxis()->SetTitle("M_{bb} (GeV)");
-        frame->GetYaxis()->SetTitle("Events");
+        frame->GetYaxis()->SetTitle(TString::Format("Events / (%.1f)",hTOT[iMass][icat]->GetBinWidth(1)).Data());
+		  frame->GetYaxis()->SetRangeUser(0.,hTOT[iMass][icat]->GetBinContent(hTOT[iMass][icat]->GetMaximumBin())*1.1);
         frame->Draw();
         hGF[iMass][icat]->SetFillColor(kGreen-8); 
         hVBF[iMass][icat]->SetFillColor(kRed-10); 
@@ -158,21 +165,25 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH, TStr
         frame->Draw("same");
         gPad->RedrawAxis();
         
-        TF1 *tmp_func = model[iMass][icat]->asTF(x,fsig,x);
-        double y0 = tmp_func->GetMaximum();
+		  //TF1 *tmp_func = model[iMass][icat]->asTF(x,fsig);
+        //double y0 = tmp_func->GetMaximum();
+		  //cout << y0 << endl;
+        tmp_func = model[iMass][icat]->asTF(x,fsig,x);
+		  double y0b = tmp_func->GetMaximum();
         double x0 = tmp_func->GetMaximumX();
-        double x1 = tmp_func->GetX(y0/2,XMIN,x0);
-        double x2 = tmp_func->GetX(y0/2,x0,XMAX);
+        double x1 = tmp_func->GetX(y0b/2,XMIN,x0);
+        double x2 = tmp_func->GetX(y0b/2,x0,XMAX);
         double FWHM = x2-x1;
         width.setVal(FWHM);
-        double y1 = dX*0.5*y0*(YieldVBF[iMass][icat]->getVal()+YieldGF[iMass][icat]->getVal())/tmp_func->Integral(XMIN,XMAX); 
+        double y1 = dX*25*0.5*y0b*(YieldVBF[iMass][icat]->getVal()+YieldGF[iMass][icat]->getVal())/tmp_func->Integral(XMIN,XMAX); 
+		  cout << y1 << endl;
         TLine *ln = new TLine(x1,y1,x2,y1);
         ln->SetLineColor(kMagenta+3);
         ln->SetLineStyle(7);
         ln->SetLineWidth(2);
         ln->Draw(); 
 
-        TLegend *leg = new TLegend(0.65,0.35,0.9,0.45);  
+        TLegend *leg = new TLegend(0.71,0.35,0.9,0.45);  
         leg->AddEntry(hVBF[iMass][icat],"VBF","F");
         leg->AddEntry(hGF[iMass][icat],"GF","F");
         leg->SetFillColor(0);
@@ -181,7 +192,7 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH, TStr
         leg->SetTextSize(0.05);
         leg->Draw("same");
       
-        TPaveText *pave = new TPaveText(0.65,0.55,0.9,0.92,"NDC");
+        TPaveText *pave = new TPaveText(0.67,1.-(6*1.2+1)*gStyle->GetPadTopMargin()-0.02,1.-gStyle->GetPadRightMargin()-0.02,1.-gStyle->GetPadTopMargin()-0.02,"NDC");
         sprintf(name,"M_{H} = %d GeV",H_MASS[iMass]);
         pave->AddText(name);
         sprintf(name,"%s selection",SELTAG[isel].Data());
@@ -192,13 +203,13 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH, TStr
         pave->AddText(name);
         sprintf(name,"#sigma = %1.1f #pm %1.1f",s.getVal(),s.getError());
         pave->AddText(name);
-        sprintf(name,"FWHM = %1.2f",FWHM);
+        sprintf(name,"FWHM = %1.2f",width.getVal());//FWHM);
         pave->AddText(name);
         
         pave->SetFillColor(0);
         pave->SetBorderSize(0);
         pave->SetTextFont(42);
-        pave->SetTextSize(0.05);
+        pave->SetTextSize(gStyle->GetPadTopMargin()*3.75/4.);
         pave->SetTextColor(kBlue);
         pave->Draw();
         
@@ -220,6 +231,7 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH, TStr
         w->import(*YieldVBF[iMass][icat]);   
         w->import(*YieldGF[iMass][icat]);  
         
+		  gPad->RedrawAxis();
         counter++;
       }// categories loop
 		makeDirs(OUTPATH);

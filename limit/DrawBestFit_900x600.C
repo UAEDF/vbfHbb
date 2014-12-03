@@ -229,8 +229,8 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS)
 	 paveCMS->SetFillStyle(-1);
 	 paveCMS->SetTextAlign(12);
 	 paveCMS->AddText("CMS");
-	 TText *l = (TText*)paveCMS->AddText("Preliminary");
-	 l->SetTextFont(52);
+	 //TText *l = (TText*)paveCMS->AddText("Preliminary");
+	 //l->SetTextFont(52);
 	 paveCMS->Draw();
 	 gPad->Update();
 	 paveCMS->SetY1NDC(paveCMS->GetY2NDC()-paveCMS->GetListOfLines()->GetSize()*gStyle->GetPadTopMargin());

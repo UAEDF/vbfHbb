@@ -134,8 +134,10 @@ parseThis ${run[0]} ${cmd0[@]}
 # CMD 1
 for mass in ${masses[@]}; do 
    datacard=`getDatacard ${mass} ${name}`
-	#cmd1a="combine -M MaxLikelihoodFit -v 2 --saveNormalizations --plots --stepSize=0.05 --preFitValue=1.5 --robustFit=1 --X-rtd FITTER_NEW_CROSSING_ALGO --minimizerAlgoForMinos=Minuit2 --minimizerToleranceForMinos=0.005 --X-rtd FITTER_NEVER_GIVE_UP --X-rtd FITTER_BOUND --minimizerAlgo=Minuit2 --minimizerStrategy=1 --minimizerTolerance=0.001 --cminFallbackAlgo Minuit,0.001 --rMin=-60 --rMax=60 ${datacard} -n ${nameU}.mH${mass} -m ${mass} 2>&1 | tee `getLogName ${nameN}".mH"${mass} "MLFit" ${mass}`"
-	cmd1a="combine -M MaxLikelihoodFit -v 2 --saveNormalizations --plots --stepSize=0.05 --preFitValue=1.0 --robustFit=1 --X-rtd FITTER_NEW_CROSSING_ALGO --minimizerAlgoForMinos=Minuit2 --X-rtd FITTER_NEVER_GIVE_UP --X-rtd FITTER_BOUND --minimizerAlgo=Minuit2 --minimizerStrategy=1 --cminFallbackAlgo Minuit,0.001 --rMin=-4 --rMax=8 ${datacard} -n ${nameU}.mH${mass} -m ${mass} 2>&1 | tee `getLogName ${nameN}".mH"${mass} "MLFit" ${mass}`"
+	#old#cmd1a="combine -M MaxLikelihoodFit -v 2 --saveNormalizations --plots --stepSize=0.05 --preFitValue=1.5 --robustFit=1 --X-rtd FITTER_NEW_CROSSING_ALGO --minimizerAlgoForMinos=Minuit2 --minimizerToleranceForMinos=0.005 --X-rtd FITTER_NEVER_GIVE_UP --X-rtd FITTER_BOUND --minimizerAlgo=Minuit2 --minimizerStrategy=1 --minimizerTolerance=0.001 --cminFallbackAlgo Minuit,0.001 --rMin=-60 --rMax=60 ${datacard} -n ${nameU}.mH${mass} -m ${mass} 2>&1 | tee `getLogName ${nameN}".mH"${mass} "MLFit" ${mass}`"
+	#fail#cmd1a="combine -M MaxLikelihoodFit -v 2 --saveNormalizations --plots --stepSize=0.05 --preFitValue=1.5 --robustFit=1 --X-rtd FITTER_NEW_CROSSING_ALGO --minimizerAlgoForMinos=Minuit2 --X-rtd FITTER_NEVER_GIVE_UP --X-rtd FITTER_BOUND --minimizerAlgo=Minuit2 --minimizerStrategy=1 --cminFallbackAlgo Minuit,0.001 --rMin=-4 --rMax=8 ${datacard} -n ${nameU}.mH${mass} -m ${mass} 2>&1 | tee `getLogName ${nameN}".mH"${mass} "MLFit" ${mass}`"
+	#other#cmd1a="combine -M MaxLikelihoodFit -v 2 --saveNormalizations --plots --stepSize=0.05 --preFitValue=2.0 --robustFit=1 --X-rtd FITTER_NEW_CROSSING_ALGO --minimizerAlgoForMinos=Minuit2 --minimizerToleranceForMinos=0.001 --X-rtd FITTER_NEVER_GIVE_UP --X-rtd FITTER_BOUND --minimizerAlgo=Minuit2 --minimizerStrategy=1 --minimizerTolerance=0.001 --cminFallbackAlgo Minuit,0.001 --rMin=-4 --rMax=8 ${datacard} -n ${nameU}.mH${mass} -m ${mass} 2>&1 | tee `getLogName ${nameN}".mH"${mass} "MLFit" ${mass}`"
+	#125#cmd1a="combine -M MaxLikelihoodFit -v 2 --saveNormalizations --plots --stepSize=0.05 --preFitValue=1.0 --robustFit=1 --X-rtd FITTER_NEW_CROSSING_ALGO --minimizerAlgoForMinos=Minuit2 --minimizerToleranceForMinos=0.01 --X-rtd FITTER_NEVER_GIVE_UP --X-rtd FITTER_BOUND --minimizerAlgo=Minuit2 --minimizerStrategy=1 --minimizerTolerance=0.01 --cminFallbackAlgo Minuit,0.001 --rMin=-4 --rMax=8 ${datacard} -n ${nameU}.mH${mass} -m ${mass} 2>&1 | tee `getLogName ${nameN}".mH"${mass} "MLFit" ${mass}`"
 	cmd1b="mv higgsCombine${nameU}.mH${mass}.MaxLikelihoodFit.mH${mass}.root combine/"
 	cmd1c="mv mlfit*${nameU}*mH${mass}* combine/"
 	cmd1d="mv *.png plots/"
@@ -146,16 +148,18 @@ done
 
 ##################################################
 # CMD 2 & 3
-mass="125"
-datacard=`getDatacard ${mass} ${name}`
-cmd2a="combine -M ProfileLikelihood --significance ${datacard} -m ${mass} -t -1 --expectSignal=1 --toysFreq 2>&1 | tee `getLogName ${nameN} "SignifExp" ${mass}`"
-cmd2b="mv `getLogName ${nameN} "SignifExp" ${mass}` logs/"
-cmd2=($cmd2a $cmd2b)
-parseThis ${run[2]} ${cmd2[@]}
-cmd3a="combine -M ProfileLikelihood --significance ${datacard} -m ${mass} --bruteForce --preFit 2>&1 | tee `getLogName ${nameN} "SignifObs" ${mass}`"
-cmd3b="mv `getLogName ${nameN} "SignifObs" ${mass}` logs/"
-cmd3=($cmd3a $cmd3b)
-parseThis ${run[2]} ${cmd3[@]}
+#mass="125"
+for mass in ${masses[@]}; do 
+   datacard=`getDatacard ${mass} ${name}`
+	cmd2a="combine -M ProfileLikelihood --significance ${datacard} -m ${mass} -t -1 --expectSignal=1 --toysFreq 2>&1 | tee `getLogName ${nameN} "SignifExp" ${mass}`"
+	cmd2b="mv `getLogName ${nameN} "SignifExp" ${mass}` logs/"
+	cmd2=($cmd2a $cmd2b)
+	parseThis ${run[2]} ${cmd2[@]}
+	cmd3a="combine -M ProfileLikelihood --significance ${datacard} -m ${mass} --bruteForce --preFit 2>&1 | tee `getLogName ${nameN} "SignifObs" ${mass}`"
+	cmd3b="mv `getLogName ${nameN} "SignifObs" ${mass}` logs/"
+	cmd3=($cmd3a $cmd3b)
+	parseThis ${run[2]} ${cmd3[@]}
+done
 
 ##################################################
 for mass in ${masses[@]}; do 

@@ -110,7 +110,7 @@ void DrawChannelCompatibility(int MASS,double rMin = -30,double rMax=40)
 	 paveCMS2->SetFillStyle(-1);
 	 paveCMS2->SetTextAlign(12);
     paveCMS2->AddText("Preliminary");
-	 paveCMS2->Draw();
+	 //paveCMS2->Draw();
 	 gPad->Update();
 
 	 TPaveText *paveLumi = new TPaveText(0.5,1.-gStyle->GetPadTopMargin(),0.98,1.00,"NDC");
