@@ -70,32 +70,42 @@ def gaStyle(g,i):
 	g.SetFillStyle(1001)
 
 ####################################################################################################
-def RooDraw(opts,can,x,h,hVBF,hGF,yVBF,yGF,model,bkg,fsig,width,mass,m,s,iS,S,C,Cp,archive):
+def RooDraw(opts,can,x,h,hVBF,hGF,hTOT,yVBF,yGF,model,bkg,fsig,width,mass,m,s,iS,S,C,Cp,archive):
 	can.cd(C+1)
+	
+	hGF.Rebin(25)
+	hVBF.Rebin(25)
+	hTOT.Rebin(25)
+	hScale = RooDataHist("tmp","tmp",RooArgList(x),hTOT)
+
 	frame = x.frame()
-	h.plotOn(frame)
+	hScale.plotOn(frame)
 	model.plotOn(frame)#,RooFit.LineWidth(2))
 	frame.GetXaxis().SetNdivisions(505)
 	frame.GetXaxis().SetTitle("M_{bb} (GeV)")
-	frame.GetYaxis().SetTitle("Events / (%d)"%hVBF.GetBinWidth(1))
-	model.plotOn(frame,RooFit.Components(RooArgSet(bkg)),RooFit.LineColor(kBlue),RooFit.LineWidth(2),RooFit.LineStyle(kDashed))
+	frame.GetYaxis().SetTitle("Events / (%.1f)"%hTOT.GetBinWidth(1))
+	frame.GetYaxis().SetRangeUser(0.,hTOT.GetBinContent(hTOT.GetMaximumBin())*1.1);
+	bkgplot = RooArgSet(bkg)
+	model.plotOn(frame,RooFit.Components(bkgplot),RooFit.LineColor(kBlue),RooFit.LineWidth(2),RooFit.LineStyle(kDashed))
 	frame.Draw()
+	archive += [bkgplot]
 
-	hVBF.SetFillColor(kGreen-8)
-	hGF.SetFillColor(kRed-10)
+	hGF.SetFillColor(kGreen-8)
+	hVBF.SetFillColor(kRed-10)
 	hS = THStack("hs","hs")
 	hS.Add(hGF)
 	hS.Add(hVBF)
 	hS.Draw("same,hist")
 	frame.Draw("same")
 	gPad.RedrawAxis()
+	archive += [hS]
 
 	ftmp = model.asTF(RooArgList(x),RooArgList(fsig),RooArgSet(x))
 	y0,x0       = ftmp.GetMaximum(),ftmp.GetMaximumX()
 	x1,x2       = ftmp.GetX(y0/2.,opts.X[0],x0),ftmp.GetX(y0/2.,x0,opts.X[1])
 	fwhm        = x2-x1
 	width.setVal(fwhm)
-	y1          = opts.dX[iS]*0.5*y0*(yVBF.getVal()+yGF.getVal())/ftmp.Integral(opts.X[0],opts.X[1])
+	y1          = opts.dX[iS]*25*0.5*y0*(yVBF.getVal()+yGF.getVal())/ftmp.Integral(opts.X[0],opts.X[1])
 	line        = TLine(x1,y1,x2,y1)
 	line.SetLineColor(kMagenta+3)
 	line.SetLineStyle(7)
@@ -115,13 +125,14 @@ def RooDraw(opts,can,x,h,hVBF,hGF,yVBF,yGF,model,bkg,fsig,width,mass,m,s,iS,S,C,
 	leg.SetTextSize(top*0.75)
 	leg.SetY1(leg.GetY2()-top*leg.GetNRows()*0.87)
 	leg.Draw()
+	archive += [leg]
 
 	pave = TPaveText(0.65,0.55,1.-right-top*0.3333,1.-top*1.666,"NDC")
 	pave.SetTextAlign(11)
 	pave.SetFillStyle(-1)
 	pave.SetBorderSize(0)
 	pave.SetTextFont(42)
-	pave.SetTextSize(top*0.75)
+	pave.SetTextSize(top*0.7)
 	pave.SetTextColor(kBlue+1)
 	pave.AddText("M_{H} = %d GeV"%mass)
 	pave.AddText("%s selection"%S.label)
@@ -131,7 +142,7 @@ def RooDraw(opts,can,x,h,hVBF,hGF,yVBF,yGF,model,bkg,fsig,width,mass,m,s,iS,S,C,
 	pave.AddText("FWHM = %.2f"%fwhm)
 	pave.Draw()
 	gPad.Update()
-	pave.SetY1NDC(pave.GetY2NDC()-top*0.87*pave.GetListOfLines().GetSize())
+	pave.SetY1NDC(pave.GetY2NDC()-top*0.9*pave.GetListOfLines().GetSize())
 	pave.Draw()
 	archive += [pave]
 
@@ -222,6 +233,7 @@ def main():
 			tGF  = fGF.Get("Hbb/events")
  ### Container ## Containers
  			rh   = {}
+ 			rhs  = {}
  			hVBF = {}
 			hGF  = {}
 			hTOT = {}
@@ -256,6 +268,7 @@ def main():
 				hGF[N].Scale(LUMI[iS]/sGF)
 				hTOT[N] = hVBF[N].Clone("mass_Total_%s"%N)
 				hTOT[N].Add(hGF[N])
+				rhs[N] = RooDataHist("roohist_scaled_%s"%N,"roohist_scaled_%s"%N,RooArgList(x),hTOT[N])
 
 				yVBF[N] = RooRealVar("yield_signalVBF_mass%d_CAT%d"%(mass,Cp),"yield_signalVBF_mass%d_CAT%d"%(mass,Cp),hVBF[N].Integral())
 				yGF[N] = RooRealVar("yield_signalGF_mass%d_CAT%d"%(mass,Cp),"yield_signalGF_mass%d_CAT%d"%(mass,Cp),hGF[N].Integral())
@@ -278,7 +291,7 @@ def main():
 				res           = model.fitTo(rh[N],RooFit.SumW2Error(kFALSE))#"q"
 
   ### Draw 
-	  			RooDraw(opts,canM,x,rh[N],hVBF[N],hGF[N],yVBF[N],yGF[N],model,bkg,fsig,width,mass,m,s,iS,S,C,Cp,archive)
+	  			RooDraw(opts,canM,x,rhs[N],hVBF[N],hGF[N],hTOT[N],yVBF[N],yGF[N],model,bkg,fsig,width,mass,m,s,iS,S,C,Cp,archive)
 				canM.cd(C+1)
 				pCMS1.Draw()
 				pCMS2.Draw()
