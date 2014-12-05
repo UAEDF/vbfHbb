@@ -226,12 +226,12 @@ def main():
 ####################################################################################################
 #### Start of RooFit part 
   ## Yields
-			x   = RooRealVar("mbbReg_CAT%d"%C,"mbbReg_CAT%d"%C,opts.X[0],opts.X[1])
-			YZ  = RooRealVar("yield_ZJets_CAT%d"%C,"yield_ZJets_CAT%d"%C,hZY.Integral())
-			YW  = RooRealVar("yield_WJets_CAT%d"%C,"yield_WJets_CAT%d"%C,hWY.Integral())
-			YTT = RooRealVar("yield_TTJets_CAT%d"%C,"yield_TTJets_CAT%d"%C,hTTY.Integral())
-			YST = RooRealVar("yield_singleT_CAT%d"%C,"yield_singleT_CAT%d"%C,hSTY.Integral())
-			YT  = RooRealVar("yield_Top_CAT%d"%C,"yield_Top_CAT%d"%C,hTY.Integral())
+			x   = RooRealVar("mbbReg_CAT%d"%Cp,"mbbReg_CAT%d"%Cp,opts.X[0],opts.X[1])
+			YZ  = RooRealVar("yield_ZJets_CAT%d"%Cp,"yield_ZJets_CAT%d"%Cp,hZY.Integral())
+			YW  = RooRealVar("yield_WJets_CAT%d"%Cp,"yield_WJets_CAT%d"%Cp,hWY.Integral())
+			YTT = RooRealVar("yield_TTJets_CAT%d"%Cp,"yield_TTJets_CAT%d"%Cp,hTTY.Integral())
+			YST = RooRealVar("yield_singleT_CAT%d"%Cp,"yield_singleT_CAT%d"%Cp,hSTY.Integral())
+			YT  = RooRealVar("yield_Top_CAT%d"%Cp,"yield_Top_CAT%d"%Cp,hTY.Integral())
   ## Z Fit
 			rh_Z["CAT%d"%Cp] = RooDataHist("roohist_Z_CAT%d"%Cp,"roothist_Z_CAT%d"%Cp,RooArgList(x),hZ)
 			mZ              = RooRealVar("Z_mean_CAT%d"%Cp,"Z_mean_CAT%d"%Cp,95,80,110)
@@ -257,13 +257,13 @@ def main():
 			pCMS2.Draw()
 
   ## T Fit
-  			rh_T["CAT%d"%Cp] = RooDataHist("roohist_T_CAT%d"%Cp,"roohist_T_CAT%d"%Cp,RooArgList(x),hTY if C<3 else hSTY)
-			mT              = RooRealVar("T_mean_CAT%d"%Cp,"T_mean_CAT%d"%Cp,130,0,200)
-			sT              = RooRealVar("T_sigma_CAT%d"%Cp,"T_sigma_CAT%d"%Cp,50,0,200)
-			mTShift         = RooFormulaVar("T_mean_shifted_CAT%d"%Cp,"@0*@1",RooArgList(mT,kJES[iS]))
-			sTShift         = RooFormulaVar("T_sigma_shifted_CAT%d"%Cp,"@0*@1",RooArgList(sT,kJER[iS]))
+  			rh_T["CAT%d"%Cp] = RooDataHist("roohist_Top_CAT%d"%Cp,"roohist_Top_CAT%d"%Cp,RooArgList(x),hTY if C<3 else hSTY)
+			mT              = RooRealVar("Top_mean_CAT%d"%Cp,"Top_mean_CAT%d"%Cp,130,0,200)
+			sT              = RooRealVar("Top_sigma_CAT%d"%Cp,"Top_sigma_CAT%d"%Cp,50,0,200)
+			mTShift         = RooFormulaVar("Top_mean_shifted_CAT%d"%Cp,"@0*@1",RooArgList(mT,kJES[iS]))
+			sTShift         = RooFormulaVar("Top_sigma_shifted_CAT%d"%Cp,"@0*@1",RooArgList(sT,kJER[iS]))
   ### Full model: Gaussian
-			modelT          = RooGaussian("T_model_CAT%d"%Cp,"T_model_CAT%d"%Cp,x,mTShift,sTShift)
+			modelT          = RooGaussian("Top_model_CAT%d"%Cp,"Top_model_CAT%d"%Cp,x,mTShift,sTShift)
   ### Fit T
 			resT            = modelT.fitTo(rh_T["CAT%d"%Cp],RooFit.Save(),RooFit.SumW2Error(kTRUE))#,"q")
   ### Draw T

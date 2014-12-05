@@ -285,7 +285,6 @@ void CreateDataTemplates(double dX, float XMIN, float XMAX, int CATMIN, int CATM
       sprintf(name,("yield_signalVBF"+MASSSTRING+CATSTRING).Data());
       RooRealVar *nSigVBF = (RooRealVar*)wSig->var(name);
       sprintf(name,("yield_signalGF"+MASSSTRING+CATSTRING).Data());
-      RooRealVar *nSigVBF = (RooRealVar*)wSig->var(name);
       RooRealVar *nSigGF = (RooRealVar*)wSig->var(name);
 		sprintf(name,("yield_signal"+MSTRING+CATSTRING).Data());
 		RooRealVar *nSig = new RooRealVar(name,name,nSigVBF->getValV()+nSigGF->getValV(),0.,400.);

@@ -261,7 +261,7 @@ def main():
 ####################################################################################################
 #### Start of RooFit part 
   ## Yields
-				x   = RooRealVar("mbbReg_CAT%d"%C,"mbbReg_CAT%d"%C,opts.X[0],opts.X[1])
+				x   = RooRealVar("mbbReg_CAT%d"%Cp,"mbbReg_CAT%d"%Cp,opts.X[0],opts.X[1])
   ## Fit components
 				rh[N] = RooDataHist("roohist_fit_%s"%N,"roohist_fit_%s"%N,RooArgList(x),hVBF[N])
 				hVBF[N].Scale(LUMI[iS]/sVBF)
@@ -272,21 +272,22 @@ def main():
 
 				yVBF[N] = RooRealVar("yield_signalVBF_mass%d_CAT%d"%(mass,Cp),"yield_signalVBF_mass%d_CAT%d"%(mass,Cp),hVBF[N].Integral())
 				yGF[N] = RooRealVar("yield_signalGF_mass%d_CAT%d"%(mass,Cp),"yield_signalGF_mass%d_CAT%d"%(mass,Cp),hGF[N].Integral())
-				m             = RooRealVar("mean_%s"%N,"mean_%s"%N,mass,mass-5,mass+5)
-				s             = RooRealVar("sigma_%s"%N,"sigma_%s"%N,12,3,30)
-				width         = RooRealVar("fwhm_%s"%N,"fwhm_%s"%N,25,0,100)
-				mShift        = RooFormulaVar("mean_shifted_%s"%N,"@0*@1",RooArgList(m,kJES[iS]))
-				sShift        = RooFormulaVar("sigma_shifted_%s"%N,"@0*@1",RooArgList(s,kJER[iS]))
-				a             = RooRealVar("alpha_%s"%N,"alpha_%s"%N,1,-10,10)
-				n             = RooRealVar("exp_%s"%N,"exp_%s"%N,1,0,100)
-				b0,b1,b2,b3   = [RooRealVar("b%d_%s"%(i,N),"b%d_%s"%(i,N),0.5,0.,1.) for i in range(4)]
+				Nb = "m%d_CAT%d"%(mass,Cp)
+				m             = RooRealVar("mean_%s"%Nb,"mean_%s"%Nb,mass,mass-5,mass+5)
+				s             = RooRealVar("sigma_%s"%Nb,"sigma_%s"%Nb,12,3,30)
+				width         = RooRealVar("fwhm_%s"%Nb,"fwhm_%s"%Nb,25,0,100)
+				mShift        = RooFormulaVar("mean_shifted_%s"%Nb,"@0*@1",RooArgList(m,kJES[iS]))
+				sShift        = RooFormulaVar("sigma_shifted_%s"%Nb,"@0*@1",RooArgList(s,kJER[iS]))
+				a             = RooRealVar("alpha_%s"%Nb,"alpha_%s"%Nb,1,-10,10)
+				n             = RooRealVar("exp_%s"%Nb,"exp_%s"%Nb,1,0,100)
+				b0,b1,b2,b3   = [RooRealVar("b%d_%s"%(i,Nb),"b%d_%s"%(i,Nb),0.5,0.,1.) for i in range(4)]
   ### Bkg part: Bernstein     
-				bkg           = RooBernstein("signal_bkg_%s"%N,"signal_bkg_%s"%N,x,RooArgList(b0,b1,b2))
+				bkg           = RooBernstein("signal_bkg_%s"%Nb,"signal_bkg_%s"%Nb,x,RooArgList(b0,b1,b2))
   ### Sig part: Crystal Ball   
-				fsig          = RooRealVar("fsig_%s"%N,"fsig_%s"%N,0.7,0.,1.)
-				sig           = RooCBShape("signal_gauss_%s"%N,"signal_gauss_%s"%N,x,mShift,sShift,a,n)
+				fsig          = RooRealVar("fsig_%s"%Nb,"fsig_%s"%Nb,0.7,0.,1.)
+				sig           = RooCBShape("signal_gauss_%s"%Nb,"signal_gauss_%s"%Nb,x,mShift,sShift,a,n)
   ### Combined model
-				model         = RooAddPdf("signal_model_%s"%N,"signal_model_%s"%N,RooArgList(sig,bkg),RooArgList(fsig))
+				model         = RooAddPdf("signal_model_%s"%Nb,"signal_model_%s"%Nb,RooArgList(sig,bkg),RooArgList(fsig))
   ### Fit 
 				res           = model.fitTo(rh[N],RooFit.SumW2Error(kFALSE))#"q"
 

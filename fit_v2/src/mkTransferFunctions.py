@@ -118,6 +118,7 @@ def main():
 # Setup
 	SC = opts.SC if not type(opts.SC)==str else SELsetup(opts.SC)
 	TF = opts.TF
+	TFinfo = json.loads(filecontent("%s/vbfHbb_transfer_2014.json"%basepath))
 
 # New histograms, graphs, containers
 	CN1 = TCanvas("c2","c2",900,900)
@@ -200,7 +201,7 @@ def main():
 			r.SetMarkerSize(1.8)
 			r.SetDirectory(0)
 ### Get fit function			
-			fRat["fRat_"+N] = TF1("fRat_"+N,TF[iS].lower(),opts.X[0],opts.X[1])
+			fRat["fRat_"+N] = TF1("fRat_"+N,TFinfo[TF[iS]]['tf1'],opts.X[0],opts.X[1])
 			f = fRat["fRat_"+N]
 			f.SetLineColor([kBlack,kBlue,kRed,kGreen+2][C])
 
@@ -216,7 +217,7 @@ def main():
   ### statistical (correlated) +
   ### approximate overcovering (uncorrelated)
   				gUnc["gUnc_"+N] = getUnc(cov,f,h,false,0.)
-				gUnc["gUncApp_"+N] = getUnc(cov,f,h,true,scale(TF[iS],Cp))
+				gUnc["gUncApp_"+N] = getUnc(cov,f,h,true,TFinfo[TF[iS]]['scale'][Cp])
 				g = gUnc["gUnc_"+N]
 				ga = gUnc["gUncApp_"+N]
 				gpStyle(g,C)
