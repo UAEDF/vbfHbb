@@ -4,6 +4,8 @@ import os,sys,re,json,datetime
 from glob import glob
 from array import array
 from optparse import OptionParser,OptionGroup
+import warnings
+warnings.filterwarnings( action='ignore', category=RuntimeWarning, message='.*class stack<RooAbsArg\*,deque<RooAbsArg\*> >' )
 
 basepath=os.path.split(os.path.abspath(__file__))[0]+"/../../"
 sys.path.append(basepath+'common/')
@@ -28,6 +30,7 @@ def parser(mp=None):
 #	mp.add_option_group(mg1)
 #
 	mp.add_option('--workdir',help=colours[5]+'Case workdir.'+colours[0],default='case0',type='str')
+	mp.add_option('--long',help=colours[5]+'Long filenames.'+colours[0],default=False,action='store_true')
 #
 	mg1 = OptionGroup(mp,'Selection setup')
 	mg1.add_option('--SELCATs',help=colours[5]+'Selection/Category setup: "NOM;NOM;-0.6#0.0#0.7#0.84#1.0,VBF;PRK;-0.1#0.4#0.8#1.0,...".'+colours[0],default='NOM;NOM;-0.6#0.0#0.7#0.84#1.0,VBF;PRK;-0.1#0.4#0.8#1.0',type='str',action='callback',callback=SELsetup,dest='SC')
@@ -111,9 +114,10 @@ def main():
 	makeDirs('%s'%opts.workdir)
 	makeDirs('%s/plot'%opts.workdir)
 	makeDirs('%s/root'%opts.workdir)
+	longtag = "_B%d-%d_TF%s-%s"%(opts.X[0],opts.X[1],opts.TF[0],opts.TF[1])
 	
 # New files
-	fout = TFile.Open("%s/root/TransferFunctions.root"%opts.workdir,"recreate")
+	fout = TFile.Open("%s/root/TransferFunctions%s.root"%(opts.workdir,"" if not opts.long else longtag),"recreate")
 
 # Setup
 	SC = opts.SC if not type(opts.SC)==str else SELsetup(opts.SC)

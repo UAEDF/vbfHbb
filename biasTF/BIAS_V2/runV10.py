@@ -2,7 +2,7 @@
 
 import os,sys,re,shutil,glob
 
-if not os.system('[ "`root-config --version`" == "5.34/03" ]') == 0: sys.exit('Wrong ROOT version. Stopping.')
+#if not os.system('[ "`root-config --version`" == "5.34/03" ]') == 0: sys.exit('Wrong ROOT version. Stopping.')
 
 def main():
 	dX=0.1
@@ -39,7 +39,7 @@ def main():
 	BRNBASES=[[5,4]] #,[7,6]] #[6,5]
 	
 	CATBOUNDS=[0,6] # [0,3] # [4,6]
-	CATVETOS=["","0,1,2,3","4,5,6","1","2","3","5","6"] ##"" ###,"1,2,3,4,5,6","0,2,3,4,5,6","0,1,3,4,5,6","0,1,2,4,5,6","0,1,2,3,5,6","0,1,2,3,4,6","0,1,2,3,4,5"] #,"2,3","1,3","1,2"] #["","6","5"] #["","2,3","1,3","1,2"] # ["5,6","4,6","4,5"] #string of vetos, comma separated.
+	CATVETOS=[""]#,"0,1,2,3","4,5,6","1","2","3","5","6"] ##"" ###,"1,2,3,4,5,6","0,2,3,4,5,6","0,1,3,4,5,6","0,1,2,4,5,6","0,1,2,3,5,6","0,1,2,3,4,6","0,1,2,3,4,5"] #,"2,3","1,3","1,2"] #["","6","5"] #["","2,3","1,3","1,2"] # ["5,6","4,6","4,5"] #string of vetos, comma separated.
 	
 	MASSES=[115,120,125,130,135] #[125]
 	
@@ -47,7 +47,7 @@ def main():
 	
 	#RUN = [False,False,False,False,False,False,False]
 	#RUN = [False,False,False,True,False,False,False]
-	RUN = [False]*0 + [True]*1 + [False]*5
+	RUN = [False]*0 + [True]*5 + [False]*5
 		
 	for XBOUNDS in XBOUNDSS:
 		for BRNBASE in BRNBASES:

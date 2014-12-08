@@ -4,6 +4,8 @@ import os,sys,re,json,datetime
 from glob import glob
 from array import array
 from optparse import OptionParser,OptionGroup
+import warnings
+warnings.filterwarnings( action='ignore', category=RuntimeWarning, message='.*class stack<RooAbsArg\*,deque<RooAbsArg\*> >' )
 
 basepath=os.path.split(os.path.abspath(__file__))[0]+"/../../"
 sys.path.append(basepath+"common/")
@@ -28,6 +30,9 @@ def parser(mp=None):
 #	mp.add_option_group(mg1)
 #
 	mp.add_option('--workdir',help=colours[5]+'Case workdir.'+colours[0],default='case0',type='str')
+	mp.add_option('--long',help=colours[5]+'Long filenames.'+colours[0],default=False,action='store_true')
+	mp.add_option('-v','--verbosity',help=colours[5]+'Verbosity.'+colours[0],default=0,action='count')
+	mp.add_option('-q','--quiet',help=colours[5]+'Quiet.'+colours[0],default=True,action='store_false')
 #
 	mg1 = OptionGroup(mp,'Selection setup')
 	mg1.add_option('--SELCATs',help=colours[5]+'Selection/Category setup: "NOM;NOM;-0.6#0.0#0.7#0.84#1.0,VBF;PRK;-0.1#0.4#0.8#1.0,...".'+colours[0],default='NOM;NOM;-0.6#0.0#0.7#0.84#1.0,VBF;PRK;-0.1#0.4#0.8#1.0',type='str',action='callback',callback=SELsetup,dest='SC')
@@ -104,7 +109,8 @@ def main():
 	makeDirs('%s'%opts.workdir)
 	makeDirs('%s/plot'%opts.workdir)
 	makeDirs('%s/root'%opts.workdir)
-	
+	longtag = "_B%d-%d"%(opts.X[0],opts.X[1])
+
 # Setup
 	SC = opts.SC if not type(opts.SC)==str else SELsetup(opts.SC)
 	fnames = json.loads(filecontent("%s/vbfHbb_samples_2014_bkg.json"%basepath))
@@ -277,7 +283,7 @@ def main():
 #### Import objects
 			for o in [modelZ,modelT,YZ,YT,YTT,YST]:
 				getattr(w,'import')(o)
-				o.Print()
+				if opts.verbosity>0 and not opts.quiet: o.Print()
 
 #
 #--- end of CAT loop
@@ -289,12 +295,15 @@ def main():
 		canT.SaveAs("%s/plot/bkgTemplates/%s.pdf"%(opts.workdir,canT.GetName()))
 		canT.SaveAs("%s/plot/bkgTemplates/%s.png"%(opts.workdir,canT.GetName()))
 	
+		canZ.Close()
+		canT.Close()
+		can.Close()
 #
 #--- end of SEL loop
 #
 
 	makeDirs("%s/root/"%opts.workdir)
-	w.writeToFile("%s/root/bkg_shapes_workspace.root"%opts.workdir)
+	w.writeToFile("%s/root/bkg_shapes_workspace%s.root"%(opts.workdir,"" if not opts.long else longtag))
 
 ####################################################################################################
 if __name__=='__main__':

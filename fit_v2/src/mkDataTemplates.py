@@ -4,6 +4,8 @@ import os,sys,re,json,datetime
 from glob import glob
 from array import array
 from optparse import OptionParser,OptionGroup
+import warnings
+warnings.filterwarnings( action='ignore', category=RuntimeWarning, message='.*class stack<RooAbsArg\*,deque<RooAbsArg\*> >' )
 
 basepath=os.path.split(os.path.abspath(__file__))[0]+"/../../"
 sys.path.append(basepath+"common/")
@@ -28,6 +30,9 @@ def parser(mp=None):
 #	mp.add_option_group(mg1)
 #
 	mp.add_option('--workdir',help=colours[5]+'Case workdir.'+colours[0],default='case0',type='str')
+	mp.add_option('--long',help=colours[5]+'Long filenames.'+colours[0],default=False,action='store_true')
+	mp.add_option('-v','--verbosity',help=colours[5]+'Verbosity.'+colours[0],default=0,action='count')
+	mp.add_option('-q','--quiet',help=colours[5]+'Quiet.'+colours[0],default=True,action='store_false')
 #
 	mg1 = OptionGroup(mp,'Selection setup')
 	mg1.add_option('--SELCATs',help=colours[5]+'Selection/Category setup: "NOM;NOM;-0.6#0.0#0.7#0.84#1.0,VBF;PRK;-0.1#0.4#0.8#1.0,...".'+colours[0],default='NOM;NOM;-0.6#0.0#0.7#0.84#1.0,VBF;PRK;-0.1#0.4#0.8#1.0',type='str',action='callback',callback=SELsetup,dest='SC')
@@ -115,6 +120,9 @@ def main():
 	makeDirs('%s'%opts.workdir)
 	makeDirs('%s/plot'%opts.workdir)
 	makeDirs('%s/root'%opts.workdir)
+	longtag1 = "_B%d-%d"%(opts.X[0],opts.X[1])
+	longtag2 = "_B%d-%d_TF%s-%s"%(opts.X[0],opts.X[1],opts.TF[0],opts.TF[1])
+	longtag3 = "_B%d-%d_BRN%d-%d_TF%s-%s"%(opts.X[0],opts.X[1],opts.BRN[0],opts.BRN[1],opts.TF[0],opts.TF[1])
 	
 # Setup
 	SC = opts.SC if not type(opts.SC)==str else SELsetup(opts.SC)
@@ -124,9 +132,9 @@ def main():
 	MASS = opts.MASS
 
 # Files
-	fBKG = TFile.Open("%s/root/bkg_shapes_workspace.root"%opts.workdir,"read")
-	fSIG = TFile.Open("%s/root/sig_shapes_workspace.root"%opts.workdir,"read")
-	fTRF = TFile.Open("%s/root/TransferFunctions.root"%opts.workdir,"read")
+	fBKG = TFile.Open("%s/root/bkg_shapes_workspace%s.root"%(opts.workdir,"" if not opts.long else longtag1),"read")
+	fSIG = TFile.Open("%s/root/sig_shapes_workspace%s.root"%(opts.workdir,"" if not opts.long else longtag1),"read")
+	fTRF = TFile.Open("%s/root/TransferFunctions%s.root"%(opts.workdir,"" if not opts.long else longtag2),"read")
 	wBKG = fBKG.Get("w")
 	wSIG = fSIG.Get("w")
 	w    = RooWorkspace("w","workspace")
@@ -246,7 +254,7 @@ def main():
 				qcd_pdf_aux[N]  = RooBernstein("qcd_model_aux_%s_CAT%d"%(opts.TF[iS],sum(SC.ncats[0:iS])),"qcd_model_aux_%s_CAT%d"%(opts.TF[iS],sum(SC.ncats[0:iS])),x,brn_params["sel%s_CAT%d"%(S.tag,sum(SC.ncats[0:iS]))])
 				qcd_pdf_aux2[N] = RooProdPdf("qcd_model_aux2_%s_CAT%d"%(opts.TF[iS],Cp),"qcd_model_%s_CAT%d"%(opts.TF[iS],Cp),RooArgList(transfer["transfer_%s_CAT%d"%(opts.TF[iS],Cp)],qcd_pdf_aux[N]))
 				qcd_pdf[N]      = qcd_pdf_aux2[N] #RooAbsPdf(qcd_pdf_aux2[N])
-				qcd_pdf[N].Print()
+				if opts.verbosity>0 and not opts.quiet: qcd_pdf[N].Print()
 
 	  ### PDFs
 	  		zPDF[N] = wBKG.pdf("Z_model_CAT%d"%Cp)
@@ -268,7 +276,7 @@ def main():
 			
   ### Fit
 	  		res   = model[N].fitTo(rh[N],RooFit.Save())
-			res.Print()
+			if opts.verbosity>0 and not opts.quiet: res.Print()
 
   ### Draw
   			#RooDraw(opts,can,C,x,rh[N],model[N],qcd_pdf[N],zPDF[N],tPDF[N],archive)
@@ -288,11 +296,11 @@ def main():
   ### Saving
 			for o in [rh[N],rhb[N],model[N],Y[N]]:
 				getattr(w,'import')(o,RooFit.RenameConflictNodes("(1)"))
-				o.Print()
+				if opts.verbosity>0 and not opts.quiet: o.Print()
 ###
 ###--- end of CAT loop
 ###
-		w.Print()
+		if opts.verbosity>0 and not opts.quiet: w.Print()
 
 		makeDirs("%s/plot/dataTemplates/"%opts.workdir)
 		can.SaveAs("%s/plot/dataTemplates/%s.pdf"%(opts.workdir,can.GetName()))
@@ -303,7 +311,7 @@ def main():
 #
 
 	makeDirs("%s/root/"%opts.workdir)
-	w.writeToFile("%s/root/data_shapes_workspace.root"%opts.workdir)
+	w.writeToFile("%s/root/data_shapes_workspace%s.root"%(opts.workdir,"" if not opts.long else longtag3))
 
 ####################################################################################################
 if __name__=='__main__':
