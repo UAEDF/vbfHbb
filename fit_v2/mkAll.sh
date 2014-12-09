@@ -43,8 +43,8 @@ notext=""
 #fi
 
 # OPTION OPTION OPTIONS ##########################
-#TF=POL1,POL2
-TF=AltPOL1,AltPOL2
+TF=POL1,POL2
+#TF=AltPOL1,AltPOL2
 
 ##################################################
 
