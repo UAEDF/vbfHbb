@@ -117,10 +117,10 @@ def main():
 		fout.write("-"*100+"\n")
 		fname = os.path.split(fDAT.GetName())[1]
  ## files
-		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","data_obs",prefix,fname,"w:data_hist_$CHANNEL"))
-		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","qcd     ",prefix,fname,"w:qcd_model_$CHANNEL"))
-		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","top     ",prefix,fname,"w:Top_model_$CHANNEL"))
-		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","zjets   ",prefix,fname,"w:Z_model_$CHANNEL"))
+		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","data_obs","root",fname,"w:data_hist_$CHANNEL"))
+		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","qcd     ","root",fname,"w:qcd_model_%s_$CHANNEL"%(''.join(opts.TF))))
+		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","top     ","root",fname,"w:Top_model_$CHANNEL"))
+		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","zjets   ","root",fname,"w:Z_model_$CHANNEL"))
  ## top info
 		fout.write("-"*100+"\n")
 		fout.write("%-15s"%"bin")
@@ -217,12 +217,14 @@ def main():
 				fout.write("%-30s %-10s %9s %9s\n"%(n,"param","%g"%v.getValV(),"%g"%v.getError()))
   ## transfer functions
   		for iS,S in enumerate(SC.selections):
+			start = sum(SC.ncats[:iS])
+			end   = start + S.ncat
 			if 'Fix' in opts.TF[iS]:
 				for i in CATS: 
-					if i==0: continue
+					if not (i>start and i<end): continue
 					o = int(re.search('.*([0-9]{1})',opts.TF[iS]).group(1))
 					for j in range(o+1):
-						v = wDAT.var("trans_%s_CAT%d_p%d"%(opts.TF[iS],i+sum(SC.ncats[0:iS]),j))
+						v = wDAT.var("trans_%s_CAT%d_p%d"%(opts.TF[iS],i,j))
 						fout.write("%-30s %-10s %9.2e %9.2e\n"%(v.GetName(),"param",v.getValV(),v.getError()))
 		
 # Close

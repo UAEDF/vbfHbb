@@ -46,6 +46,7 @@ print
 
 symbols = {0:'\033[0;42;38m V \033[m', 1:'\033[0;41;38m C \033[m'}
 
+####################################################################################################
 print "\033[1;31mParameters VARIABLE or CONSTANT (BERNSTEIN)\033[m"
 print "%52s | %10s |"%("filename","key"),
 for i in range(NBRN): print "%3s |"%("bN%d"%i),
@@ -56,11 +57,9 @@ print "-"*(55+13+6*NBRN+6*NBRN)
 for fname in args:
 	fopen = TFile(fname,"read")
 	w = fopen.Get("w")
-#	keys0 = [x for x in os.path.split(fname)[1].replace('.root','').split("_")]
-#	keys1 = keys0[keys0.index([x for x in keys0 if 'BRN' in x][0])+1:]
-#	key = ''.join(keys1)
+	BRN = re.search('.*BRN(.*)_TF.*.root',fname).group(1)
 	print "%52s |"%os.path.split(fname)[1],
-	#print "%10s |"%key,
+	print "%10s |"%BRN,
 	for i in range(NBRN):
 		a = w.obj("%s%d_selNOM_CAT0"%("b",i))
 		if a: print "%3s |"%symbols[a.isConstant()],
@@ -71,6 +70,7 @@ for fname in args:
 		else: print "%3s |"%"- ",
 	print	
 
+####################################################################################################
 print
 print "\033[1;31mParameters VARIABLE or CONSTANT (TRANSFER)\033[m"
 print "%52s | %10s |"%("filename","key"),
@@ -84,25 +84,23 @@ print "-"*(55+13+7*4*3+7*4*2)
 for fname in args:
 	fopen = TFile(fname,"read")
 	w = fopen.Get("w")
-#	key = re.search('.*_([A-Za-z0-9\-]*)_.*',fname).group(1) if re.search('.*_([A-Za-z0-9\-]*)_.*',fname) else ""
+	TF = re.search('.*TF(.*).root',fname).group(1)
+	TF1,TF2 = TF.split('-')
 	print "%52s |"%os.path.split(fname)[1],
-#	print "%10s |"%key,
-#	key = key.replace('FixedPOL','POL')
-#	keyhere = key
+	print "%10s |"%TF,
 	for j in [1,2,3]:
-		#if '-' in key: keyhere = key.split('-')[0]
 		for i in range(4):
-			a = w.obj("trans_POL1_CAT%d_p%d"%(j,i))
+			a = w.obj("trans_%s_CAT%d_p%d"%(TF1,j,i))
 			if a: print " %4s |"%symbols[a.isConstant()],
 			else: print "%4s |"%"- ",
 	for j in [5,6]:
-		#if '-' in key: keyhere = key.split('-')[1]
 		for i in range(4):
-			a = w.obj("trans_POL2_CAT%d_p%d"%(j,i))
+			a = w.obj("trans_%s_CAT%d_p%d"%(TF2,j,i))
 			if a: print " %4s |"%symbols[a.isConstant()],
 			else: print "%4s |"%"- ",
 	print
 
+####################################################################################################
 print
 print "\033[0;35m","#"*150,"\033[m"
 print "\033[0;35m","#"*150,"\033[m"
@@ -116,11 +114,9 @@ print "-"*(55+13+9*NBRN+9*NBRN)
 for fname in args:
 	fopen = TFile(fname,"read")
 	w = fopen.Get("w")
-#	keys0 = [x for x in os.path.split(fname)[1].replace('.root','').split("_")]
-#	keys1 = keys0[keys0.index([x for x in keys0 if 'BRN' in x][0])+1:]
-#	key = ''.join(keys1)
+	BRN = re.search('.*BRN(.*)_TF.*.root',fname).group(1)
 	print "%52s |"%os.path.split(fname)[1],
-#	print "%10s |"%key,
+	print "%10s |"%BRN,
 	for i in range(NBRN):
 		a = w.obj("%s%d_selNOM_CAT0"%("b",i))
 		if a: print "%6.3g |"%a.getVal(),
@@ -144,11 +140,9 @@ print "-"*(55+13+9*NBRN+9*NBRN)
 for fname in args:
 	fopen = TFile(fname,"read")
 	w = fopen.Get("w")
-#	keys0 = [x for x in os.path.split(fname)[1].replace('.root','').split("_")]
-#	keys1 = keys0[keys0.index([x for x in keys0 if 'BRN' in x][0])+1:]
-#	key = ''.join(keys1)
+	BRN = re.search('.*BRN(.*)_TF.*.root',fname).group(1)
 	print "%52s |"%os.path.split(fname)[1],
-#	print "%10s |"%key,
+	print "%10s |"%BRN,
 	for i in range(NBRN):
 		a = w.obj("%s%d_selNOM_CAT0"%("b",i))
 		if a: print "%6.3g |"%a.getError(),
@@ -159,6 +153,7 @@ for fname in args:
 		else: print "%6s |"%"- ",
 	print	
 
+####################################################################################################
 print
 print "\033[0;35m","#"*150,"\033[m"
 print "\033[0;35m","#"*150,"\033[m"
@@ -172,15 +167,13 @@ print "-"*(55+13+12*4*3)
 for fname in args:
 	fopen = TFile(fname,"read")
 	w = fopen.Get("w")
-#	key = re.search('.*Fit([A-Za-z0-9\-]*).*',fname).group(1) if re.search('.*Fit([A-Za-z0-9\-]*).*',fname) else ""
+	TF = re.search('.*TF(.*).root',fname).group(1)
+	TF1,TF2 = TF.split('-')
 	print "%52s |"%os.path.split(fname)[1],
-#	print "%10s |"%key,
-#	key = key.replace('FixedPOL','POL')
-#	keyhere = key
+	print "%10s |"%TF,
 	for j in [1,2,3]:
-#		if '-' in key: keyhere = key.split('-')[0]
 		for i in range(4):
-			a = w.obj("trans_POL1_CAT%d_p%d"%(j,i))
+			a = w.obj("trans_%s_CAT%d_p%d"%(TF1,j,i))
 			if a: print "%9.3g |"%a.getVal(),
 			else: print "%9s |"%"- ",
 	print
@@ -195,19 +188,18 @@ print "-"*(55+13+12*4*2)
 for fname in args:
 	fopen = TFile(fname,"read")
 	w = fopen.Get("w")
-#	key = re.search('.*Fit([A-Za-z0-9\-]*).*',fname).group(1) if re.search('.*Fit([A-Za-z0-9\-]*).*',fname) else ""
+	TF = re.search('.*TF(.*).root',fname).group(1)
+	TF1,TF2 = TF.split('-')
 	print "%52s |"%os.path.split(fname)[1],
-#	print "%10s |"%key,
-#	key = key.replace('FixedPOL','POL')
-#	keyhere = key
+	print "%10s |"%TF,
 	for j in [5,6]:
-#		if '-' in key: keyhere = key.split('-')[1]
 		for i in range(4):
-			a = w.obj("trans_POL2_CAT%d_p%d"%(j,i))
+			a = w.obj("trans_%s_CAT%d_p%d"%(TF2,j,i))
 			if a: print "%9.3g |"%a.getVal(),
 			else: print "%9s |"%"- ",
 	print	
 
+####################################################################################################
 print
 print "\033[0;35m","#"*150,"\033[m"
 print "\033[0;35m","#"*150,"\033[m"
@@ -221,15 +213,13 @@ print "-"*(55+13+12*4*3)
 for fname in args:
 	fopen = TFile(fname,"read")
 	w = fopen.Get("w")
-#	key = re.search('.*Fit([A-Za-z0-9\-]*).*',fname).group(1) if re.search('.*Fit([A-Za-z0-9\-]*).*',fname) else ""
+	TF = re.search('.*TF(.*).root',fname).group(1)
+	TF1,TF2 = TF.split('-')
 	print "%52s |"%os.path.split(fname)[1],
-#	print "%10s |"%key,
-#	key = key.replace('FixedPOL','POL')
-#	keyhere = key
+	print "%10s |"%TF,
 	for j in [1,2,3]:
-#		if '-' in key: keyhere = key.split('-')[0]
 		for i in range(4):
-			a = w.obj("trans_POL1_CAT%d_p%d"%(j,i))
+			a = w.obj("trans_%s_CAT%d_p%d"%(TF1,j,i))
 			if a: print "%9.3g |"%a.getError(),
 			else: print "%9s |"%"- ",
 	print	
@@ -244,15 +234,13 @@ print "-"*(55+13+12*4*2)
 for fname in args:
 	fopen = TFile(fname,"read")
 	w = fopen.Get("w")
-#	key = re.search('.*Fit([A-Za-z0-9\-]*).*',fname).group(1) if re.search('.*Fit([A-Za-z0-9\-]*).*',fname) else ""
+	TF = re.search('.*TF(.*).root',fname).group(1)
+	TF1,TF2 = TF.split('-')
 	print "%52s |"%os.path.split(fname)[1],
-#	print "%10s |"%key,
-#	key = key.replace('FixedPOL','POL')
-#	keyhere = key
+	print "%10s |"%TF,
 	for j in [5,6]:
-#		if '-' in key: keyhere = key.split('-')[1]
 		for i in range(4):
-			a = w.obj("trans_POL2_CAT%d_p%d"%(j,i))
+			a = w.obj("trans_%s_CAT%d_p%d"%(TF2,j,i))
 			if a: print "%9.3g |"%a.getError(),
 			else: print "%9s |"%"- ",
 	print	

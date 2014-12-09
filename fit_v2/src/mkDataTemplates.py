@@ -45,6 +45,7 @@ def parser(mp=None):
 	mg2.add_option('--TF',help=colours[5]+'Transfer function label: POL1,POL2 (NOM,VBF)'+colours[0],default=['POL1','POL2'],type='str',action='callback',callback=optsplit)
 	mg2.add_option('--BRN',help=colours[5]+'Bernstein order: 5,4 (NOM,VBF)'+colours[0],default=[5,4],type='str',action='callback',callback=optsplitint)
 	mg2.add_option('--MASS',help=colours[5]+'Signal masspoint: 125'+colours[0],default=125,type='int')
+	mg2.add_option('--forfit',help=colours[5]+'Freeze/free parameters for fit or not (for toys)'+colours[0],default=True,action='store_false')
 	mp.add_option_group(mg2)
 #
 	return mp
@@ -208,6 +209,7 @@ def main():
 				ntf = "trans_%s_CAT%d"%(opts.TF[iS],Cp)
 				for ip in range(npar):
 					if not ntf in trans_p: trans_p[ntf] = []
+					
 					trans_p[ntf] += [RooRealVar(ntf+"_p%d"%ip,ntf+"_p%d"%ip,ftf.GetParameter(ip),-0.1,0.1)]
 					if 'Fix' in opts.TF[iS]:
 						trans_p[ntf][-1].setError(fTF[opts.TF[iS]]['scale'][Cp]*ftf.GetParError(ip))
@@ -216,7 +218,9 @@ def main():
 					trans_p[ntf][-1].setConstant(kTRUE)
   ### TF Functions
 				rl = RooArgList(x)
-				for t in trans_p[ntf]: rl.add(t)
+				for ti,t in enumerate(trans_p[ntf]): 
+					if ti==0 and fTF[opts.TF[iS]]['f'][-3:]=="+ 1": continue
+					rl.add(t)
 				ntf = "transfer_%s_CAT%d"%(opts.TF[iS],Cp)
   				transfer[ntf] = RooGenericPdf(ntf,fTF[opts.TF[iS]]['f'],rl)
 
@@ -244,7 +248,7 @@ def main():
 				for ib in range(opts.BRN[iS]+1):
 					nb = "b%d_sel%s_CAT%d"%(ib,S.tag,Cp)
 					brn[nb].setConstant(kFALSE)
-				qcd_pdf_aux[N] = RooBernstein("qcd_model_%s_CAT%d"%(opts.TF[iS],Cp),"qcd_model_%s_CAT%d"%(opts.TF[iS],Cp),x,brn_params[N])
+				qcd_pdf_aux[N] = RooBernstein("qcd_model_%s_CAT%d"%(''.join(opts.TF),Cp),"qcd_model_%s_CAT%d"%(''.join(opts.TF),Cp),x,brn_params[N])
 				qcd_pdf[N]     = qcd_pdf_aux[N]#RooAbsPdf(qcd_pdf_aux[N])
 	  ### Bernstein * TFs other CATs
 			else:
@@ -252,7 +256,7 @@ def main():
 					nb = "b%d_sel%s_CAT%d"%(ib,S.tag,sum(SC.ncats[0:iS]))
 					brn[nb].setConstant(kTRUE)
 				qcd_pdf_aux[N]  = RooBernstein("qcd_model_aux_%s_CAT%d"%(opts.TF[iS],sum(SC.ncats[0:iS])),"qcd_model_aux_%s_CAT%d"%(opts.TF[iS],sum(SC.ncats[0:iS])),x,brn_params["sel%s_CAT%d"%(S.tag,sum(SC.ncats[0:iS]))])
-				qcd_pdf_aux2[N] = RooProdPdf("qcd_model_aux2_%s_CAT%d"%(opts.TF[iS],Cp),"qcd_model_%s_CAT%d"%(opts.TF[iS],Cp),RooArgList(transfer["transfer_%s_CAT%d"%(opts.TF[iS],Cp)],qcd_pdf_aux[N]))
+				qcd_pdf_aux2[N] = RooProdPdf("qcd_model_%s_CAT%d"%(''.join(opts.TF),Cp),"qcd_model_%s_CAT%d"%(''.join(opts.TF),Cp),RooArgList(transfer["transfer_%s_CAT%d"%(opts.TF[iS],Cp)],qcd_pdf_aux[N]))
 				qcd_pdf[N]      = qcd_pdf_aux2[N] #RooAbsPdf(qcd_pdf_aux2[N])
 				if opts.verbosity>0 and not opts.quiet: qcd_pdf[N].Print()
 
@@ -288,10 +292,10 @@ def main():
 			for ib in range(opts.BRN[iS]+1):
 				if C==0:
 					nb = "b%d_sel%s_CAT%d"%(ib,S.tag,Cp)
-					brn[nb].setConstant(kFALSE)  ## false for final fit, true if fixed
+					brn[nb].setConstant(kFALSE if opts.forfit else kTRUE)  ## false for final fit, true if fixed
 			if not C==0:
 				ntf = "trans_%s_CAT%d"%(opts.TF[iS],Cp)
-				for t in trans_p[ntf]: t.setConstant(kFALSE if not 'fix' in opts.TF[iS] else kTRUE) ## false for final fit, true if fixed
+				for t in trans_p[ntf]: t.setConstant(kFALSE if opts.forfit else (kFALSE if not 'Fix' in opts.TF[iS] else kTRUE)) ## false for final fit, true if fixed
 			
   ### Saving
 			for o in [rh[N],rhb[N],model[N],Y[N]]:
