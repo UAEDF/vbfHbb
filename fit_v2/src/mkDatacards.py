@@ -116,11 +116,14 @@ def main():
 		fout.write("jmax *\nkmax *\n")
 		fout.write("-"*100+"\n")
 		fname = os.path.split(fDAT.GetName())[1]
+		sfname = os.path.split(fSIG.GetName())[1]
  ## files
 		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","data_obs","root",fname,"w:data_hist_$CHANNEL"))
 		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","qcd     ","root",fname,"w:qcd_model_%s_$CHANNEL"%(''.join(opts.TF))))
 		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","top     ","root",fname,"w:Top_model_$CHANNEL"))
 		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","zjets   ","root",fname,"w:Z_model_$CHANNEL"))
+		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","qqH     ","root",sfname,"w:signal_model_m%s_$CHANNEL"%jmass))
+		fout.write("%-15s %-15s *   %s/%-30s %-30s\n"%("shapes","ggH     ","root",sfname,"w:signal_model_m%s_$CHANNEL"%jmass))
  ## top info
 		fout.write("-"*100+"\n")
 		fout.write("%-15s"%"bin")
