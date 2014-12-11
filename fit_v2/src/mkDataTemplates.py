@@ -255,7 +255,7 @@ def main():
 				for ib in range(opts.BRN[iS]+1):
 					nb = "b%d_sel%s_CAT%d"%(ib,S.tag,sum(SC.ncats[0:iS]))
 					brn[nb].setConstant(kTRUE)
-				qcd_pdf_aux[N]  = RooBernstein("qcd_model_aux_%s_CAT%d"%(opts.TF[iS],sum(SC.ncats[0:iS])),"qcd_model_aux_%s_CAT%d"%(opts.TF[iS],sum(SC.ncats[0:iS])),x,brn_params["sel%s_CAT%d"%(S.tag,sum(SC.ncats[0:iS]))])
+				qcd_pdf_aux[N]  = RooBernstein("qcd_model_aux_%s_CAT%d"%(''.join(opts.TF),Cp),"qcd_model_aux_%s_CAT%d"%(''.join(opts.TF),Cp),x,brn_params["sel%s_CAT%d"%(S.tag,sum(SC.ncats[0:iS]))])
 				qcd_pdf_aux2[N] = RooProdPdf("qcd_model_%s_CAT%d"%(''.join(opts.TF),Cp),"qcd_model_%s_CAT%d"%(''.join(opts.TF),Cp),RooArgList(transfer["transfer_%s_CAT%d"%(opts.TF[iS],Cp)],qcd_pdf_aux[N]))
 				qcd_pdf[N]      = qcd_pdf_aux2[N] #RooAbsPdf(qcd_pdf_aux2[N])
 				if opts.verbosity>0 and not opts.quiet: qcd_pdf[N].Print()

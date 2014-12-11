@@ -217,7 +217,7 @@ def main():
 			for i in CATS: 
 				n = "%s_CAT%d"%(l,i)
 				v = wDAT.var(n)
-				fout.write("%-30s %-10s %9s %9s\n"%(n,"param","%g"%v.getValV(),"%g"%v.getError()))
+				fout.write("%-30s %-10s %9s %9s\n"%(n,"param","%g"%v.getValV(),"%g"%(v.getError() if not 'Top' in l else v.getValV()*(0.01 if 'mean' in l else 0.05))))
   ## transfer functions
   		for iS,S in enumerate(SC.selections):
 			start = sum(SC.ncats[:iS])

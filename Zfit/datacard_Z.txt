@@ -1,0 +1,34 @@
+imax *
+jmax *
+kmax *
+----------------
+shapes data_obs   * dataZ_shapes_workspace_BRN8_dM0.1_m0.02_0.02.root w:data_hist_$CHANNEL
+shapes qcd        * dataZ_shapes_workspace_BRN8_dM0.1_m0.02_0.02.root w:qcd_model_$CHANNEL
+shapes top        * bkgForZ_shapes_workspace_m0.02_0.02.root w:Top_model_$CHANNEL
+shapes zjets      * bkgForZ_shapes_workspace_m0.02_0.02.root w:Z_model_$CHANNEL
+----------------
+bin         CAT0 CAT1 CAT2
+observation -1 -1 -1
+----------------
+bin         CAT0 CAT0 CAT0 CAT1 CAT1 CAT1 CAT2 CAT2 CAT2
+process     zjets top qcd zjets top qcd zjets top qcd
+process     0 1 1 0 1 1 0 1 1
+rate        1373.81 2781.07 659873 1466.52 2390.42 374797 2782.77 3139.29 342931
+----------------
+Z_accep_anticor lnN  1.1  -  -  1.0  -  -  0.9  -  -
+Z_accep_cor     lnN  1.1  -  -  1.1  -  -  1.1  -  -
+top_norm_CAT0   lnN  -  1.2  -  -  -  -  -  -  -
+top_norm_CAT1   lnN  -  -  -  -  1.2  -  -  -  -
+top_norm_CAT2   lnN  -  -  -  -  -  -  -  1.2  -
+qcd_norm_CAT0   lnU  -  -  1.5  -  -  -  -  -  -
+qcd_norm_CAT1   lnU  -  -  -  -  -  1.5  -  -  -
+qcd_norm_CAT2   lnU  -  -  -  -  -  -  -  -  1.5
+----------------
+Z_core_mean_CAT0  param 94.1418 0.632033
+Z_core_sigma_CAT0 param 11.4282 0.939106
+Z_core_mean_CAT1  param 94.7823 0.508393
+Z_core_sigma_CAT1 param 9.93454 0.6196
+Z_core_mean_CAT2  param 96.5526 0.257903
+Z_core_sigma_CAT2 param 9.11458 0.271231
+kJES              param 1.0 0.02
+kJER              param 1.0 0.1
