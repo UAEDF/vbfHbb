@@ -39,6 +39,14 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS)
   RooRealVar *rFit     = dynamic_cast<RooRealVar *>(res_s->floatParsFinal()).find("r");
   RooDataSet *data     = (RooDataSet*)w->data("data_obs");
   
+  int nparS=0,nparB=0;
+  cout << res_s->floatParsFinal().getSize() << endl;
+  cout << res_b->floatParsFinal().getSize() << endl;
+  nparS = res_s->floatParsFinal().getSize();
+  nparB = res_b->floatParsFinal().getSize();  
+  float chi2sumS = 0.;
+  float chi2sumB = 0.;
+  int nparsum = 0;
 //  if (BLIND) {
 //    res_b->Print();
 //  }
@@ -57,7 +65,10 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS)
   const RooAbsCategoryLValue &cat = (RooAbsCategoryLValue &) sim->indexCat();
   TList *datasets = data->split(cat,true);
   TIter next(datasets);
+  //int count = 0; 
   for(RooAbsData *ds = (RooAbsData*)next();ds != 0; ds = (RooAbsData*)next()) {
+	 //if (count > 0) return 0;
+	 //count++;
     RooAbsPdf *pdfi = sim->getPdf(ds->GetName());
     RooArgSet *obs = (RooArgSet*)pdfi->getObservables(ds);
     RooRealVar *x = dynamic_cast<RooRealVar *>(obs->first());
@@ -76,7 +87,7 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS)
     TH1 *hCoarse = (TH1*)ds->createHistogram("coarseHisto_"+ds_name,*x);
     float norm = hCoarse->Integral();
   
-    int rebin = BIN_SIZE/hCoarse->GetBinWidth(1);
+	 int rebin = BIN_SIZE/hCoarse->GetBinWidth(1);
     hCoarse->Rebin(rebin);
 
     float MIN_VAL = TMath::Max(0.9*hCoarse->GetBinContent(hCoarse->GetMinimumBin()),1.0);
@@ -94,11 +105,12 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS)
     
     RooDataHist ds_blind("ds_blind_"+ds_name,"ds_blind_"+ds_name,*x,hBlind); 
     
-    RooHist *hresid;
+    RooHist *hresid,*hresid0;
     RooPlot *frame1 = x->frame();
     RooPlot *frame2 = x->frame();
     
     if (BLIND) {
+		//cout << "Blind case: " << ds_coarse.GetName() << endl;
       ds_coarse.plotOn(frame1,LineColor(0),MarkerColor(0));
       pdfi->plotOn(frame1,Components("shapeBkg_qcd_"+ds_name+",shapeBkg_top_"+ds_name+",shapeBkg_zjets_"+ds_name),VisualizeError(*res_s,1,kTRUE),FillColor(0),MoveToBack());
       pdfi->plotOn(frame1,Components("shapeBkg_qcd_"+ds_name+",shapeBkg_top_"+ds_name+",shapeBkg_zjets_"+ds_name),LineWidth(2),LineStyle(3));
@@ -107,13 +119,21 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS)
       frame2->addPlotable(hresid,"pE1");
     }
     else {    
-      ds_coarse.plotOn(frame1);
+		//cout << "Non-blind case: " << ds_coarse.GetName() << endl;
+		ds_coarse.plotOn(frame1);
       pdfi->plotOn(frame1);
-      cout<<"chi2/ndof = "<<frame1->chiSquare()<<endl;
+		//cout << pdfi->getParameters(ds_coarse)->selectByAttrib("Constant",kFALSE)->getSize() << endl;
+      cout<<"chi2/ndof (bkg+sig) = "<<frame1->chiSquare()<<endl;
+		cout << ds_coarse.numEntries() << endl;
+		chi2sumS += frame1->chiSquare()*ds_coarse.numEntries();
+		nparsum += ds_coarse.numEntries();
+		//hresid0 = frame1->residHist();
       //pdfi->plotOn(frame1,VisualizeError(*res_s,1,kTRUE),FillColor(0),MoveToBack());
       pdfi->plotOn(frame1,Components("shapeBkg_qcd_"+ds_name),LineWidth(2),LineStyle(5),LineColor(kGreen+2));
       pdfi->plotOn(frame1,Components("shapeBkg_qcd_"+ds_name+",shapeBkg_top_"+ds_name+",shapeBkg_zjets_"+ds_name),LineWidth(2),LineStyle(2),LineColor(kBlack)); 
-      pdfi->plotOn(frame1,Components("shapeBkg_qcd_"+ds_name+",shapeBkg_top_"+ds_name+",shapeBkg_zjets_"+ds_name),LineWidth(2),LineStyle(2),LineColor(kBlack),VisualizeError(*res_s,1,kTRUE),FillColor(0),MoveToBack()); 
+      cout<<"chi2/ndof (bkg) = "<<frame1->chiSquare()<<endl;
+		chi2sumB += frame1->chiSquare()*ds_coarse.numEntries();
+		pdfi->plotOn(frame1,Components("shapeBkg_qcd_"+ds_name+",shapeBkg_top_"+ds_name+",shapeBkg_zjets_"+ds_name),LineWidth(2),LineStyle(2),LineColor(kBlack),VisualizeError(*res_s,1,kTRUE),FillColor(0),MoveToBack()); 
       hresid = frame1->residHist();
       frame2->addPlotable(hresid,"pE1");
     
@@ -121,7 +141,19 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS)
       RooAbsPdf *signal_pdf = (RooAbsPdf*)w->pdf("shapeSig_qqH_"+ds_name);
       signal_pdf->plotOn(frame2,LineWidth(2),LineColor(kRed),Normalization(yield_sig,RooAbsReal::NumEvent),MoveToBack());
     }
-    
+//	 hresid0->Print();
+//	 hresid->Print();
+//	 double x2,y2;
+//	 for (int i=0; i<3; ++i) {
+//		 hresid0->GetPoint(i,x2,y2);
+//		 cout << "BKG+SIG\t" << x2 << "\t" << y2 << endl;
+//		 hresid->GetPoint(i,x2,y2);
+//		 cout << "BKG\t" << x2 << "\t" << y2 << endl;
+//		 ds_coarse.get(i);
+//		 cout << ds_coarse.weightError(RooAbsData::SumW2) << endl;
+//		 cout << endl;
+//	 }
+
     TCanvas* canFit = new TCanvas("Higgs_fit_"+ds_name,"Higgs_fit_"+ds_name,900,750);
     canFit->cd(1)->SetBottomMargin(0.4);
     frame1->SetMinimum(MIN_VAL);
@@ -173,7 +205,7 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS)
     pad->SetFillStyle(0);
     pad->Draw();
     pad->cd(0);
-    hUnc2H->GetXaxis()->SetTitle("M_{bb} (GeV)");
+    hUnc2H->GetXaxis()->SetTitle("m_{bb} (GeV)");
     hUnc2H->GetYaxis()->SetTitle("Data - Bkg");
     //hUnc2H->GetYaxis()->SetTitle("Data - Fit");
     double YMAX = 1.1*frame2->GetMaximum();
@@ -229,8 +261,8 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS)
 	 paveCMS->SetFillStyle(-1);
 	 paveCMS->SetTextAlign(12);
 	 paveCMS->AddText("CMS");
-	 //TText *l = (TText*)paveCMS->AddText("Preliminary");
-	 //l->SetTextFont(52);
+	 TText *l = (TText*)paveCMS->AddText("Preliminary");
+	 l->SetTextFont(52);
 	 paveCMS->Draw();
 	 gPad->Update();
 	 paveCMS->SetY1NDC(paveCMS->GetY2NDC()-paveCMS->GetListOfLines()->GetSize()*gStyle->GetPadTopMargin());
@@ -241,7 +273,8 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS)
 	 paveLumi->SetBorderSize(0);
 	 paveLumi->SetFillStyle(-1);
 	 paveLumi->SetTextAlign(32);
-	 paveLumi->AddText("19.8 fb^{-1} (8TeV)");//+ 18.2 ;
+	 cout << ds_name(3,1) << endl;
+	 paveLumi->AddText(TString::Format("%.1f fb^{-1} (8TeV)",(atoi(ds_name(3,1).Data())<4 ? 19.8 : 18.2)).Data());//+ 18.2 ;
 	 paveLumi->Draw();
 
 	 TString path=".";
@@ -252,5 +285,13 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS)
 
     delete ds;
   }
+
+  cout << "chi2sumS: " << chi2sumS << endl;
+  cout << "chi2sumB: " << chi2sumB << endl;
+  cout << "nparS: " << nparS << endl;
+  cout << "nparB: " << nparB << endl;
+  cout << "nbinsum: " << nparsum << endl;
+  cout << "chi2sumS/(nbinsum - nparS): " << chi2sumS / (float)(nparsum - nparS) << endl;
+  cout << "chi2sumB/(nbinsum - nparB): " << chi2sumB / (float)(nparsum - nparB) << endl;
   delete datasets; 
 }

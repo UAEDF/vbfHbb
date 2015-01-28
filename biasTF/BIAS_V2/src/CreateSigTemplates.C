@@ -14,7 +14,7 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH, TStr
   const int NCAT[NSEL] = {4,3};
   const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};
   TString SELECTION[NSEL] = {"NOM","VBF"};
-  TString SELTAG[NSEL] = {"NOM","PRK"};
+  TString SELTAG[NSEL] = {"Set A","Set B"};
   TString MASS_VAR[NSEL] = {"mbbReg[1]","mbbReg[2]"};
   TString TRIG_WT[NSEL] = {"trigWtNOM[1]","trigWtVBF"};
   const int NMASS(5);
@@ -30,11 +30,17 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH, TStr
   RooRealVar *YieldVBF[NMASS][NCAT[0]],*YieldGF[NMASS][NCAT[0]];
   RooRealVar *kJES[10],*kJER[10];
   TCanvas *can[NMASS];
+  TCanvas *canvas = new TCanvas("c","c",900,750);
   TString PATH("flat/");
   TString ss("");
 
   vector<int> MASSasked = splitString(MASS);
+  cout << MASSasked[0] << endl;
   RooWorkspace *w = new RooWorkspace("w","workspace");
+
+  makeDirs(OUTPATH);
+  makeDirs(OUTPATH+"/plots/");
+  makeDirs(OUTPATH+"/plots/sigTemplates/");
 
   int counter(0);
   for(int isel=0;isel<NSEL;isel++) {
@@ -212,6 +218,22 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH, TStr
         pave->SetTextSize(gStyle->GetPadTopMargin()*3.75/4.);
         pave->SetTextColor(kBlue);
         pave->Draw();
+
+		  canvas->cd();
+		  frame->Draw();
+		  hs->Draw("hist,same");
+		  frame->Draw("same");
+		  ln->Draw();
+		  leg->Draw("same");
+		  pave->Draw();
+		  gPad->SetRightMargin(0.05);
+		  gPad->Update();
+		  pave->SetX2(1.-gPad->GetRightMargin()-0.02);
+		  gPad->Modified();
+		  gPad->Update();
+		  gPad->RedrawAxis();
+		  canvas->SaveAs(TString::Format("%s/plots/sigTemplates/sig_m%d_CAT%d.png",OUTPATH.Data(),H_MASS[iMass],counter).Data());
+		  canvas->SaveAs(TString::Format("%s/plots/sigTemplates/sig_m%d_CAT%d.pdf",OUTPATH.Data(),H_MASS[iMass],counter).Data());
         
         b0.setConstant(kTRUE);
         b1.setConstant(kTRUE);
@@ -234,9 +256,6 @@ void CreateSigTemplates(double dX, float XMIN, float XMAX, TString OUTPATH, TStr
 		  gPad->RedrawAxis();
         counter++;
       }// categories loop
-		makeDirs(OUTPATH);
-		makeDirs(OUTPATH+"/plots/");
-		makeDirs(OUTPATH+"/plots/sigTemplates/");
 		can[iMass]->SaveAs(TString::Format("%s/plots/sigTemplates/%s.png",OUTPATH.Data(),can[iMass]->GetName()));
 		can[iMass]->SaveAs(TString::Format("%s/plots/sigTemplates/%s.pdf",OUTPATH.Data(),can[iMass]->GetName()));
     }// selection loop 

@@ -47,7 +47,7 @@ def main():
 	
 	#RUN = [False,False,False,False,False,False,False]
 	#RUN = [False,False,False,True,False,False,False]
-	RUN = [False]*0 + [True]*1 + [False]*2 + [True]*0 + [False]*5
+	RUN = [False]*0 + [True]*1 + [False]*0 + [True]*0 + [False]*5
 		
 	for XBOUNDS in XBOUNDSS:
 		for BRNBASE in BRNBASES:

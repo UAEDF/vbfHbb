@@ -6,17 +6,17 @@ if not os.system('[ "`root-config --version`" == "5.34/03" ]') == 0: sys.exit('W
 
 def main():
 	dXs=[0.1]
-	NdXchis=[10,20]
+	NdXchis=[25] # 10,20,50
 	XBOUNDSS=[[80,200]]#[90,200]]#,[80,210],[90,210],[80,190],[90,190],[80,220]] #
 	
 	BRNALTS=[\
-	["expPow"],\
-	["tanh"],\
-	["modG"],\
-	["sine1"],\
+#	["expPow"],\
+#	["tanh"],\
+#	["modG"],\
+#	["sine1"],\
 	["brn4"],\
 	["brn5"],\
-	["brn6"],\
+#	["brn6"],\
 	]
 	
 	TRFALTS=[\
@@ -57,7 +57,7 @@ def main():
 			
 				for MASS in MASSES:
 					if RUN[2]==True:
-						ROOTTHIS("./src/CreateSigTemplates.C'(%.2f,%d,%d,\"%s\",%d)'"%(dX,XBOUNDS[0],XBOUNDS[1],FOLDER,MASS))
+						ROOTTHIS("./src/CreateSigTemplates.C'(%.2f,%d,%d,\"%s\",\"%s\")'"%(dX,XBOUNDS[0],XBOUNDS[1],FOLDER,"%d"%MASS))
 			
 				if RUN[3]==True:
 					for BR in BRNALTS:

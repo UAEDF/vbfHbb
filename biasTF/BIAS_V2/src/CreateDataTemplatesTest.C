@@ -39,11 +39,9 @@ void CreateDataTemplatesTest(double dX, float XMIN, float XMAX, int CATMIN, int 
 
   makeDirs(OUTPATH);
   makeDirs(OUTPATH+"/output/");
-  if (XMAXDIFF==0) TFile *fBKG  = TFile::Open(TString::Format("%s/output/bkg_shapes_workspace_B%.f-%.f.root",OUTPATH.Data(),XMIN,XMAX).Data());
-  else             TFile *fBKG  = TFile::Open(TString::Format("%s/output/bkg_shapes_workspace_B%.f-%.f%.f.root",OUTPATH.Data(),XMIN,XMAX,XMAX+XMAXDIFF).Data());
+  TFile *fBKG  = TFile::Open(TString::Format("%s/output/bkg_shapes_workspace_B%.f-%.f.root",OUTPATH.Data(),XMIN,XMAX).Data());
   RooWorkspace *wBkg = (RooWorkspace*)fBKG->Get("w");
-  if (XMAXDIFF==0) TFile *fSIG  = TFile::Open(TString::Format("%s/output/signal_shapes_workspace_B%.f-%.f.root",OUTPATH.Data(),XMIN,XMAX).Data());
-  else             TFile *fSIG  = TFile::Open(TString::Format("%s/output/signal_shapes_workspace_B%.f-%.f%.f.root",OUTPATH.Data(),XMIN,XMAX,XMAX+XMAXDIFF).Data());
+  TFile *fSIG  = TFile::Open(TString::Format("%s/output/signal_shapes_workspace_B%.f-%.f.root",OUTPATH.Data(),XMIN,XMAX).Data());
   RooWorkspace *wSig = (RooWorkspace*)fSIG->Get("w");
   RooWorkspace *w = new RooWorkspace("w","workspace");
 
@@ -311,7 +309,6 @@ void CreateDataTemplatesTest(double dX, float XMIN, float XMAX, int CATMIN, int 
 			hresid->GetPoint(i,xVal,y);
 			//roohist[icat]->get(i);
 			roohistB1[icat]->get(i);
-			//double error = roohist[icat]->weightError(RooAbsData::SumW2);
 			double error = roohistB1[icat]->weightError(RooAbsData::SumW2);
 			double lo, hi, errorPoisson;
 			//roohist[icat]->weightError(lo,hi);		
@@ -387,8 +384,7 @@ void CreateDataTemplatesTest(double dX, float XMIN, float XMAX, int CATMIN, int 
   }// selection loop
   makeDirs(OUTPATH+"/output/");
 //  w->Print();
-  if (XMAXDIFF==0) w->writeToFile(TString::Format("%s/output/data_shapes_workspace_BRN%dp%d_B%.f-%.f%s%s%s.root",OUTPATH.Data(),BRN_ORDER_NOM,BRN_ORDER_VBF,XMIN,XMAX,tTRF.Data(),tBRN.Data(),FitWithSignal ? "_withSignal" : ""));
-  else             w->writeToFile(TString::Format("%s/output/data_shapes_workspace_BRN%dp%d_B%.f-%.f%.f%s%s%s.root",OUTPATH.Data(),BRN_ORDER_NOM,BRN_ORDER_VBF,XMIN,XMAX,XMAX+XMAXDIFF,tTRF.Data(),tBRN.Data(),FitWithSignal ? "_withSignal" : ""));
+  w->writeToFile(TString::Format("%s/output/data_shapes_workspace_BRN%dp%d_B%.f-%.f%s%s%s.root",OUTPATH.Data(),BRN_ORDER_NOM,BRN_ORDER_VBF,XMIN,XMAX,tTRF.Data(),tBRN.Data(),FitWithSignal ? "_withSignal" : ""));
 } 
 
 void makeDirs(TString dirName) {

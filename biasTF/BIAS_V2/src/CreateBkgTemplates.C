@@ -13,7 +13,7 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH, float XMAXDIFF=
   const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};
   float LUMI[2] = {19784.,18281.};
   TString SELECTION[2] = {"NOM","VBF"};
-  TString SELNAME[2] = {"NOM","PRK"};
+  TString SELNAME[2] = {"Set A","Set B"};
   TString MASS_VAR[2] = {"mbbReg[1]","mbbReg[2]"};
   TString TRIG_WT[2] = {"trigWtNOM[1]","trigWtVBF"};
   TString PATH("flat/");
@@ -28,6 +28,10 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH, float XMAXDIFF=
   RooDataHist *roohist_Z[5],*roohist_T[5];
   RooRealVar *kJES[10],*kJER[10];
   RooWorkspace *w = new RooWorkspace("w","workspace");
+  makeDirs(OUTPATH);
+  makeDirs(OUTPATH+"/plots");
+  makeDirs(OUTPATH+"/plots/bkgTemplates/");
+  TString FULLPATH(OUTPATH+"/plots/bkgTemplates");
   
   int counter(0);
   for(int isel=0;isel<NSEL;isel++) {
@@ -45,7 +49,7 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH, float XMAXDIFF=
     TCanvas *canT = new TCanvas("canT_"+SELECTION[isel],"canT_"+SELECTION[isel],900,600);  
     canZ->Divide(2,2);
     canT->Divide(2,2);
-    TCanvas *can = new TCanvas(); 
+    TCanvas *can = new TCanvas("c","c",900,600); 
     
     sprintf(name,"CMS_vbfbb_scale_mbb_sel%s",SELECTION[isel].Data()); 
     kJES[isel] = new RooRealVar(name,name,1.0);
@@ -184,6 +188,15 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH, float XMAXDIFF=
 		//paveZ->Draw();
 		gPad->Update();
 		paveZ->SetY2NDC(paveZ->GetY1NDC()+paveZ->GetListOfLines()->GetSize()*0.032);
+		
+		can->cd();
+		frame->Draw();
+		pave->Draw();
+		//paveZ->Draw();
+		//gPad->Update();
+		//paveZ->SetY2NDC(paveZ->GetY1NDC()+paveZ->GetListOfLines()->GetSize()*0.032);
+		can->SaveAs(TString::Format("%s/bkg_Z_CAT%d.pdf",FULLPATH.Data(),counter).Data());
+		can->SaveAs(TString::Format("%s/bkg_Z_CAT%d.png",FULLPATH.Data(),counter).Data());
 
       sprintf(name,"roohist_T_CAT%d",counter);
       if (icat < 3) { 
@@ -250,6 +263,15 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH, float XMAXDIFF=
 		gPad->Update();
 		paveT->SetY2NDC(paveT->GetY1NDC()+paveT->GetListOfLines()->GetSize()*0.032);
 
+		can->cd();
+		frame->Draw();
+		pave->Draw();
+		//paveT->Draw();
+		//gPad->Update();
+		//paveT->SetY2NDC(paveT->GetY1NDC()+paveT->GetListOfLines()->GetSize()*0.032);
+		can->SaveAs(TString::Format("%s/bkg_T_CAT%d.pdf",FULLPATH.Data(),counter).Data());
+		can->SaveAs(TString::Format("%s/bkg_T_CAT%d.png",FULLPATH.Data(),counter).Data());
+
       mZ.setConstant(kTRUE);
       sZ.setConstant(kTRUE);
       aZ.setConstant(kTRUE);
@@ -275,10 +297,6 @@ void CreateBkgTemplates(float XMIN, float XMAX, TString OUTPATH, float XMAXDIFF=
       YieldST->Print();
       counter++;
     }// category loop
-	 makeDirs(OUTPATH);
-	 makeDirs(OUTPATH+"/plots");
-	 makeDirs(OUTPATH+"/plots/bkgTemplates/");
-	 TString FULLPATH(OUTPATH+"/plots/bkgTemplates");
 	 canT->SaveAs(TString::Format("%s/%s.png",FULLPATH.Data(),canT->GetName()));
 	 canZ->SaveAs(TString::Format("%s/%s.png",FULLPATH.Data(),canZ->GetName()));
 	 canT->SaveAs(TString::Format("%s/%s.pdf",FULLPATH.Data(),canT->GetName()));

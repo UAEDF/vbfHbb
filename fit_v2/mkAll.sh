@@ -30,6 +30,8 @@ options="\n
    3	mkSigTemplates\n
    4	mkDataTemplates\n
    5	mkDatacards\n
+	\n
+	10 mkAsymptotic limits\n
 "
 ###
 ###
@@ -91,7 +93,29 @@ if [ "$1" == "0" ] || [ "$1" == "5" ];then
 		eval ${cmd} | grep -v "Developed by Wouter" | grep -v "Copyright (C)" | grep -v "All rights reserved" | grep -v "^$"
 	done
 fi
-
+##################################################
+##################################################
+##################################################
+if [ "$1" == "0" ] || [ "$1" == "10" ];then
+	cmd="./src/mkLimit.py -t Asymptotic -m 115,120,125,130,135 -n .vbfHbb --workdir ${workdir}"
+	echo ${cmd}
+	eval ${cmd}
+fi
+##################################################
+if [ "$1" == "0" ] || [ "$1" == "11" ];then
+	for c in "1" "2" "3" "5" "6" "4,5,6" "0,1,2,3"; do
+		cmd="./src/mkLimit.py -t Asymptotic -m 125 -n .vbfHbb --workdir ${workdir} -V $c"
+		echo ${cmd}
+		eval ${cmd} 
+	done
+fi
+##################################################
+if [ "$1" == "0" ] || [ "$1" == "12" ];then
+	cmd="./src/mkLimit.py -t MaxLikelihoodFit -m 115,120,125,130,135 -n .vbfHbb --workdir ${workdir}"
+	echo ${cmd}
+	eval ${cmd}
+fi
+##################################################
 ##################################################
 #notext=""
 #done

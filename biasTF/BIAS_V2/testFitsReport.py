@@ -6,7 +6,7 @@ fopen = open("TestFit.log","r")
 
 alts = ["expPow","tanh","modG","sine1","brn4","brn5","brn6"]
 cats = ["CAT0","CAT1","CAT2","CAT3","CAT4","CAT5","CAT6"]
-dxs = [0.1,0.2,0.5,1,2]
+dxs = [0.1,0.2,0.5,1,2,2.5,5]
 count = 0
 cat = ""
 
@@ -58,8 +58,8 @@ for d in dxs:
 	for c in cats:
 		print "%5s %5s |"%(d,c),
 		for a in alts:
-			if (c,a,d) in found: print "%8.5f"%float(found[(c,a,d)]['chi2red']),
-			if (c,a,d) in found: print "%s%8.5f%s |"%("\033[0;31m" if (float(found[(c,a,d)]['chi2prob'])<1e-5 or float(found[(c,a,d)]['chi2prob'])>(1-1e-5)) else "\033[m",float(found[(c,a,d)]['chi2prob']),"\033[m"),
+			if (c,a,d) in found: print "%8.2f"%float(found[(c,a,d)]['chi2red']),
+			if (c,a,d) in found: print "%s%8.2f%s |"%("\033[0;31m" if (float(found[(c,a,d)]['chi2prob'])<1e-5 or float(found[(c,a,d)]['chi2prob'])>(1-1e-5)) else "\033[m",float(found[(c,a,d)]['chi2prob']),"\033[m"),
 			else: print "%17s |"%"-",
 		print
 	prevd = d

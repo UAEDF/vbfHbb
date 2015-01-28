@@ -9,7 +9,7 @@ void TransferFunctions(float XMIN, float XMAX, int CATMIN, int CATMAX, TString T
   const int NCAT[NSEL] = {4,3};
   const double MVA_BND[NSEL][NCAT[0]+1] = {{-0.6,0.0,0.7,0.84,1},{-0.1,0.4,0.8,1}};
   TString SELECTION[2] = {"NOM","VBF"};  
-  TString SELTAG[2] = {"NOM","PRK"};
+  TString SELTAG[2] = {"Set A","Set B"};
   int STYLE[NCAT[0]] = {20,20,23,21};
   int COLOR[NCAT[0]] = {kBlack,kBlue,kRed,kGreen+2};
   float BINSIZE[NSEL]= {10,5};
@@ -28,6 +28,8 @@ void TransferFunctions(float XMIN, float XMAX, int CATMIN, int CATMAX, TString T
 	
   makeDirs(OUTPATH);
   makeDirs(OUTPATH+"/output");
+  makeDirs(OUTPATH+"/plots");
+  makeDirs(OUTPATH+"/plots/transferFunctions");
 //  system(TString::Format("[ ! -d %s ] && mkdir %s",OUTPATH.Data(),OUTPATH.Data()).Data());
 //  system(TString::Format("[ ! -d %s/output ] && mkdir %s/output",OUTPATH.Data(),OUTPATH.Data()).Data());
   if (XMAXDIFF==0.) TFile *outf = TFile::Open(TString::Format("%s/output/transferFunctions_B%.f-%.f.root",OUTPATH.Data(),XMIN,XMAX),"UPDATE");
@@ -52,7 +54,7 @@ else                TFile *outf = TFile::Open(TString::Format("%s/output/transfe
   
   TCanvas *can1[NSEL];
   TCanvas *can2[NSEL];
-  TCanvas *can = new TCanvas("aux","aux");
+  TCanvas *can = new TCanvas("aux","aux",900,900);
   gStyle->SetPadTopMargin(0.06);
   gStyle->SetPadLeftMargin(0.12);
  
@@ -91,7 +93,7 @@ else                TFile *outf = TFile::Open(TString::Format("%s/output/transfe
     leg->SetTextSize(0.05);  
 
     for(int icat=0;icat<NCAT[isel];icat++) { 
-      TString ss("sel"+SELTAG[isel]+TString::Format("_CAT%d",counter)+TString::Format("_%s",TR.Data()));
+      TString ss("sel"+SELECTION[isel]+TString::Format("_CAT%d",counter)+TString::Format("_%s",TR.Data()));
 		cout << "\n\033[1;34mWorking on: " << ss << "\033[m" << endl;
       hData[isel][icat] = new TH1F("hData_"+ss,"hData_"+ss,(XMAX-XMIN)/BINSIZE[isel],XMIN,XMAX);
       hData[isel][icat]->Sumw2();
@@ -191,8 +193,32 @@ else                TFile *outf = TFile::Open(TString::Format("%s/output/transfe
 		  pave->SetY1NDC(pave->GetY2NDC()-0.04*(fitRatio[isel][icat]->GetNpar()+1));
 		  //pave->Draw();
 		  gPad->RedrawAxis();
+
+		  can->cd();
+		  ln->Draw();
+		  gUnc_approx[isel][icat]->Draw("sameE3");
+		  ln->Draw("same");
+        gUnc[isel][icat]->Draw("sameE3");
+		  TH1F *htmp = (TH1F*)hRatio[isel][icat]->Clone("htmp");
+		  htmp->SetMarkerSize(2);
+		  htmp->DrawCopy("same");
+		  gPad->SetLeftMargin(0.175);
+		  TLegend *leg2 = (TLegend*)leg1->Clone();
+		  leg2->Clear();
+        leg2->SetHeader(TString::Format("%s selection CAT%d/CAT%d",SELTAG[isel].Data(),icat+(isel==0 ? 0 : NCAT[isel-1]),(isel==0 ? 0 : 4)).Data());//ss); 
+        leg2->AddEntry(htmp,"data","P");
+        leg2->AddEntry(fitRatio[isel][icat],"fit","L");
+        leg2->AddEntry(gUnc_approx[isel][icat],"uncert.","F");
+        leg2->AddEntry(gUnc[isel][icat],"uncert. (stat)","F"); 
+		  leg2->Draw("same");
+		  gPad->Update();
+		  leg2->SetY2(leg2->GetY1()+leg2->GetNRows()*gPad->GetTopMargin());
+		  gPad->RedrawAxis();
+		  can->SaveAs(TString::Format("%s/plots/transferFunctions/transfer_CAT%d.png",OUTPATH.Data(),counter).Data());
+		  can->SaveAs(TString::Format("%s/plots/transferFunctions/transfer_CAT%d.pdf",OUTPATH.Data(),counter).Data());
       }
 
+    can1[isel]->cd();
     TPaveText *paveCMS = new TPaveText(gPad->GetLeftMargin()+0.01,1.-gPad->GetTopMargin(),gPad->GetLeftMargin()+0.15,1.,"NDC");
 	 paveCMS->SetTextFont(62);
 	 paveCMS->SetTextSize(gStyle->GetPadTopMargin()*3./4.);
@@ -203,7 +229,7 @@ else                TFile *outf = TFile::Open(TString::Format("%s/output/transfe
 	 paveCMS->Draw();
 	 gPad->Update();
 	 float scale= (float)gPad->GetCanvas()->GetWindowHeight()/(float)(gPad->GetCanvas()->GetWindowWidth()*gPad->GetAbsWNDC());
-	 scale = (float)floor(scale*3)/3.);
+	 scale = (float)(floor(scale*3)/3.);
     TPaveText *paveCMS2 = new TPaveText(gPad->GetLeftMargin()+0.105*scale,1.-gPad->GetTopMargin(),gPad->GetLeftMargin()+0.32,1.-0.008,"NDC");
 	 paveCMS2->SetTextFont(52);
 	 paveCMS2->SetTextSize(gStyle->GetPadTopMargin()*2.55/4.);
@@ -220,7 +246,7 @@ else                TFile *outf = TFile::Open(TString::Format("%s/output/transfe
 	 paveLumi->SetBorderSize(0);
 	 paveLumi->SetFillStyle(-1);
 	 paveLumi->SetTextAlign(32);
-	 paveLumi->AddText("19.8 fb^{-1} (8TeV)");//+ 18.2 ;
+	 paveLumi->AddText(isel==0 ? "19.8 fb^{-1} (8TeV)" : "18.3 fb^{-1} (8TeV)");//+ 18.2 ;
 	 paveLumi->Draw();
 
       outf->cd();
@@ -238,8 +264,6 @@ else                TFile *outf = TFile::Open(TString::Format("%s/output/transfe
 
     can1[isel]->cd();
     leg->Draw();
-	 makeDirs(OUTPATH+"/plots");
-	 makeDirs(OUTPATH+"/plots/transferFunctions");
 	 TString n="";
 	 n = TString::Format("%s/plots/transferFunctions/%s_%s-%.f-%.f",OUTPATH.Data(),can1[isel]->GetName(),TR.Data(),XMIN,XMAX);
 	 can1[isel]->SaveAs(n+".png");

@@ -256,6 +256,7 @@ def main():
   			modelZ          = RooAddPdf("Z_model_CAT%d"%Cp,"Z_model_CAT%d"%Cp,RooArgList(Zcore,Zbkg),RooArgList(fZsig))
   ### Fit Z
   			resZ            = modelZ.fitTo(rh_Z["CAT%d"%Cp],RooFit.Save())
+			resZ.Print()
   ### Draw Z
   			RooDraw(canZ,x,rh_Z["CAT%d"%Cp],modelZ,S,C,Cp,"Z template",archive)
 			canZ.cd(C+1)

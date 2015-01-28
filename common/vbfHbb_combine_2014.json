@@ -1,0 +1,20 @@
+{
+	"GenerateOnly" : {
+								"opts" : "-M GenerateOnly -t -1 --saveToys --expectSignal=1"
+						  },
+	"ProfileLikelihoodExp" : {
+	       							"opts" : "-M ProfileLikelihood --significance -t -1 --expectSignal=1 --toysFreq"
+									 },
+	"ProfileLikelihoodObs" : {
+	       							"opts" : "-M ProfileLikelihood --significance --bruteForce --preFit"
+	  							    },
+	"MaxLikelihoodFit" : {
+	       							"opts" : "-M MaxLikelihoodFit --X-rtd FITTER_NEW_CROSSING_ALGO --minimizerAlgoForMinos=Minuit2 --X-rtd FITTER_NEVER_GIVE_UP --X-rtd FITTER_BOUND --minimizerAlgo=Minuit2 --minimizerStrategy=1 --rMin=-5 --rMax=20"
+								},
+	"Asymptotic" : {
+							"opts" : "-M Asymptotic  --rMin=-5 --rMax=20"
+					   },
+	"ChannelCompatibilityCheck" : {
+												"opts" : "-M ChannelCompatibiltyCheck --saveFitResult --X-rtd FITTER_NEW_CROSSING_ALGO --minimizerAlgoForMinos=Minuit2 --X-rtd FITTER_NEVER_GIVE_UP --X-rtd FITTER_BOUND --minimizerAlgo=Minuit2 --minimizerStrategy=1 --rMin=-50 --rMax=50"
+									      }
+}

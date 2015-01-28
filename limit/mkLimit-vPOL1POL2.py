@@ -105,7 +105,7 @@ folder="BiasV10_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output/"
 home=`pwd`
 
 declare -a masses=("125" "115" "135" "120" "130")
-#declare -a masses=("125")
+declare -a masses=("125")
 
 cd $folder
 
@@ -228,7 +228,7 @@ done
 for mass in ${masses[@]}; do 
 	if [ -f "combine/mlfit${nameU}.mH${mass}.root" ]; then 
 		if [ ${run[7]} == true ]; then
-			cmd8a="root -l ${home}/DrawBestFit.C'(2.5,false,\"$mass\")' -q 2>&1 | tee `getLogName ${nameN} "fitplots"`";
+			cmd8a="root -l ${home}/DrawBestFit.C'(0.1,false,\"$mass\")' -q 2>&1 | tee `getLogName ${nameN} "fitplots"`";
 			cmd8b="mv `getLogName ${nameN} "fitplots"` logs/";
 			cmd8=($cmd8a $cmd8b)
 		fi
