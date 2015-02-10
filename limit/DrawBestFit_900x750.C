@@ -1,5 +1,5 @@
 using namespace RooFit;
-void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS)
+void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS,TString NAME)
 {
   gROOT->ProcessLine(".x ../../../common/styleCMSTDR.C");
   gSystem->Load("libHiggsAnalysisCombinedLimit.so");
@@ -26,10 +26,10 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS)
  // int MASS=125;
 
   //BiasV10_limit_BRN5p4_dX0p1_B80-200_CAT0-6/output/
-  TFile *f1 = TFile::Open("datacards/datacard_m"+MASS+"_BRN5p4_B80-200_CAT0-CAT6_FitPOL1-POL2.root");
-  TFile *f2 = TFile::Open("combine/mlfit_vbfhbb_BRN5p4_B80-200_CAT0-CAT6_FitPOL1-POL2.mH"+MASS+".root");
-  TFile *f3 = TFile::Open("signal_shapes_workspace_B80-200.root");
-  TFile *f4 = TFile::Open("data_shapes_workspace_BRN5p4_B80-200_FitPOL1-POL2.root");
+  TFile *f1 = TFile::Open("datacards/datacard_m"+MASS+"_"+NAME+".root");
+  TFile *f2 = TFile::Open("combine/mlfit_vbfhbb_"+NAME+".mH"+MASS+".root");
+  TFile *f3 = TFile::Open("sig_shapes_workspace_B80-200.root");
+  TFile *f4 = TFile::Open("data_shapes_workspace_"+NAME+".root");
 
   RooWorkspace *w = (RooWorkspace*)f1->Get("w");
   //w->Print();

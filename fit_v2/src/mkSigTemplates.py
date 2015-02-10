@@ -140,7 +140,7 @@ def RooDraw(opts,can,x,h,hVBF,hGF,hTOT,yVBF,yGF,model,bkg,fsig,width,mass,m,s,iS
 	pave.SetTextSize(top*0.7)
 	pave.SetTextColor(kBlue+1)
 	pave.AddText("M_{H} = %d GeV"%mass)
-	pave.AddText("%s selection"%S.label)
+	pave.AddText("%s selection"%S.label.replace('NOM','Set A').replace('PRK','Set B'))
 	pave.AddText("CAT%d"%Cp)
 	pave.AddText("m = %.1f #pm %.1f"%(m.getVal(),m.getError()))
 	pave.AddText("#sigma = %.1f #pm %.1f"%(s.getVal(),s.getError()))

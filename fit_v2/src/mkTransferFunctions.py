@@ -172,7 +172,7 @@ def main():
 		CN.Divide(S.ncat-1,1)
 ## Set legend
 		L0 = TLegend(0.6,0.6,1.-gStyle.GetPadRightMargin()-gStyle.GetPadTopMargin()*0.3333,1.-gStyle.GetPadTopMargin()*1.3333)
-		L0.SetHeader("%s selection"%S.label)
+		L0.SetHeader("%s selection"%S.label.replace('NOM','Set A').replace('PRK','Set B'))
 		L0.SetFillColor(-1)
 		L0.SetBorderSize(0)
 		L0.SetTextFont(42)
@@ -181,7 +181,7 @@ def main():
 ## Category loop
 		for C in range(S.ncat):
 			Cp = C + sum([x for x in SC.ncats[0:iS]])
-			N  = "sel%s_CAT%d"%(S.label,Cp)
+			N  = "sel%s_CAT%d"%(S.label.replace('NOM','Set A').replace('PRK','Set B'),Cp)
 ### Get histogram
 			hDat["hDat_"+N] = TH1F("hDat_"+N,"hDAT_"+N,int(opts.X[1]-opts.X[0])/opts.BINS[iS],opts.X[0],opts.X[1])
 			h = hDat["hDat_"+N]
@@ -201,7 +201,7 @@ def main():
 			hRat["hRat_"+N] = h.Clone("hRat_"+N)
 			r = hRat["hRat_"+N]
 			hStyle(r,C,False)
-			r.Divide(hDat["hDat_sel%s_CAT%s"%(S.label,sum([x for x in SC.ncats[0:iS]]))])
+			r.Divide(hDat["hDat_sel%s_CAT%s"%(S.label.replace('NOM','Set A').replace('PRK','Set B'),sum([x for x in SC.ncats[0:iS]]))])
 			r.SetMarkerSize(1.8)
 			r.SetDirectory(0)
 ### Get fit function			
@@ -250,7 +250,7 @@ def main():
 				g.Draw("sameE3")
 				r.Draw("same")
 				L1 = TLegend(gStyle.GetPadLeftMargin()+gStyle.GetPadTopMargin()*0.3333,gStyle.GetPadBottomMargin()+gStyle.GetPadTopMargin()*0.3333,0.6,0.4)
-				L1.SetHeader("%s selection CAT%d/CAT%d"%(S.label,Cp,sum(SC.ncats[0:iS])))
+				L1.SetHeader("%s selection CAT%d/CAT%d"%(S.label.replace('NOM','Set A').replace('PRK','Set B'),Cp,sum(SC.ncats[0:iS])))
 				L1.SetFillColor(-1)
 				L1.SetBorderSize(0)
 				L1.SetTextFont(42)

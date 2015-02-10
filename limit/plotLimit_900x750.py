@@ -127,7 +127,8 @@ def main(opts,limnames):
 	limitplotexp.SetLineColor(kBlack)#kBlue
 	limitplotexp.GetXaxis().SetTitle("Higgs Mass (GeV)")
 	limitplotexp.GetYaxis().SetTitle("95% Asymptotic CL Limit on #sigma/#sigma_{SM}")
-	limitplotexp.GetXaxis().SetLimits(114,136)
+#	limitplotexp.GetXaxis().SetLimits(114,136)
+	limitplotexp.GetXaxis().SetLimits(99,151)
 
 	gStyle.SetLineStyleString(11,"24 24")
 	limitplotinj.SetLineStyle(11)
@@ -141,7 +142,8 @@ def main(opts,limnames):
 	limitplotobs.SetMarkerColor(kBlack)
 	limitplotobs.SetMarkerSize(1.7)
 
-	line = TF1("line","1.0",114,136)
+	#line = TF1("line","1.0",114,136)
+	line = TF1("line","1.0",99,151)
 	line.SetLineColor(kGray+2)#+kRed)#kBlack)
 	line.SetLineStyle(3)#2
 	line.SetLineWidth(1)

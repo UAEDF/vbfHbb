@@ -66,13 +66,32 @@ for cat in range(7):
 		h.GetXaxis().SetLabelSize(0.07)
 		h.GetYaxis().SetLabelSize(0.07)
 
+
 c = TCanvas("c","c",900,600)
+pcms1 = TPaveText(gPad.GetLeftMargin(),1.-gPad.GetTopMargin(),0.4,1.,"NDC")
+pcms1.SetTextAlign(12)
+pcms1.SetTextFont(62)
+pcms1.SetTextSize(gPad.GetTopMargin()*2.5/4.)
+pcms1.SetFillStyle(-1)
+pcms1.SetBorderSize(0)
+pcms1.AddText("CMS")
+
+pcms2 = TPaveText(0.5,1.-gPad.GetTopMargin(),1.-gPad.GetRightMargin()+0.02,1.,"NDC")
+pcms2.SetTextAlign(32)
+pcms2.SetTextFont(62)
+pcms2.SetTextSize(gPad.GetTopMargin()*2.5/4.)
+pcms2.SetFillStyle(-1)
+pcms2.SetBorderSize(0)
+pcms2.AddText("19.8 fb^{-1} (8 TeV)")
+
 gPad.SetGrid(1)
 gPad.SetTicks(1)
 h.SetMaximum(0.6)#round(h.GetBinContent(h.GetMaximumBin())*1.01,2))
 h.SetMinimum(0.052)#round(h.GetBinContent(h.GetMinimumBin())/1.01,2))
 h.SetMarkerSize(1.7)
 h.Draw("text,col")
+pcms1.Draw()
+pcms2.Draw()
 c.SaveAs("GFFraction.pdf")
 c.SaveAs("GFFraction.png")
 

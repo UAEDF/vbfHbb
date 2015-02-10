@@ -87,7 +87,7 @@ def RooDraw(can,x,h,model,S,C,Cp,text,archive):
 	pave.SetBorderSize(0)
 	pave.SetTextFont(62)
 	pave.SetTextSize(top*0.80)
-	pave.AddText("%s selection"%S.label)
+	pave.AddText("%s selection"%(S.label.replace('NOM','Set A') if 'NOM' in S.label else S.label.replace('PRK','Set B')))
 	pave.AddText("CAT%d"%Cp)
 	pave.AddText(text)
 	pave.Draw()
