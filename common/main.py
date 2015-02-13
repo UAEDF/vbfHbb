@@ -344,6 +344,7 @@ def main(mp=None,parseronly=False,variablesBool=None,samplesBool=None):
 			if not opts.flatprefix=='': s['fname'] = s['fname'].replace('flat','%sFlat'%opts.flatprefix)
 			if not opts.flatsuffix=='': s['fname'] = s['fname'].replace('.root','%s.root'%opts.flatsuffix)
 		for key in samples.keys():
+                        [x in samples[key]['tag'] for x in opts.sample]
 			if any([x in samples[key]['tag'] for x in opts.nosample]): del samples[key] 
 			elif not any([x in samples[key]['tag'] for x in opts.sample]): del samples[key]
 

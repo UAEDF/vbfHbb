@@ -131,8 +131,8 @@ def ratio(eff1,eff2):
 	g.GetYaxis().SetTitle("Data / MC")
 	g.GetYaxis().SetRangeUser(0.65,1.35) #0.6,1.4 #0.0,2.0
 	g.GetYaxis().SetNdivisions(505)
-	g.GetXaxis().SetTickLength(0.08)
-	g.GetYaxis().SetTickLength(0.015)
+	g.GetXaxis().SetTickLength(0.025)
+	g.GetYaxis().SetTickLength(0.082)
 #	g.SetMarkerStyle(20)
 #	g.SetMarkerColor(kBlack)
 	g.SetMarkerSize(1.6) #1.25
@@ -239,13 +239,21 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	right   = 1 - 0.02
 	bottom  = 1 - gPad.GetTopMargin() - 0.25 - 0.02 - (0.045*rows) 
 	top     = 1 - gPad.GetTopMargin() - 0.25 - 0.02 
-	legend  = getTLegend(left,bottom,right,top,columns,"%s cut trg effi."%("(N-1)" if not ('mbb' in v['bare'] or 'mva' in v['bare']) else "N"),0,1,0.030) #3001
+	legend  = getTLegend(left,bottom,right,top,columns,"%s cut trigger efficiency"%("(N-1)" if not ('mbb' in v['bare'] or 'mva' in v['bare']) else "N"),0,1,0.030) #3001
+        legend.SetFillStyle(-1)
+        legend.SetBorderSize(0)
 	if opts.notext: 
-		legend.SetTextSize(0.028)
-		legend.SetX1(0.15)
-		legend.SetX2(0.15+0.3)
-		legend.SetY1(0.77)
-		legend.SetY2(0.90)
+###		legend.SetTextSize(0.028)
+###		legend.SetX1(0.15)
+###		legend.SetX2(0.15+0.3)
+###		legend.SetY1(0.77)
+###		legend.SetY2(0.90)
+		legend.SetFillStyle(1000)
+		legend.SetFillColor(kWhite)
+		legend.SetTextSize(2.0/4.0*gStyle.GetPadTopMargin())
+		legend.SetX1(gStyle.GetPadLeftMargin()+0.015)
+		legend.SetX2(0.55)
+		legend.SetY1(0.0)
 
 	# info text
 	rows   = sum([not opts.weight==[[''],['']],sum([x in opts.weight[1] for x in ['KFAC','LUMI']]),sum([(x[0:2]=='PU' or x[0:3] in ['MAP','COR']) for x in opts.weight[1]]),1]) # counting lines about weights + 1 for vbfHbb tag 
@@ -265,9 +273,23 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	if not opts.weight==[[''],['']] and 'PU'  in [x[0:2] for x in opts.weight[1]]: text.AddText("PU reweighted")
 	if not opts.weight==[[''],['']] and 'COR' in [x[0:3] for x in opts.weight[1]]: text.AddText("1DMap reweighted")
 	if not opts.weight==[[''],['']] and 'MAP' in [x[0:3] for x in opts.weight[1]]: text.AddText("2DMap reweighted")
-	textalt = getTPave(0.14,0.91,0.46,0.92,None,0,0,1,0.028)
-	l = textalt.AddText("%s selection"%('Set A' if any(['NOM' in x for x in trg]) else ('Set B' if any(['VBF' in x for x in trg]) else '???')))
+	textaltpad = TPave(gPad.GetLeftMargin()+0.015,0.0,0.55,1.-gPad.GetTopMargin()-0.015)
+        textaltpad.SetFillColor(kWhite)
+        textaltpad.SetFillStyle(1000)
+        textaltpad.SetBorderSize(0)
+###	textalt = getTPave(0.14,0.91,0.46,0.92,None,0,0,1,0.028)
+	textalt = getTPave(gPad.GetLeftMargin()+0.006,0.0,0.55,1.-gPad.GetTopMargin()-0.015,None,0,0,1,2.2/4.0*gStyle.GetPadTopMargin())
+        textalt.SetTextAlign(12)
+	textalt.SetFillStyle(3000)
+	textalt.SetFillColor(kWhite)
+	l = textalt.AddText("%s selection      "%('Set A' if any(['NOM' in x for x in trg]) else ('Set B' if any(['VBF' in x for x in trg]) else '???')))
 	l.SetTextFont(62)
+        textalt.Draw()
+        gPad.Update()
+        textalt.SetY1NDC(textalt.GetY2NDC()-textalt.GetListOfLines().GetSize()*2.4/4.*gStyle.GetPadTopMargin())
+        textaltpad.SetY1(textalt.GetY1NDC()-0.01)
+        if opts.notext:
+		legend.SetY2(textalt.GetY1NDC()-0.005)
 	# layout scaling
 	ymin=0
 	ymax=0
@@ -417,7 +439,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		tag = 'Rat'
 		g['effis'].effi(g['names'][tag],markerColour(group,g['colours']),markerStyle(group,g['markers']))
 #g['markers'] if (not 'NoRef' in group and not 'NoCor' in group) else (21 if not ('NoCor' in group) else (26 if 'QCD' in group else 27)))#25 26 27 #if not 'NoRef' in group else kOrange+1 ## 22 an 33
-		legend.AddEntry(g['effis'].e,group,'LP')
+		legend.AddEntry(g['effis'].e,group if not 'QCD' in group else ('QCD (no correction)' if 'NoCor' in group else 'QCD (corrected)'),'LP')
 
 	# Data / MC ratio
 	ratioplots = {}
@@ -433,7 +455,18 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	cutsjson = json.loads(filecontent(opts.jsoncuts))
 	if not ratioplots=={}:
 		# containers
-		c1,c2 = getRatioPlotCanvas(canvas)
+###		c1,c2 = getRatioPlotCanvas(canvas)
+                c1 = TPad("c1","c1",0.0,0.0,1.0,1.0)
+                c2 = TPad("c2","c2",0.0,0.0,1.0,1.0)
+                c2.SetFillStyle(-1)
+                c1.Draw()
+                c2.Draw()
+                canvas.Update()
+                canvas.Modified()
+                c1.SetBottomMargin(0.3)
+                c2.SetTopMargin(1-0.29)
+                canvas.Update()
+                canvas.Modified()
 		# draw (top)
 		c1.cd()
 		#gPad.SetLeftMargin(0.08)
@@ -456,14 +489,15 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			#stack.e.GetPaintedGraph().GetYaxis().SetRangeUser(0.0,1.4)#5*stack.e.GetPaintedGraph().GetHistogram().GetMaximum())
 			stack.e.GetPaintedGraph().GetYaxis().SetTitleOffset(1.10 if not opts.notext else 1.25)
 			stack.e.GetPaintedGraph().GetXaxis().SetTickLength(0.025)
-			stack.e.GetPaintedGraph().GetYaxis().SetTickLength(0.015)
+			stack.e.GetPaintedGraph().GetYaxis().SetTickLength(0.025)
 			stack.e.GetPaintedGraph().GetYaxis().SetLabelSize(stack.e.GetPaintedGraph().GetYaxis().GetLabelSize()*(1.2 if not opts.notext else 1.1))
 			stack.e.GetPaintedGraph().GetYaxis().SetLabelOffset(stack.e.GetPaintedGraph().GetYaxis().GetLabelOffset()/(1.4 if not opts.notext else 1.2))
+			stack.e.GetPaintedGraph().GetYaxis().SetDecimals(kTRUE)
 			if istack==0: stack.e.GetPaintedGraph().Draw("ap")
 			stack.e.GetPaintedGraph().Draw("e,p,same")
-			if opts.notext:
-				c1.SetLeftMargin(0.13)
-				c1.SetRightMargin(0.07)
+###			if opts.notext:
+###				c1.SetLeftMargin(0.13)
+###				c1.SetRightMargin(0.07)
 			c1.Update()
 			c1.Modified()
 			if istack==0: 
@@ -487,7 +521,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 						for i in range(len(cutsjson['sel'][isel][v['root']])/2):
 							plotcuts += [float(cutsjson['sel'][isel][v['root']][2*i+1])]
 							plotcutdirections += [1 if cutsjson['sel'][isel][v['root']][2*i]=='>' else -1]
-							vlines += [getTLine(plotcuts[-1],gPad.GetUymin(),plotcuts[-1],gPad.GetUymax(),kMagenta,5,9)]
+							vlines += [getTLine(plotcuts[-1],gPad.GetUymin(),plotcuts[-1],gPad.GetUymax(),kMagenta,3,9)]
 							vlines[-1].Draw("same")
 						for i in range(len(plotcuts)):
 							if opts.shade:
@@ -518,13 +552,15 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			ratioplot.GetYaxis().SetNdivisions(505)
 			ratioplot.GetXaxis().SetLimits(float(v['xmin']),float(v['xmax']))
 			ratioplot.GetXaxis().SetNdivisions(808)
-			ratioplot.GetXaxis().SetTitleOffset(3.5)
+###			ratioplot.GetXaxis().SetTitleOffset(3.5)
+			ratioplot.GetXaxis().SetTitleOffset(1.0)
 			ratioplot.GetYaxis().SetTitleOffset(1.20 if not opts.notext else 1.40)
 			ratioplot.GetYaxis().SetTitleSize(ratioplot.GetYaxis().GetTitleSize()*0.9)
 			ratioplot.GetYaxis().SetLabelSize(ratioplot.GetYaxis().GetLabelSize()*(1.0 if not opts.notext else 0.95))
-			if opts.notext:
-				c2.SetLeftMargin(0.13)
-				c2.SetRightMargin(0.07)
+			ratioplot.GetYaxis().SetDecimals(kTRUE)
+###			if opts.notext:
+###				c2.SetLeftMargin(0.13)
+###				c2.SetRightMargin(0.07)
 			gPad.SetGridy(1)
 			if iratioplot==0: 
 				ratioplot.Draw('e')
@@ -547,7 +583,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			rvboxes = []
 			for plotcut in plotcuts: 
 				plotcutdirection = plotcutdirections[plotcuts.index(plotcut)]
-				vlines2 += [getTLine(plotcut,gPad.GetUymin(),plotcut,gPad.GetUymax(),kMagenta,5,9)]
+				vlines2 += [getTLine(plotcut,gPad.GetUymin(),plotcut,gPad.GetUymax(),kMagenta,3,9)]
 				vlines2[-1].Draw("same")
 				if opts.shade:
 					rvboxes += [TBox(gPad.GetUxmin() if plotcutdirection==1 else plotcut,gPad.GetUymin(),plotcut if plotcutdirection==1 else gPad.GetUxmax(),gPad.GetUymax())]
@@ -569,12 +605,32 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 
 	# write plot to file
 	canvas.cd()
+        textaltpad.Draw()
 	legend.Draw()
+        legend.SetY1(legend.GetY2()-(legend.GetNRows()+1)*2.15/4.0*gStyle.GetPadTopMargin())
 	if not opts.notext: 
 		text.Draw()
 		selleg.Draw()
 	else:
 		textalt.Draw()
+
+        pcms1 = TPaveText(gPad.GetLeftMargin(),1.-gPad.GetTopMargin(),0.4,1.,"NDC")
+        pcms1.SetTextAlign(12)
+        pcms1.SetTextFont(62)
+        pcms1.SetTextSize(gPad.GetTopMargin()*2.5/4.)
+        pcms1.SetFillStyle(-1)
+        pcms1.SetBorderSize(0)
+        pcms1.AddText("CMS")
+        pcms1.Draw()
+
+        pcms2 = TPaveText(0.5,1.-gPad.GetTopMargin(),1.-gPad.GetRightMargin()+0.02,1.,"NDC")
+        pcms2.SetTextAlign(32)
+        pcms2.SetTextFont(62)
+        pcms2.SetTextSize(gPad.GetTopMargin()*2.5/4.)
+        pcms2.SetFillStyle(-1)
+        pcms2.SetBorderSize(0)
+        pcms2.AddText("%.1f fb^{-1} (8 TeV)"%(float(opts.weight[0][0])/1000.))
+        pcms2.Draw()
 
 	path = '%s/../trigger/%s/%s/%s/%s/%s'%(basepath,'plots',os.path.split(fout.GetName())[1][:-5],wpars,'turnonCurves',namesGlobal['path-turnon'])
 	makeDirs(path)
@@ -596,6 +652,20 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 def mkTurnonCurves():
 	# init main (including option parsing)
 	opts,samples,variables,loadedSamples,fout,KFWghts = main.main(parser(),False,None,None)
+
+        # ROOT
+        gROOT.SetBatch(1)
+        gROOT.ProcessLineSync(".x ../common/styleCMSTDR.C")
+        gStyle.SetPadTopMargin(0.06)
+        gStyle.SetPadBottomMargin(0.11)
+        gStyle.SetPadRightMargin(0.04)
+        gStyle.SetTextFont(42)
+        gStyle.SetTitleFont(42,"XYZT")
+        gStyle.SetLabelFont(42,"XYZT")
+        gStyle.SetTextSize(0.04)
+        gStyle.SetTitleSize(0.05,"XYZT")
+        gStyle.SetLabelSize(0.04,"XYZT")
+        gStyle.SetLabelOffset(0.01,"Y")
 
 	# check actions
 	if not (opts.fill or opts.draw or opts.redraw or opts.drawstack or opts.redrawstack): sys.exit(red+"Specify either fill, draw, redraw, drawstack or redrawstack option to run. Exiting."+plain) 
