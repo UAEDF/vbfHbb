@@ -50,7 +50,7 @@ def mkFitFlatTree(opts,s,sel,trg):
 	hpass = fin.Get("Hbb/TriggerPass")
 
 	tin.SetBranchStatus("*",0)
-	for b in list(set([x['bare'] for x in jsonvars['variables'].iteritems()]))
+	for b in list(set(sum([x['bare'].split(',') for x in jsonvars['variables'].itervalues() if not "-"==x['bare']],[]))):
 		tin.SetBranchStatus(b,1)
 	if ismc:
 		for b in ["puWt","trigWtNOM","trigWtVBF"]:
@@ -92,7 +92,7 @@ def mkFitFlatTrees():
 	jsonsamp = json.loads(filecontent(opts.jsonsamp))
 	allsamples = jsonsamp['files']
 	selsamples = []
-	for s in sorted(allsamples.itervalues(),key=lambda x: (x['tag'] if not 'QCD' in x['tag'] else x['tag'][0:3],float(x['tag'][3:]) if 'QCD' in x['tag'] else 1)):
+	for s in sorted(allsamples.itervalues(),key=lambda x: (x['tag'] if not 'QCD' in x['tag'] else x['tag'][0:3],float(x['tag'][3:].replace('_sNOM','').replace('_sVBF','')) if 'QCD' in x['tag'] else 1)):
 		# require regex in opts.sample
 		if not opts.sample==[] and not any([(x in s['tag']) for x in opts.sample]): continue
 	   # veto regex in opts.nosample
