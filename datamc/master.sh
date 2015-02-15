@@ -13,16 +13,17 @@ elif [[ "`uname -a`" == *heisenberg* ]]; then
 	globalpath="/data/UAdata/largefiles/"
 	globalpathtrigger="/data/UAdata/largefiles/trigger/"
 fi
-globalpathslim="./flatslim"
+globalpathslim="./flatslim/"
 usebool="--usebool" 
 
-samples="VBF125,GluGlu,Data,T,WJets,ZJets,QCD"
+samples="VBF125,GluGlu125,DataVB,DataVC,DataVD,T,WJets,ZJets,QCD,DataA,DataB,DataC,DataD"
 samplesNOM=_sNOM
 samplesVBF=_sVBF
 samplesveto=`echo {VBF,Powheg}{115,120,130,135} | sed "s# #,#g"`
+sampleslarge="../common/vbfHbb_samples_2015_large.json"
 
 preselNOM="NOM"
-preselVBF="VBF,NOMveto"
+preselVBF="VBF;NOMveto"
 
 NOweight="1."
 weightNOM="19784.,LUMI;XSEC;PU#0;TNOM;KF"
@@ -53,11 +54,11 @@ fi
 if [ "$1" == "" ] || [ "$1" == "1" ];then
 	if [ "$2" == "" ] || [ "$2" == "1" ]; then
 	# NOM FitFlatTrees
-	$basepath/mkFitFlatTrees.py -d -D "$defaultopts" -G "$globalpath" --destination "$globalpathslim" -t "NOM" --datatrigger "NOM" -p "$preselNOM" -s "$samples" -w "$NOweight" $usebool $notext
+	$basepath/mkFitFlatTrees.py -d -D "$defaultopts" -G "$globalpath" -S ${sampleslarge} --destination "$globalpathslim" -t "NOM" --datatrigger "NOM" -p "$preselNOM" -s "$samples" -w "$NOweight" $usebool $notext
 	fi
 	if [ "$2" == "" ] || [ "$2" == "2" ]; then
 	# VBF FitFlatTrees
-	$basepath/mkFitFlatTrees.py -d -D "$defaultopts" -G "$globalpath" --destination "$globalpathslim" -t "VBF" --datatrigger "VBF" -p "$preselVBF" -s "$samples" -w "$NOweight" $usebool $notext
+	$basepath/mkFitFlatTrees.py -d -D "$defaultopts" -G "$globalpath" -S ${sampleslarge} --destination "$globalpathslim" -t "VBF" --datatrigger "VBF" -p "$preselVBF" -s "$samples" -w "$NOweight" $usebool $notext
 	fi
 fi
 
