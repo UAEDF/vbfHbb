@@ -63,7 +63,7 @@ void styleCMSTDR() {
 
   tdrStyle->SetEndErrorSize(2);
   //tdrStyle->SetErrorMarker(20);  // Seems to give an error
-  tdrStyle->SetErrorX(0.);
+  //tdrStyle->SetErrorX(0.);
   
   tdrStyle->SetMarkerStyle(20);
 

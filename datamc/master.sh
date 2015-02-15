@@ -16,10 +16,10 @@ fi
 globalpathslim="./flatslim"
 usebool="--usebool" 
 
-samples="VBF125,GluGlu,Data,T,WJets,ZJets,QCD"
+samples="VBF125,Data,T,WJets,ZJets,QCD" #GluGlu
 samplesNOM=_sNOM
 samplesVBF=_sVBF
-samplesveto=`echo {VBF,Powheg}{115,120,130,135} | sed "s# #,#g"`
+samplesveto=`echo {VBF,Powheg}{115,120,130,135} | sed "s# #,#g"`,GF
 
 preselNOM="NOM"
 preselVBF="VBF,NOMveto"
@@ -30,6 +30,8 @@ weightVBF="18281.,LUMI;XSEC;PU#0;TVBF;KF"
 weightBoth="NOM_19784._LUMI;XSEC;PU#0;TNOM;KF,VBF_18281._LUMI;XSEC;PU#0;TVBF;KF"
 #19784,18281
 
+variablesNOM="mbbReg1,mqq1,dEtaqq1,jetPt0"
+variablesVBF="mbbReg2,mqq2,dEtaqq2,jetPt0"
 
 
 ###   OPTIONS
@@ -63,15 +65,15 @@ fi
 
 if ([ "$1" == "" ] || [ "$1" == "1" ]) && ([ "$2" == "3" ] || [ "2" == "" ]); then
 	if [ ! -d ${globalpathslim}/DataSeparate ]; then mkdir ${globalpathslim}/DataSeparate; fi
-	if [ ! -f ${globalpathslim}/fitFlatTree_MultiJetA_NOM.root ]; then mv ${globalpathslim}/DataSeparate/fitFlatTree_{MultiJet,BJetPlusX,VBF1Parked}*.root ${globalpathslim}/; fi
+	if [ ! -f ${globalpathslim}/flatTree_MultiJetA_sNOM.root ]; then mv ${globalpathslim}/DataSeparate/flatTree_{MultiJet,BJetPlusX,VBF1Parked}*.root ${globalpathslim}/; fi
 
-	if [ -f "${globalpathslim}/fitFlatTree_Data_NOM.root" ]; then mv ${globalpathslim}/fitFlatTree_Data_NOM.root ${globalpathslim}/DataSeparate/fitFlatTree_Data_NOM.root.backup; fi
-	hadd ${globalpathslim}/fitFlatTree_Data_NOM.root ${globalpathslim}/fitFlatTree_{MultiJet,BJetPlusX}*_NOM.root
-	mv ${globalpathslim}/fitFlatTree_{MultiJet,BJetPlusX}*_NOM.root ${globalpathslim}/DataSeparate/
+#	if [ -f "${globalpathslim}/flatTree_Data_sNOM.root" ]; then mv ${globalpathslim}/flatTree_Data_sNOM.root ${globalpathslim}/DataSeparate/flatTree_Data_sNOM.root.backup; fi
+#	hadd ${globalpathslim}/flatTree_Data_sNOM.root ${globalpathslim}/flatTree_{MultiJet,BJetPlusX}*_sNOM.root
+#	mv ${globalpathslim}/flatTree_{MultiJet,BJetPlusX}*_sNOM.root ${globalpathslim}/DataSeparate/
 
-	if [ -f "${globalpathslim}/fitFlatTree_Data_VBF.root" ]; then mv ${globalpathslim}/fitFlatTree_Data_VBF.root ${globalpathslim}/DataSeparate/fitFlatTree_Data_VBF.root.backup; fi
-	hadd ${globalpathslim}/fitFlatTree_Data_VBF.root ${globalpathslim}/fitFlatTree_VBF1Parked*_VBF.root
-	mv ${globalpathslim}/fitFlatTree_VBF1Parked*_VBF.root ${globalpathslim}/DataSeparate/
+	if [ -f "${globalpathslim}/flatTree_Data_sVBF.root" ]; then mv ${globalpathslim}/flatTree_Data_sVBF.root ${globalpathslim}/DataSeparate/flatTree_Data_sVBF.root.backup; fi
+	hadd ${globalpathslim}/flatTree_Data_sVBF.root ${globalpathslim}/flatTree_VBF1Parked*_sVBF.root
+	mv ${globalpathslim}/flatTree_VBF1Parked*_sVBF.root ${globalpathslim}/DataSeparate/
 fi
 
 
