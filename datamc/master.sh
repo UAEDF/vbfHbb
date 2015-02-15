@@ -21,7 +21,7 @@ samplesNOM=_sNOM
 samplesVBF=_sVBF
 samplesveto=`echo {VBF,Powheg}{115,120,130,135} | sed "s# #,#g"`
 sampleslargejson="../common/vbfHbb_samples_2015_large.json"
-sampleslarge="VBF125,Data,T,WJets,ZJets,QCD,GF"
+sampleslarge="VBF125,Data,T,WJets,ZJets,QCD,GluGlu"
 
 preselNOM="NOM"
 preselVBF="VBF;NOMveto"
