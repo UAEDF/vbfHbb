@@ -57,11 +57,11 @@ fi
 if [ "$1" == "" ] || [ "$1" == "1" ];then
 	if [ "$2" == "" ] || [ "$2" == "1" ]; then
 	# NOM FitFlatTrees
-	$basepath/mkFitFlatTrees.py -d -D "$defaultopts" -G "$globalpath" -S ${sampleslarge} --destination "$globalpathslim" -t "NOM" --datatrigger "NOM" -p "$preselNOM" -s "$samples" -w "$NOweight" $usebool $notext
+	$basepath/mkFitFlatTrees.py -d -D "$defaultopts" -G "$globalpath" -S ${sampleslargejson} --destination "$globalpathslim" -t "NOM" --datatrigger "NOM" -p "$preselNOM" -s "$sampleslarge" -w "$NOweight" $usebool $notext
 	fi
 	if [ "$2" == "" ] || [ "$2" == "2" ]; then
 	# VBF FitFlatTrees
-	$basepath/mkFitFlatTrees.py -d -D "$defaultopts" -G "$globalpath" -S ${sampleslarge} --destination "$globalpathslim" -t "VBF" --datatrigger "VBF" -p "$preselVBF" -s "$samples" -w "$NOweight" $usebool $notext
+	$basepath/mkFitFlatTrees.py -d -D "$defaultopts" -G "$globalpath" -S ${sampleslargejson} --destination "$globalpathslim" -t "VBF" --datatrigger "VBF" -p "$preselVBF" -s "$sampleslarge" -w "$NOweight" $usebool $notext
 	fi
 fi
 
