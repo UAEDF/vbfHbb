@@ -23,7 +23,7 @@ samplesNOM=_sNOM
 samplesVBF=_sVBF
 samplesveto=`echo {VBF,Powheg}{115,120,130,135} | sed "s# #,#g"`
 sampleslargejson="../common/vbfHbb_samples_2015_large.json"
-sampleslarge="VBF125,Data,T,WJets,ZJets,QCD,GF"
+sampleslarge="VBF125,Data,T,WJets,ZJets,QCD,GluGlu"
 
 samplesTPN=_sTPN
 samplesTPV=_sTPV
