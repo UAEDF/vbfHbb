@@ -228,7 +228,7 @@ done
 for mass in ${masses[@]}; do 
 	if [ -f "combine/mlfit${nameU}.mH${mass}.root" ]; then 
 		if [ ${run[7]} == true ]; then
-			cmd8a="root -l ${home}/DrawBestFit.C'(0.1,false,\"$mass\")' -q 2>&1 | tee `getLogName ${nameN} "fitplots"`";
+			cmd8a="root -l ${home}/DrawBestFit.C'(2.5,false,\"$mass\",\"$name\")' -q 2>&1 | tee `getLogName ${nameN} "fitplots"`";
 			cmd8b="mv `getLogName ${nameN} "fitplots"` logs/";
 			cmd8=($cmd8a $cmd8b)
 		fi
