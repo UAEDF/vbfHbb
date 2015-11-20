@@ -236,23 +236,30 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS,TString NAME)
     //list1->Print();
     RooCurve *gSigFit = (RooCurve*)list1->FindObject("shapeSig_qqH_"+ds_name+"_Norm[mbbReg_"+ds_name+"]");
 
-    TLegend *leg = new TLegend(0.70,0.57,0.94,1.-gStyle->GetPadTopMargin()-0.02);
-    leg->SetHeader(ds_name+" (m_{H}="+MASS+")");
+    TLegend *leg = new TLegend(0.70,0.61,0.94,1.-gStyle->GetPadTopMargin()-0.01);
+	 leg->SetTextFont(42);
+	 leg->SetFillStyle(-1);
+	 //leg->SetHeader(ds_name+" (m_{H}="+MASS+")");
+    leg->SetHeader(TString::Format("Category %d",atoi(ds_name(3,1).Data())+1));
     leg->AddEntry(hBlind,"Data","P");
     if (!BLIND) {
       leg->AddEntry(gSigFit,"Fitted signal","L");
     }
-    leg->AddEntry(gFit,"Bkg + sig","L");
-    leg->AddEntry(gBkgFit,"Bkg","L");
+	 TLine *gEmpty = new TLine(0.0,0.0,0.0,0.0);
+	 gEmpty->SetLineWidth(0);
+	 TLegendEntry *l1 = leg->AddEntry(gEmpty,"(m_{H} = "+MASS+" GeV)","");
+	 l1->SetTextSize(0.038*0.97*0.85);
+    leg->AddEntry(gFit,"Bkg. + signal","L");
+    leg->AddEntry(gBkgFit,"Bkg.","L");
     leg->AddEntry(gQCDFit,"QCD","L");
-    leg->AddEntry(hUnc2H,"2-#sigma bkg. unc.","F");
-    leg->AddEntry(hUncH,"1-#sigma bkg. unc.","F");
+    leg->AddEntry(hUnc2H,"2#sigma bkg. unc.","F");
+    leg->AddEntry(hUncH,"1#sigma bkg. unc.","F");
     leg->SetFillColor(0);
     leg->SetBorderSize(0);
     leg->SetTextFont(42);
-    leg->SetTextSize(0.038);
+    leg->SetTextSize(0.038*0.98);
     leg->Draw(); 
-	 leg->SetY1(leg->GetY2()-leg->GetNRows()*0.045);
+	 leg->SetY1(leg->GetY2()-leg->GetNRows()*0.045*0.96);
      
     TPaveText *paveCMS = new TPaveText(gStyle->GetPadLeftMargin()+0.02,0.7,gStyle->GetPadLeftMargin()+0.15,1.-gStyle->GetPadTopMargin()-0.01,"NDC");
 	 paveCMS->SetTextFont(62);
@@ -261,8 +268,6 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS,TString NAME)
 	 paveCMS->SetFillStyle(-1);
 	 paveCMS->SetTextAlign(12);
 	 paveCMS->AddText("CMS");
-	 TText *l = (TText*)paveCMS->AddText("Preliminary");
-	 l->SetTextFont(52);
 	 paveCMS->Draw();
 	 gPad->Update();
 	 paveCMS->SetY1NDC(paveCMS->GetY2NDC()-paveCMS->GetListOfLines()->GetSize()*gStyle->GetPadTopMargin());
@@ -273,8 +278,7 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS,TString NAME)
 	 paveLumi->SetBorderSize(0);
 	 paveLumi->SetFillStyle(-1);
 	 paveLumi->SetTextAlign(32);
-	 cout << ds_name(3,1) << endl;
-	 paveLumi->AddText(TString::Format("%.1f fb^{-1} (8TeV)",(atoi(ds_name(3,1).Data())<4 ? 19.8 : 18.2)).Data());//+ 18.2 ;
+	 paveLumi->AddText(TString::Format("%.1f fb^{-1} (8TeV)",(atoi(ds_name(3,1).Data())<4 ? 19.8 : 18.3)).Data());//+ 18.2 ;
 	 paveLumi->Draw();
 
 	 TString path=".";
@@ -282,6 +286,15 @@ void DrawBestFit(float BIN_SIZE=5.0,bool BLIND=false,TString MASS,TString NAME)
 	 system(TString::Format("[ ! -d %s/plots/ ] && mkdir %s/plots/",path.Data(),path.Data()).Data());
 	 canFit->SaveAs(TString::Format("%s/plots/Fit_mH%s_%s.pdf",path.Data(),MASS.Data(),ds_name.Data()).Data());
 	 canFit->SaveAs(TString::Format("%s/plots/Fit_mH%s_%s.png",path.Data(),MASS.Data(),ds_name.Data()).Data());
+	 canFit->SaveAs(TString::Format("%s/plots/Fit_mH%s_%s.eps",path.Data(),MASS.Data(),ds_name.Data()).Data());
+	 TText *l = (TText*)paveCMS->AddText("Preliminary");
+	 l->SetTextFont(52);
+	 paveCMS->Draw();
+	 gPad->Update();
+	 paveCMS->SetY1NDC(paveCMS->GetY2NDC()-paveCMS->GetListOfLines()->GetSize()*gStyle->GetPadTopMargin());
+	 canFit->SaveAs(TString::Format("%s/plots/Fit_mH%s_%s_prelim.pdf",path.Data(),MASS.Data(),ds_name.Data()).Data());
+	 canFit->SaveAs(TString::Format("%s/plots/Fit_mH%s_%s_prelim.png",path.Data(),MASS.Data(),ds_name.Data()).Data());
+	 canFit->SaveAs(TString::Format("%s/plots/Fit_mH%s_%s_prelim.eps",path.Data(),MASS.Data(),ds_name.Data()).Data());
 
     delete ds;
   }
