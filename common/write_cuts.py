@@ -96,7 +96,8 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	
 	# catch selection VETOs
 	est = ""
-	for k in sorted(sel):
+	#for k in sorted(sel):
+	for k in sel:
 		if not ('selection' in cuts['sel'][k].keys() or 'trigger' in cuts['sel'][k].keys()): continue
 		else:
 			if 'selection' in cuts['sel'][k].keys():
@@ -124,8 +125,8 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 		if not stgroup:
 			# selection
 			#out# print [[k for (k,v) in selections[si].iteritems()] for si in sel]
-			s      = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections[si].iteritems(), key=lambda(x,y):x) if not ((k in varskip) or (k.replace("mqq[2]","mjjTrig") in varskip) or (k.replace("dEtaqq[2]","dEtaTrig") in varskip) or (k.replace("mjjTrig","mqq[2]") in varskip) or (k.replace("dEtaTrig","dEtaqq[2]") in varskip) or (k=='selection' or k=='trigger')) ]) ) for si in sorted(sel)] + extra ) ).replace(' && ()','').replace('() &&','')
-			scmp   = group( selcmpjoin.join( [ group("! "+group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections.iteritems(), key=lambda(x,y):x) if not ((k in varskip)  or (k.replace("mqq[2]","mjjTrig") in varskip) or (k.replace("dEtaqq[2]","dEtaTrig") in varskip) or (k.replace("mjjTrig","mqq[2]") in varskip) or (k.replace("dEtaTrig","dEtaqq[2]") in varskip)) ]) )) for si in selcmp ] ) )
+			s      = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for index,(k,v) in enumerate(selections[si].iteritems()) if not ((k in varskip) or (k.replace("mqq[2]","mjjTrig") in varskip) or (k.replace("dEtaqq[2]","dEtaTrig") in varskip) or (k.replace("mjjTrig","mqq[2]") in varskip) or (k.replace("dEtaTrig","dEtaqq[2]") in varskip) or (k=='selection' or k=='trigger')) ]) ) for index,si in enumerate(sel)] + extra ) ).replace(' && ()','').replace('() &&','')
+			scmp   = group( selcmpjoin.join( [ group("! "+group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for ind,(k,v) in enumerate(selections.iteritems()) if not ((k in varskip)  or (k.replace("mqq[2]","mjjTrig") in varskip) or (k.replace("dEtaqq[2]","dEtaTrig") in varskip) or (k.replace("mjjTrig","mqq[2]") in varskip) or (k.replace("dEtaTrig","dEtaqq[2]") in varskip)) ]) )) for si in selcmp ] ) )
 			if s=='()' : s='(1.)'
 			# trigger
 			t      = group( trgjoin.join( [ get_trigger(triggers[x],kwargs['sample'],kwargs['jsonsamp'],trigequal) for x in trg ] ) )
@@ -145,8 +146,8 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 			if st=='()': st='(1.)'
 	
 		else:
-			st        = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for k,v in sorted(selections.iteritems(), key=lambda(x,y):x) if not ((k in varskip) or k=='selection' or k=='trigger' or (k.replace("mqq[2]","mjjTrig") in varskip) or (k.replace("dEtaqq[2]","dEtaTrig") in varskip) or (k.replace("mjjTrig","mqq[2]") in varskip) or (k.replace("dEtaTrig","dEtaqq[2]") in varskip) ) ]+[get_trigger(triggers,kwargs['sample'],kwargs['jsonsamp'],trigequal)]) ) for si in (sel if not sel==[] else selold) ] ) )
-			stlabels  = group( seljoin.join( [ group('s'+x+' && t'+x) for x in (sel if not sel==[] else selold) ] ) )
+			st        = group( seljoin.join( [ group( ' && '.join([ ' && '.join([k+v[2*ind]+v[2*ind+1] for ind in range(len(v)/2)]) for ind,(k,v) in enumerate(selections.iteritems()) if not ((k in varskip) or k=='selection' or k=='trigger' or (k.replace("mqq[2]","mjjTrig") in varskip) or (k.replace("dEtaqq[2]","dEtaTrig") in varskip) or (k.replace("mjjTrig","mqq[2]") in varskip) or (k.replace("dEtaTrig","dEtaqq[2]") in varskip) ) ]+[get_trigger(triggers,kwargs['sample'],kwargs['jsonsamp'],trigequal)]) ) for ind,si in enumerate(sel if not sel==[] else selold) ] ) )
+			stlabels  = group( seljoin.join( [ group('s'+x+' && t'+x) for ind,x in enumerate(sel if not sel==[] else selold) ] ) )
 	
 		# reftrig
 		if len(reftrig)>0:
