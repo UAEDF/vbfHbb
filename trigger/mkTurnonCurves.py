@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys,os,json,re
+import sys,os,json,re,math
 basepath=os.path.split(os.path.abspath(__file__))[0]
 sys.path.append(basepath+'/../common/')
 
@@ -71,9 +71,12 @@ class TEffiType():
 		#print blue+"Den: ",self.s['Den'].GetStack().Last().GetEntries(),plain
 		self.e.SetPassedHistogram(self.s['Num'].GetStack().Last(),'f')
 		self.e.SetTotalHistogram(self.s['Den'].GetStack().Last(),'f')
+		self.e.SetLineColor(mColor)
 		self.e.SetMarkerStyle(mStyle)
-		self.e.SetMarkerColor(mColor)
-		self.e.SetMarkerSize(2.0 if not any([x in names['hist'] for x in ['Data','JetMon']]) else 1.6) #1.75
+		self.e.SetMarkerColorAlpha(mColor,1.0 if not (mStyle==33 or (mStyle==22 and not 'NoCor' in names['stack'])) else 0.85)
+		self.e.SetMarkerSize(1.8 if not any([x in names['hist'] for x in ['Data','JetMon']]) else 1.50) #1.75
+		if mStyle==21: self.e.SetMarkerSize(2.0)
+		if mStyle==33: self.e.SetMarkerSize(2.3)
 		self.e.Paint("")
 		self.e.GetPaintedGraph().GetXaxis().SetTitle(names['stack-title'].split(';')[1])
 		self.e.GetPaintedGraph().GetYaxis().SetTitle(names['stack-title'].split(';')[2])
@@ -123,8 +126,8 @@ def ratio(eff1,eff2):
 		veyh[i] = 0
 		if (y1>0 and y2>0):
 			vy[i]   = y1/y2
-			veyl[i] = vy[i]*sqrt(e1l*e1l/y1/y1 + e2l*e2l/y2/y2)
-			veyh[i] = vy[i]*sqrt(e1h*e1h/y1/y1 + e2h*e2h/y2/y2)
+			veyl[i] = vy[i]*math.sqrt(e1l*e1l/y1/y1 + e2l*e2l/y2/y2)
+			veyh[i] = vy[i]*math.sqrt(e1h*e1h/y1/y1 + e2h*e2h/y2/y2)
 	g = TGraphAsymmErrors(N,vx,vy,vexl,vexh,veyl,veyh)
 	g.SetTitle("")
 	g.GetXaxis().SetTitle(eff1.GetPaintedGraph().GetXaxis().GetTitle())
@@ -135,20 +138,22 @@ def ratio(eff1,eff2):
 	g.GetYaxis().SetTickLength(0.082)
 #	g.SetMarkerStyle(20)
 #	g.SetMarkerColor(kBlack)
-	g.SetMarkerSize(1.6) #1.25
+	g.SetMarkerSize(2.3 if markerStyle==33 else (1.8 if not g.GetMarkerStyle()==22 else 1.6)) #1.25
+	g.SetLineColor(g.GetMarkerColor()) #1.25
 	return g
 
-def markerStyle(tag,smarker):
+def markerStyle(tag,smarker,opts):
 	if 'NoRef' in tag: return 21
-	elif 'QCD' in tag and 'NoCor' in tag: return 26
-	elif 'QCD' in tag: return 22
+	elif 'QCD' in tag and 'NoCor' in tag: return 22#26
+	elif 'QCD' in tag: return 22 if opts.closure else 33
 	elif 'VBF' in tag and 'NoCor' in tag: return 27
 	elif 'VBF' in tag: return 33
 	else: return smarker
 
-def markerColour(tag,scolour):
+def markerColour(tag,scolour,opts):
 	if 'NoRef' in tag: return kOrange+1
-	elif 'NoCor' in tag: return kRed+1#kGreen-3
+	elif 'NoCor' in tag: return TColor.GetColorDark(kAzure-3)#kRed+1#kGreen-3
+	elif 'QCD' in tag: return TColor.GetColorDark(kAzure-3) if opts.closure else TColor.GetColorDark(kGreen-3)
 	else: return TColor.GetColorDark(scolour)
 
 # FUNCTIONS FOR FILLING AND DRAWING HISTOGRAMS #####################################################
@@ -190,7 +195,7 @@ def do_fill(opts,fout,s,v,sel,trg,ref,KFWght=None,skipWght=None):
 	# consider ratio
 	tag = 'Rat'
 	names[tag]  = getNames(opts,s,v,sel,trg_orig,ref,tag)
-	TEffi.effi(names[tag],jsoninfo['colours'][s['tag']],markerStyle(s['tag'],jsoninfo['markers'][s['tag']]))
+	TEffi.effi(names[tag],jsoninfo['colours'][s['tag']],markerStyle(s['tag'],jsoninfo['markers'][s['tag']],opts))
 
 	# write histogram to file			
 	path = "%s/%s/%s"%('turnonCurves',wpars,names['global']['path-turnon'])
@@ -239,7 +244,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	right   = 1 - 0.02
 	bottom  = 1 - gPad.GetTopMargin() - 0.25 - 0.02 - (0.045*rows) 
 	top     = 1 - gPad.GetTopMargin() - 0.25 - 0.02 
-	legend  = getTLegend(left,bottom,right,top,columns,"%s cut trigger efficiency"%("(N-1)" if not ('mbb' in v['bare'] or 'mva' in v['bare']) else "N"),0,1,0.030) #3001
+	legend  = getTLegend(left,bottom,right,top,columns,"%s cut trigger efficiency"%("(N-1)" if not ('mbb' in v['bare'] or 'mva' in v['bare'] or not (any([v['bare'] in x for x in sel]) or ('jetBtag' in v['bare'] and any(['Btag' in x for x in sel])))) else "N"),0,1,0.030) #3001
         legend.SetFillStyle(-1)
         legend.SetBorderSize(0)
 	if opts.notext: 
@@ -434,12 +439,21 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			trg = dc(trg_orig)
 
 	istack=0
-	for group,g in sorted(stacks.iteritems()):
+	for group,g in sorted(stacks.iteritems(),key=lambda (x,y):(not 'JetMon' in x, not 'NoRef' in x, not 'NoCor' in x)):
 		# get ratio
 		tag = 'Rat'
-		g['effis'].effi(g['names'][tag],markerColour(group,g['colours']),markerStyle(group,g['markers']))
+		g['effis'].effi(g['names'][tag],markerColour(group,g['colours'],opts),markerStyle(group,g['markers'],opts))
 #g['markers'] if (not 'NoRef' in group and not 'NoCor' in group) else (21 if not ('NoCor' in group) else (26 if 'QCD' in group else 27)))#25 26 27 #if not 'NoRef' in group else kOrange+1 ## 22 an 33
-		legend.AddEntry(g['effis'].e,group if not 'QCD' in group else ('QCD (no correction)' if 'NoCor' in group else 'QCD (corrected)'),'LP')
+		legentry = ""
+		if 'JetMon' in group: legentry = 'Data'
+		elif 'QCD' in group:
+			if 'NoRef' in group: legentry = 'QCD (without reference trigger)'
+			elif 'NoCor' in group: legentry = 'QCD (no correction)'
+			else: 
+				if any(['NoRef' in x for x in stacks.iterkeys()]): legentry = 'QCD (with reference trigger)'
+				else: legentry = 'QCD (corrected)'
+		else: legentry = group
+		legend.AddEntry(g['effis'].e,legentry,'LP')
 
 	# Data / MC ratio
 	ratioplots = {}
@@ -448,9 +462,10 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			if group=='JetMon': continue
 			#if 'NoCor' in group or 'NoRef' in group: continue
 			ratioplots[group] = ratio(stacks['JetMon']['effis'].e,stacks[group]['effis'].e)
-			ratioplots[group].SetMarkerStyle(markerStyle(group,stacks[group]['markers']))
-			ratioplots[group].SetMarkerColor(markerColour(group,stacks[group]['colours']))
-			ratioplots[group].SetMarkerSize(1.6)
+			ratioplots[group].SetMarkerStyle(markerStyle(group,stacks[group]['markers'],opts))
+			ratioplots[group].SetMarkerColorAlpha(markerColour(group,stacks[group]['colours'],opts),1.0 if not (ratioplots[group].GetMarkerStyle()==33 or (ratioplots[group].GetMarkerStyle==22 and opts.closure)) else 0.85)
+			ratioplots[group].SetMarkerSize(1.8 if not ratioplots[group].GetMarkerStyle()==33 else 2.3)
+			ratioplots[group].SetLineColor(markerColour(group,stacks[group]['colours'],opts))
 			
 	cutsjson = json.loads(filecontent(opts.jsoncuts))
 	if not ratioplots=={}:
@@ -475,8 +490,8 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 		for istack,tagNstack in enumerate([(g,stacks[g]['effis']) for g in stacks.keys()]):
 			tag = tagNstack[0]
 			stack = tagNstack[1]
-			if any(['NOM' in x for x in trg]): ymax = 0.75 if not any([x in stack.e.GetPaintedGraph().GetXaxis().GetTitle() for x in ['mva','Bjet']]) else 0.755 #0.14
-			elif any(['VBF' in x for x in trg]): ymax = 1.2
+			if any(['NOM' in x for x in trg]): ymax = 0.65 if not any([x in stack.e.GetPaintedGraph().GetXaxis().GetTitle() for x in ['mva','Bjet']]) else 0.70 #0.14
+			elif any(['VBF' in x for x in trg]): ymax = 1.2 if not any([x in stack.e.GetPaintedGraph().GetXaxis().GetTitle() for x in ['ptAve','jet3']]) else 1.3
 			else: ymax = 1.0
 			#stack.e.SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
 			stack.e.SetTitle(";;Efficiency curves")
@@ -495,10 +510,6 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			stack.e.GetPaintedGraph().GetYaxis().SetDecimals(kTRUE)
 			if istack==0: stack.e.GetPaintedGraph().Draw("ap")
 			stack.e.GetPaintedGraph().Draw("e,p,same")
-###			if opts.notext:
-###				c1.SetLeftMargin(0.13)
-###				c1.SetRightMargin(0.07)
-			c1.Update()
 			c1.Modified()
 			if istack==0: 
 		#		ymax = 0
@@ -521,7 +532,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 						for i in range(len(cutsjson['sel'][isel][v['root']])/2):
 							plotcuts += [float(cutsjson['sel'][isel][v['root']][2*i+1])]
 							plotcutdirections += [1 if cutsjson['sel'][isel][v['root']][2*i]=='>' else -1]
-							vlines += [getTLine(plotcuts[-1],gPad.GetUymin(),plotcuts[-1],gPad.GetUymax(),kMagenta,3,9)]
+							vlines += [getTLine(plotcuts[-1],gPad.GetUymin(),plotcuts[-1],gPad.GetUymax(),kRed,3,9)]
 							vlines[-1].Draw("same")
 						for i in range(len(plotcuts)):
 							if opts.shade:
@@ -553,7 +564,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			ratioplot.GetXaxis().SetLimits(float(v['xmin']),float(v['xmax']))
 			ratioplot.GetXaxis().SetNdivisions(808)
 ###			ratioplot.GetXaxis().SetTitleOffset(3.5)
-			ratioplot.GetXaxis().SetTitleOffset(1.0)
+			ratioplot.GetXaxis().SetTitleOffset(1.02)
 			ratioplot.GetYaxis().SetTitleOffset(1.20 if not opts.notext else 1.40)
 			ratioplot.GetYaxis().SetTitleSize(ratioplot.GetYaxis().GetTitleSize()*0.9)
 			ratioplot.GetYaxis().SetLabelSize(ratioplot.GetYaxis().GetLabelSize()*(1.0 if not opts.notext else 0.95))
@@ -583,7 +594,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			rvboxes = []
 			for plotcut in plotcuts: 
 				plotcutdirection = plotcutdirections[plotcuts.index(plotcut)]
-				vlines2 += [getTLine(plotcut,gPad.GetUymin(),plotcut,gPad.GetUymax(),kMagenta,3,9)]
+				vlines2 += [getTLine(plotcut,gPad.GetUymin(),plotcut,gPad.GetUymax(),kRed,3,9)]
 				vlines2[-1].Draw("same")
 				if opts.shade:
 					rvboxes += [TBox(gPad.GetUxmin() if plotcutdirection==1 else plotcut,gPad.GetUymin(),plotcut if plotcutdirection==1 else gPad.GetUxmax(),gPad.GetUymax())]
@@ -632,6 +643,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
         pcms2.AddText("%.1f fb^{-1} (8 TeV)"%(float(opts.weight[0][0])/1000.))
         pcms2.Draw()
 
+	gPad.RedrawAxis()
 	path = '%s/../trigger/%s/%s/%s/%s/%s'%(basepath,'plots',os.path.split(fout.GetName())[1][:-5],wpars,'turnonCurves',namesGlobal['path-turnon'])
 	makeDirs(path)
 	canvas.SetName(namesGlobal['turnon'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon'])
@@ -656,8 +668,13 @@ def mkTurnonCurves():
         # ROOT
         gROOT.SetBatch(1)
         gROOT.ProcessLineSync(".x ../common/styleCMSTDR.C")
+        gStyle.SetDrawBorder(0)
+        gStyle.SetCanvasBorderMode(0)
+        gStyle.SetCanvasBorderSize(0)
+        gStyle.SetPadBorderMode(1)
+        gStyle.SetLineScalePS(2.2)
         gStyle.SetPadTopMargin(0.06)
-        gStyle.SetPadBottomMargin(0.11)
+        gStyle.SetPadBottomMargin(0.12)
         gStyle.SetPadRightMargin(0.04)
         gStyle.SetTextFont(42)
         gStyle.SetTitleFont(42,"XYZT")

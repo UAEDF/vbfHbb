@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from copy import deepcopy as dc
+from array import array
 import sys,os,json
 basepath=os.path.split(os.path.abspath(__file__))[0]
 sys.path.append(basepath)
@@ -9,8 +11,6 @@ sys.argv = []
 import ROOT
 from ROOT import *
 sys.argv = tempargv
-
-from copy import deepcopy as dc
 
 
 # PRINTING #########################################################################################
@@ -107,6 +107,8 @@ def setdefaults(option,opt,value,parser):
 		if any(['schrodinger' in x for x in os.uname()]) and parser.values.fileformat=='2': globalpath = '/data/UAData/autumn2013'
 		if any(['heisenberg' in x for x in os.uname()]) and parser.values.fileformat=='1': globalpath = '/usb/MrBig/UAdata'
 		if any(['heisenberg' in x for x in os.uname()]) and parser.values.fileformat=='2': globalpath = '/usb/MrBig/UAdata'
+		if any(['enterprise' in x for x in os.uname()]) and parser.values.fileformat=='1': globalpath = '/data/UAdata'
+		if any(['enterprise' in x for x in os.uname()]) and parser.values.fileformat=='2': globalpath = '/data/UAdata'
 		if os.getlogin()=='xjanssen' and parser.values.fileformat=='1': globalpath = '/Users/xjanssen/cms/vbfHbb2012/vbfHbb_flattree/KK_Paper'
 		if os.getlogin()=='xjanssen' and parser.values.fileformat=='2': globalpath = '/Users/xjanssen/cms/vbfHbb2012/vbfHbb_ParkAna_flattree/v0'
 		if any(['lxplus' in x for x in os.uname()]) and os.getlogin()=='salderwe' and parser.values.fileformat=='1': globalpath='/afs/cern.ch/work/s/salderwe/groups/Hbb/paper2012/'
@@ -369,3 +371,54 @@ def SELsetup(option,opt=None,value=None,parser=None):
 	s.reeval()
 	if parser: setattr(parser.values, option.dest, s)
 	else: return s
+
+####################################################################################################
+def set_palette(ncontours=999):
+    stops = [0.00, 0.30, 1.00]
+    red   = [0.85, 0.95, 0.00]
+    green = [0.85, 0.95, 0.30]
+    blue  = [0.50, 0.95, 0.90]
+
+    s = array('d', stops)
+    r = array('d', red)
+    g = array('d', green)
+    b = array('d', blue)
+
+    npoints = len(s)
+    TColor.CreateGradientColorTable(npoints, s, r, g, b, ncontours)
+    gStyle.SetNumberContours(ncontours)
+
+####################################################################################################
+def mapgrid(h,xmin=2,ymin=2,offset=4):
+	tlines = []
+	for i in range(xmin,h.GetNbinsX()+1):
+		for j in range(ymin,h.GetNbinsY()+1):
+			if not h.GetBinContent(i,j)==0:
+				x1 = h.GetXaxis().GetBinLowEdge(i)
+				x2 = h.GetXaxis().GetBinLowEdge(i+1)
+				y1 = h.GetYaxis().GetBinLowEdge(j)
+				y2 = h.GetYaxis().GetBinLowEdge(j+1)
+				tlines += [TLine(x1,y1,x1,y2)]
+				tlines += [TLine(x2,y1,x2,y2)]
+				tlines += [TLine(x1,y1,x2,y1)]
+				tlines += [TLine(x1,y2,x2,y2)]
+	for t in tlines:
+		t.SetNDC(kFALSE)
+		t.SetLineWidth(1)
+		t.SetLineColor(kBlack)
+		t.SetLineStyle(kDashed)
+		t.Draw()
+	return tlines
+####################################################################################################
+def sticker(pad,bottom,tag,value,left=False):
+    t = TPaveText(0.25 if left else 0.72,bottom,0.5 if left else 0.9,bottom+0.06,"NDC")
+    t.SetTextFont(62)
+    t.SetTextSize(0.038)
+    t.SetTextColor(kCyan+3)
+    t.SetBorderSize(0)
+    t.SetFillStyle(-1)
+    t.SetTextAlign(12)
+    t.AddText("%s: %.2f"%(tag,value))
+    t.Draw()
+    return t
+

@@ -338,10 +338,14 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 # To Save
 	if opts.notext: canvas = TCanvas("cmap","cmap",1600,1200)
 	else: canvas = TCanvas("cmap","cmap",1800,1200)
+	gStyle.SetLineScalePS(2.2)
 	canvas.cd()
+	set_palette()
 	gPad.SetGrid(0,0)
 	if not opts.notext: gPad.SetRightMargin(0.25)
 	else: gPad.SetRightMargin(0.12)
+	print gPad.GetTopMargin()
+	gPad.SetTopMargin(0.065)
 # LOOP over ALL GROUPS
 	itest = 0
 	for group in groups:
@@ -407,11 +411,16 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 #$			else: maps[group][tag].SetTitleOffset(1.0,"Y")
 			#maps[group][tag].GetXaxis().SetTitle(variables[vx[0]]['title_x'])
 			#maps[group][tag].GetYaxis().SetTitle(variables[vy[0]]['title_x'])
-			maps[group][tag].SetTitleOffset(maps[group][tag].GetTitleOffset()*1.0 if not opts.notext else maps[group][tag].GetTitleOffset()*1.2,"XY")
+			maps[group][tag].SetTitleSize(maps[group][tag].GetTitleSize("X")*1.1,"XY")
+			maps[group][tag].SetTitleOffset(maps[group][tag].GetTitleOffset()*1.0 if not opts.notext else maps[group][tag].GetTitleOffset()*1.05,"X")
+			maps[group][tag].SetTitleOffset(maps[group][tag].GetTitleOffset()*1.0 if not opts.notext else maps[group][tag].GetTitleOffset()*(1.14 if not "VBF" in trg else 1.00),"Y")
+			if "VBF" in trg: maps[group][tag].SetLabelSize(maps[group][tag].GetLabelSize("X")*0.95,"X")
 			#maps[group][tag].SetTitleOffset(maps[group][tag].GetTitleOffset()*0.8,"Z")
 			maps[group][tag].SetMarkerSize((1.25 if not ('mqq' in vx[0] or 'mqq' in vy[0]) else 0.85) if not (group=='QCD' and not tag=='Rat') else 1.0)
+			if "VBF" in trg: maps[group][tag].SetMarkerSize(maps[group][tag].GetMarkerSize()*0.95)
 			maps[group][tag].GetXaxis().SetTickLength(0.03)
 			maps[group][tag].GetYaxis().SetTickLength(0.016)
+			maps[group][tag].GetZaxis().SetRangeUser(0,0.8 if not "VBF" in trg else 1.0)
 			maps[group][tag].GetYaxis().SetNdivisions(505 if not 'VBF' in trg else 507)
 			maps[group][tag].SetTitle("")
 			if 'VBF' in trg:
@@ -420,13 +429,22 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 				maps[group][tag].SetMarkerSize(maps[group][tag].GetMarkerSize()*0.75)
 			gStyle.SetHistMinimumZero(kFALSE)
 			if maps[group][tag].GetEntries()==0: maps[group][tag].SetBinContent(0,0,-1e-16)
+			maps[group][tag].SetMinimum(0.0 if not "VBF" in trg else 0.0)
+			maps[group][tag].SetMaximum(0.8 if not "VBF" in trg else 1.0)
+			maps[group][tag].SetContour(999)
+			set_palette()
 			maps[group][tag].Draw("colz,text,error")
+			grid = mapgrid(maps[group][tag],2,2 if not "VBF" in trg else 1,5)
 			
 			gPad.Update()
 			try:
 				palette = maps[group][tag].GetListOfFunctions().FindObject("palette")
-				palette.SetX1NDC(0.885 - (0.13 if not opts.notext else 0.0))
+				palette.SetX1NDC(0.89 - (0.13 if not opts.notext else 0.0))
 				palette.SetX2NDC(0.93 - (0.13 if not opts.notext else 0.0))
+				palette.SetY1NDC(0.1)
+				palette.SetY2NDC(0.935)
+				maps[group][tag].GetZaxis().SetTickLength(0.02)
+				gPad.Update()
 			except:
 				continue
 			canvas.Modified()
@@ -436,6 +454,8 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 				text,selleg = addText(opts,group,tag,vx,vy,sel,trg,ref)
 				text.Draw("same")
 				selleg.Draw("same")
+			ttl = topleft("Set %s trigger efficiency (%s)"%("A" if not "VBF" in trg else "B","data" if not "QCD" in group else "simulation"))
+			ttr = topright("%.1f fb^{-1} (8 TeV)"%(19.8 if not "VBF" in trg else 18.3))
 
 			maps[group][tag].Write(maps[group][tag].GetName(),TH1.kOverwrite)
 			canvas.SaveAs('%s/%s%s.png'%(path,maps[group][tag].GetName(),'' if not opts.notext else '_noleg'))
@@ -477,15 +497,25 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		#maps[ratio]['Rat'].GetXaxis().SetTitle(variables[vx[0]]['title_x'])
 		#maps[ratio]['Rat'].GetYaxis().SetTitle(variables[vy[0]]['title_x'])
 		maps[ratio]['Rat'].SetMarkerSize(1.25 if not ('mqq' in vx[0] or 'mqq' in vy[0]) else 0.85)
-		maps[ratio]['Rat'].SetTitleOffset(maps[ratio]['Rat'].GetTitleOffset()*1.0 if not opts.notext else maps[ratio]['Rat'].GetTitleOffset()*1.2,"XY")
+		maps[ratio]['Rat'].SetTitleSize(maps[ratio]['Rat'].GetTitleSize("X")*1.1,"XY")
+		maps[ratio]['Rat'].SetTitleOffset(maps[ratio]['Rat'].GetTitleOffset()*1.0 if not opts.notext else maps[ratio]['Rat'].GetTitleOffset()*1.05,"X")
+		maps[ratio]['Rat'].SetTitleOffset(maps[ratio]['Rat'].GetTitleOffset()*1.0 if not opts.notext else maps[ratio]['Rat'].GetTitleOffset()*(1.14 if not "VBF" in trg else 1.00),"Y")
+		if "VBF" in trg: maps[ratio]['Rat'].SetLabelSize(maps[ratio]['Rat'].GetLabelSize("X")*0.95,"X")
+		if "VBF" in trg: maps[ratio]['Rat'].SetMarkerSize(maps[ratio]['Rat'].GetMarkerSize()*0.95)
 		maps[ratio]['Rat'].GetXaxis().SetTickLength(0.03)
-		maps[ratio]['Rat'].GetZaxis().SetRangeUser(0,1.4)
+		maps[ratio]['Rat'].GetYaxis().SetTickLength(0.016)
+		maps[ratio]['Rat'].GetZaxis().SetRangeUser(0,1.4 if not "VBF" in trg else 2.0)
+		maps[ratio]['Rat'].GetYaxis().SetNdivisions(505 if not 'VBF' in trg else 507)
 		if 'VBF' in trg:
 			gPad.SetLogx(1)
 			maps[ratio]['Rat'].GetXaxis().SetMoreLogLabels()
 			maps[ratio]['Rat'].SetMarkerSize(maps[ratio]['Rat'].GetMarkerSize()*0.75)
 		gStyle.SetHistMinimumZero(kFALSE)
+		set_palette()
 		maps[ratio]['Rat'].Draw('colz,error,text')
+		maps[ratio]['Rat'].SetMinimum(0.6 if not "VBF" in trg else 0.0)
+		maps[ratio]['Rat'].SetMaximum(1.4 if not "VBF" in trg else 1.6)
+		grid = mapgrid(maps[ratio]['Rat'],2,2 if not "VBF" in trg else 1,4)
 		#for ix in range(1,maps[ratio]['Rat'].GetNbinsX()+1):
 		#	for iy in range(1,maps[ratio]['Rat'].GetNbinsY()+1):
 		#		if maps[ratio]['Rat'].GetBinContent(ix,iy)==0: 
@@ -497,9 +527,13 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 		#			paves += [pave]
 			
 		gPad.Update()
-		palette = maps[group][tag].GetListOfFunctions().FindObject("palette")
-		palette.SetX1NDC(0.885 - (0.11 if not opts.notext else 0.0))
+		maps[ratio]['Rat'].GetZaxis().SetTickLength(0.02)
+		palette = maps[ratio]['Rat'].GetListOfFunctions().FindObject("palette")
+		palette.SetX1NDC(0.89 - (0.11 if not opts.notext else 0.0))
 		palette.SetX2NDC(0.93 - (0.11 if not opts.notext else 0.0))
+		palette.SetY1NDC(0.1)
+		palette.SetY2NDC(0.935)
+		gPad.Update()
 		canvas.Modified()
 		canvas.Update()
 
@@ -507,6 +541,8 @@ def get2DMap(opts,fout,samples,variables,sel,trg,ref,vx,vy):
 			text,selleg = addText(opts,'Data / QCD','SF',vx,vy,sel,trg,ref)
 			text.Draw("same")
 			selleg.Draw("same")
+		ttl = topleft("Set %s trigger efficiency (data/simulation)"%("A" if not "VBF" in trg else "B"))
+		ttr = topright("%.1f fb^{-1} (8 TeV)"%(19.8 if not "VBF" in trg else 18.3))
 		
 		# save		
 		gDirectory.cd('%s:/2DMaps/%s'%(fout.GetName(),ratio))
@@ -534,8 +570,8 @@ def loadOneDWght(fout,mapfile,mapname):
 	if not fout.GetName()==mapfile: inroot('TFile *fmap = TFile::Open("%s");'%mapfile)
 	inroot('gDirectory->cd("%s:/");'%fout.GetName())
 	# load & clone
-	if not fout.GetName()==mapfile: inroot('TH1F *wghtOneHist = (TH1F*)fmap->Get("%s;1").Clone();'%mapname)
-	else: inroot('TH1F *wghtOneHist = (TH1F*)gDirectory->Get("%s;1").Clone();'%mapname)
+	if not fout.GetName()==mapfile: inroot('TH1F *wghtOneHist = (TH1F*)fmap->Get("%s;1")->Clone();'%mapname)
+	else: inroot('TH1F *wghtOneHist = (TH1F*)gDirectory->Get("%s;1")->Clone();'%mapname)
 	# close if unneeded
 	if not fout.GetName()==mapfile: inroot('fmap->Close();')
 
@@ -548,8 +584,8 @@ def loadTwoDWght(fout,mapfile,mapname):
 	if not fout.GetName()==mapfile: inroot('TFile *fmap = TFile::Open("%s");'%mapfile)
 	inroot('gDirectory->cd("%s:/");'%fout.GetName())
 	# load & clone
-	if not fout.GetName()==mapfile: inroot('TH2F *wghtTwoHist = (TH2F*)fmap->Get("%s;1").Clone();'%mapname)
-	else: inroot('TH2F *wghtTwoHist = (TH2F*)gDirectory->Get("%s;1").Clone();'%mapname)
+	if not fout.GetName()==mapfile: inroot('wghtTwoHist = (TH2F*)fmap->Get("%s;1")->Clone();'%mapname)
+	else: inroot('wghtTwoHist = (TH2F*)gDirectory->Get("%s;1")->Clone();'%mapname)
 	# close if unneeded
 	if not fout.GetName()==mapfile: inroot('fmap->Close();')
 
@@ -880,8 +916,32 @@ def addText(opts,sample,tag,vx,vy,sel,trg,ref):
 
 	return text,selleg
 
-####################################################################################################################################################################################
+######################################################################################################################################################
+def topright(text):
+    toprightpave = TPaveText(0.6,1.-gPad.GetTopMargin(),1.-gPad.GetRightMargin()+0.008,1.-0.01,"NDC")
+    toprightpave.SetTextFont(62)
+    toprightpave.SetTextSize(gPad.GetTopMargin()*0.55)
+    toprightpave.SetTextColor(kBlack)
+    toprightpave.SetBorderSize(0)
+    toprightpave.SetFillStyle(-1)
+    toprightpave.SetTextAlign(32)
+    toprightpave.AddText("%s"%text)
+    toprightpave.Draw()
+    return toprightpave
 
+######################################################################################################################################################
+def topleft(text):
+    topleftpave = TPaveText(gPad.GetLeftMargin()-0.015,1.-gPad.GetTopMargin(),0.5,1.-0.01,"NDC")
+    topleftpave.SetTextFont(62)
+    topleftpave.SetTextSize(gPad.GetTopMargin()*0.55)
+    topleftpave.SetTextColor(kBlack)
+    topleftpave.SetBorderSize(0)
+    topleftpave.SetFillStyle(-1)
+    topleftpave.SetTextAlign(12)
+    topleftpave.AddText("%s"%text)
+    topleftpave.Draw()
+    return topleftpave
+####################################################################################################################################################################################
 ########################################
 def examples():
 	# init main
