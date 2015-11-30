@@ -17,6 +17,7 @@ elif [[ "`uname -a`" == *schrodinger* ]]; then
 	globalpath="/data/UAdata/autumn2013"
 	globalpathtrigger="/data/UAdata/autumn2013"
 fi
+globalpath="/usb/data2/UAData/2015/"
 globalpathtrigger="/usb/data2/UAData/2015/trigger"
 #globalpathtrigger="/run/media/salderwe/data2/UAData/fromKostas/autumn2013"
 #globalpath="/run/media/salderwe/data2/UAData/fromKostas/autumn2013"

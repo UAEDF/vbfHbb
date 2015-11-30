@@ -287,7 +287,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
         textalt.SetTextAlign(12)
 	textalt.SetFillStyle(3000)
 	textalt.SetFillColor(kWhite)
-	l = textalt.AddText("%s selection      "%('Set A' if any(['NOM' in x for x in trg]) else ('Set B' if any(['VBF' in x for x in trg]) else '???')))
+	l = textalt.AddText("%s preselection      "%('Set A' if any(['NOM' in x for x in trg]) else ('Set B' if any(['VBF' in x for x in trg]) else '???')))
 	l.SetTextFont(62)
         textalt.Draw()
         gPad.Update()
@@ -313,7 +313,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 
 	# containers
 	stacks = {}
-
+        
 	### LOOP over all samples
 	for s in sorted(samples,key=lambda x:('QCD' in x['tag'],-jsoninfo['crosssections'][x['tag']])):
 		# trg
@@ -397,6 +397,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 			trg = dc(trg_orig)
 
 	
+
 	if opts.overlay and any([('MAP'==x[0:3] or 'FUN'==x[0:3] or x[0:3]=='COR') for x in opts.weight[1]]):
 		### LOOP over all samples (again, without map correction)
 		for s in sorted(samples,key=lambda x:('QCD' in x['tag'],-jsoninfo['crosssections'][x['tag']])):
@@ -473,7 +474,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 ###		c1,c2 = getRatioPlotCanvas(canvas)
                 c1 = TPad("c1","c1",0.0,0.0,1.0,1.0)
                 c2 = TPad("c2","c2",0.0,0.0,1.0,1.0)
-                c2.SetFillStyle(-1)
+                c2.SetFillStyle(0)
                 c1.Draw()
                 c2.Draw()
                 canvas.Update()
@@ -482,6 +483,7 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
                 c2.SetTopMargin(1-0.29)
                 canvas.Update()
                 canvas.Modified()
+        
 		# draw (top)
 		c1.cd()
 		#gPad.SetLeftMargin(0.08)
@@ -648,7 +650,6 @@ def do_drawstack(opts,fout,samples,v,sel,trg,ref,KFWght=None):
 	makeDirs(path)
 	canvas.SetName(namesGlobal['turnon'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon'])
 	canvas.SetTitle(namesGlobal['turnon-title'] if len(stacks.keys())>1 else stacks[stacks.keys()[0]]['names']['global']['turnon-title'])
-	canvas.Update()
 	canvas.SaveAs('%s/%s%s.png'%(path, canvas.GetName(),'' if not opts.notext else "_noleg"))
 	canvas.SaveAs('%s/%s%s.pdf'%(path, canvas.GetName(),'' if not opts.notext else "_noleg"))
 	print
@@ -668,10 +669,6 @@ def mkTurnonCurves():
         # ROOT
         gROOT.SetBatch(1)
         gROOT.ProcessLineSync(".x ../common/styleCMSTDR.C")
-        gStyle.SetDrawBorder(0)
-        gStyle.SetCanvasBorderMode(0)
-        gStyle.SetCanvasBorderSize(0)
-        gStyle.SetPadBorderMode(1)
         gStyle.SetLineScalePS(2.2)
         gStyle.SetPadTopMargin(0.06)
         gStyle.SetPadBottomMargin(0.12)

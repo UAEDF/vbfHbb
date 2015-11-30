@@ -35,7 +35,7 @@ void styleCMSTDR() {
 
 // For the Pad:
   tdrStyle->SetPadBorderMode(0);
-  // tdrStyle->SetPadBorderSize(Width_t size = 1);
+  tdrStyle->SetPadBorderSize(0);
   tdrStyle->SetPadColor(kWhite);
   tdrStyle->SetPadGridX(false);
   tdrStyle->SetPadGridY(false);
