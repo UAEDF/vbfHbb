@@ -15,3 +15,4 @@ kostas/workspace/
 */plots/
 */flat/
 trigger/logs*/
+*.root

@@ -2,6 +2,8 @@
 
 from copy import deepcopy as dc
 from array import array
+from datetime import datetime,timedelta
+now = datetime.now
 import sys,os,json
 basepath=os.path.split(os.path.abspath(__file__))[0]
 sys.path.append(basepath)
@@ -422,3 +424,12 @@ def sticker(pad,bottom,tag,value,left=False):
     t.Draw()
     return t
 
+##########################################################################
+def testimate(tref,i,N):
+    if i==0: return [0,0],0
+    tnow = now()
+    tdelta = float((tnow - tref).total_seconds())/float(i)
+    trem = float(N-i)*float(tdelta)
+    m,s = divmod(trem,60)
+    p = 100 - float(i)/float(N)*100
+    return [m,s],p

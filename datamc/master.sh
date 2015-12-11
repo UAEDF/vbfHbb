@@ -12,6 +12,7 @@ elif [[ "`uname -a`" == *schrodinger* ]]; then
 elif [[ "`uname -a`" == *heisenberg* ]]; then
 	globalpath="/data/UAdata/largefiles/"
 	globalpath="/usb/MrBig/UAdata/"
+#	globalpath="/usb/data2/UAData/2015/"
 	globalpathtrigger="/data/UAdata/largefiles/trigger/"
 	globalpathtrigger="/usb/MrBig/UAdataTrigger/"
 fi
@@ -48,7 +49,10 @@ variablesVBF="mbbReg2,mqq2,dEtaqq2,jetPt0,jetPt1,jetPt2,jetPt3,dPhibb2,jetBtag00
 variablesTPN="mbbReg1,mqq1,dEtaqq1,jetPt0,jetPt1,jetPt2,jetPt3,dPhibb1,jetBtag00,jetBtag01,dPhiqq1,cosTheta1,etabb1,ptbb1,jetBtag00,jetBtag01,jetBlikNOM0,jetBlikNOM1,jetBlikNOM2,jetBlikNOM3,jetQGLb11,jetQGLb21,jetQGLq11,jetQGLq21,softHt,softN2,mvaNOM,mvaZ"
 variablesTPV="mbbReg2,mqq2,dEtaqq2,jetPt0,jetPt1,jetPt2,jetPt3,dPhibb2,jetBtag00,jetBtag01,dPhiqq2,cosTheta2,etabb2,ptbb2,jetBtag00,jetBtag01,jetBlikVBF0,jetBlikVBF1,jetBlikVBF2,jetBlikVBF3,jetQGLb12,jetQGLb22,jetQGLq12,jetQGLq22,softHt,softN2,mvaVBF,mvaZ"
 
-
+variablesNOM="mvaNOM,mvaZ"
+variablesVBF="mvaVBF"
+variablesTPN="mvaNOM,mvaZ"
+variablesTPV="mvaVBF"
 ###   OPTIONS
 ###   
 ###   1    1	FlatTrees				NOM 

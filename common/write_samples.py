@@ -14,7 +14,9 @@ sys.argv = tempargv
 from toolkit import * 
 from copy import deepcopy as dc
 
-today = datetime.date.today().strftime('%Y%m%d')
+from datetime import datetime
+#today = datetime.date.today().strftime('%Y%m%d')
+today = datetime.today().strftime('%Y%m%d')
 
 
 class info:

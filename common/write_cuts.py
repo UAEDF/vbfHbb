@@ -67,7 +67,7 @@ def write_cuts(sel=[],trg=[],selcmp=[],trgcmp=[],**kwargs):
 	cuts = json.loads(filecontent(kwargs["jsoncuts"]))
 	selections = cuts['sel']
 	triggers = cuts['trg']
-	selnew = dc(list(set(sel)-set(['None'])))
+        selnew = dc(list(set(sel)-set(['None'])))
 	trgnew = dc(list(set(trg)-set(['None'])))
 	selold = sel
 	trgold = trg
