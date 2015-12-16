@@ -38,12 +38,12 @@ def epave(text,x,y,pos="left",hl=1,size=0.028):
 ####################################################################################################
 fout = TFile.Open("plots/performance.root","recreate")
 
-FOLDER = "v1"
+FOLDER = "."
 
-colours = [kBlack,kOrange-2,kBlue,kGreen+3,kRed]
-styles = [5,8,6,7,1]
+colours = [kRed,kBlack,kOrange-2,kBlue,kGreen+3,kRed]
+styles = [1,5,8,6,7,1]
 labels = ["qq' system","b-tagging","q/g tagging","soft activity","angular dynamics"]
-variables = ["m_{qq'}","|#Delta#eta_{qq'}|","|#Delta#phi_{qq'}|","b-jet_{0} b-tag","b-jet_{1} b-tag","b-jet_{0} QGL","b-jet_{1} QGL","q-jet_{0} QGL","q-jet_{1} QGL","H_{T}^{soft}","N_{2}^{soft}","cos #theta_{qq',b#bar{b}}"]
+variables = ["|#Delta#eta_{qq'}|","|#eta_{b#bar{b}}|","b-jet_{1} b-tag","b-jet_{0} QGL","b-jet_{1} QGL","q-jet_{0} QGL","q-jet_{1} QGL"]
 
 gROOT.SetBatch(1)
 gROOT.ProcessLineSync(".x ../common/styleCMSTDR.C")
@@ -62,26 +62,24 @@ TGaxis.SetMaxDigits(4)
 gStyle.SetTitleSize(0.05,"XYZ")
 gStyle.SetLabelSize(0.04,"XYZ")
 
-for SEL in ["NOM","VBF"]:
-    f = [None]*5
-    hSB = [None]*5
-    hCORS = [None]*5
-    hCORB = [None]*5
-    hBDTS = [None]*5
-    hBDTB = [None]*5
-    hBDTST = [None]*5
-    hBDTBT = [None]*5
-    for i in range(5):
-        f[i] = TFile.Open("%s/BDT-groups1-%d_%s.root"%(FOLDER,i+1,SEL),"read")
-        hSB[i] = f[i].Get("Method_BDT/BDT_GRAD2/MVA_BDT_GRAD2_rejBvsS")
-        hSB[i].SetName("ROC_%s"%(f[i].GetName()[4:13]))
-        hCORS[i] = f[i].Get("CorrelationMatrixS")
-        hCORB[i] = f[i].Get("CorrelationMatrixB")
-        hBDTS[i] = f[i].Get("Method_BDT/BDT_GRAD2/MVA_BDT_GRAD2_S")
-        hBDTB[i] = f[i].Get("Method_BDT/BDT_GRAD2/MVA_BDT_GRAD2_B")
-        hBDTST[i] = f[i].Get("Method_BDT/BDT_GRAD2/MVA_BDT_GRAD2_Train_S")
-        hBDTBT[i] = f[i].Get("Method_BDT/BDT_GRAD2/MVA_BDT_GRAD2_Train_B")
-
+for SEL in ["Z"]:
+    N = 1
+    f = [None]*N
+    hSB = [None]*N
+    hCORS = [None]*N
+    hCORB = [None]*N
+    hBDTS = [None]*N
+    hBDTB = [None]*N
+    hBDTST = [None]*N
+    hBDTBT = [None]*N
+    f[0] = TFile.Open("%s/BDT_%s.root"%(FOLDER,SEL),"read")
+    hSB[0] = f[0].Get("Method_Fisher/Fisher/MVA_Fisher_rejBvsS")
+    hCORS[0] = f[0].Get("CorrelationMatrixS")
+    hCORB[0] = f[0].Get("CorrelationMatrixB")
+    hBDTS[0] = f[0].Get("Method_Fisher/Fisher/MVA_Fisher_S")
+    hBDTB[0] = f[0].Get("Method_Fisher/Fisher/MVA_Fisher_B")
+    hBDTST[0] = f[0].Get("Method_Fisher/Fisher/MVA_Fisher_Train_S")
+    hBDTBT[0] = f[0].Get("Method_Fisher/Fisher/MVA_Fisher_Train_B")
     
     fout.cd()
     c = TCanvas("c","c",900,750)
@@ -104,7 +102,7 @@ for SEL in ["NOM","VBF"]:
     gPad.Update()
     h0.Draw("axis")
     
-    pv = TPaveText(0.50,gStyle.GetPadBottomMargin()+0.05,0.55,0.6,"NDC")
+    pv = TPaveText(0.15,gStyle.GetPadBottomMargin()+0.05,0.25,0.6,"NDC")
     pv.SetBorderSize(0)
     pv.SetFillStyle(0)
     pv.SetTextSize(0.032)
@@ -117,8 +115,6 @@ for SEL in ["NOM","VBF"]:
     l.SetTextFont(62)
     l.SetHeader("Variable group")
     l.SetTextFont(42)
-    b = pv.AddText("ROC area")
-    b.SetTextFont(62)
     for i,h in enumerate(hSB):
         #h.SetLineColor(i+1)
         h.SetLineColor(colours[i])
@@ -126,14 +122,15 @@ for SEL in ["NOM","VBF"]:
         h.SetLineWidth(2)
         h.Draw("same,L")
         I = h.Integral()/h.GetNbinsX()
-        a = l.AddEntry(h,labels[i],"L")
-        a.SetTextColor(colours[i])
-        b = pv.AddText("%.3f"%I)
-        b.SetTextColor(colours[i])
+#        a = l.AddEntry(h,labels[i],"L")
+#        a.SetTextColor(colours[i])
+        b = pv.AddText("ROC area: %.3f"%I)
+#        b.SetTextColor(colours[i])
+        b.SetTextFont(62)
     l.SetY2(l.GetY1()+l.GetNRows()*l.GetTextSize()*1.25)
-    epave("Set %s selection"%("A" if SEL=="NOM" else "B"),gStyle.GetPadLeftMargin()+0.01,1.-0.5*gStyle.GetPadTopMargin(),"left",1,0.046)
-    epave("%.1f fb^{-1} (8 TeV)"%(19.8 if SEL=="NOM" else 18.3),1.-gStyle.GetPadRightMargin()-0.01,1.-0.5*gStyle.GetPadTopMargin(),"right",0,0.046)
-    l.Draw()
+    epave("%s selection"%("Set A" if SEL=="NOM" else ("Set B" if SEL=="VBF" else "Z")),gStyle.GetPadLeftMargin()+0.01,1.-0.5*gStyle.GetPadTopMargin(),"left",1,0.046)
+    epave("%.1f fb^{-1} (8 TeV)"%(19.8 if (SEL=="NOM" or SEL=="Z") else 18.3),1.-gStyle.GetPadRightMargin()-0.01,1.-0.5*gStyle.GetPadTopMargin(),"right",0,0.046)
+    #l.Draw()
     pv.Draw()
     gPad.Update()
     pv.SetY2NDC(pv.GetY1NDC()+len(pv.GetListOfLines())*pv.GetTextSize()*1.25*0.35/0.32)
@@ -144,34 +141,35 @@ for SEL in ["NOM","VBF"]:
     
     c = TCanvas("c","c",1800,900)
     c.Divide(2,1)
-    for h in [hCORS[4],hCORB[4]]:
+    n = 0
+    for h in [hCORS[n],hCORB[n]]:
         h.SetMarkerColor(kBlack)
     c.cd(1)
     gPad.SetGrid(1,1)
     gPad.SetTopMargin(0.14)
     gPad.SetRightMargin(0.13)
-    for i in range(1,hCORS[4].GetNbinsX()+1): 
-        hCORS[4].GetXaxis().SetBinLabel(i,variables[i-1])
-        hCORS[4].GetYaxis().SetBinLabel(i,variables[i-1])
-    hCORS[4].GetXaxis().SetLabelSize(0.034)
-    hCORS[4].GetYaxis().SetLabelSize(0.034)
-    hCORS[4].GetXaxis().SetLabelOffset(0.005)
-    hCORS[4].LabelsOption("v","X")
-    hCORS[4].Draw("colz,text")
+    for i in range(1,hCORS[n].GetNbinsX()+1): 
+        hCORS[n].GetXaxis().SetBinLabel(i,variables[i-1])
+        hCORS[n].GetYaxis().SetBinLabel(i,variables[i-1])
+    hCORS[n].GetXaxis().SetLabelSize(0.034)
+    hCORS[n].GetYaxis().SetLabelSize(0.034)
+    hCORS[n].GetXaxis().SetLabelOffset(0.005)
+    hCORS[n].LabelsOption("v","X")
+    hCORS[n].Draw("colz,text")
     epavetext(["Correlation matrix (signal)","%s selection"%("Set A" if SEL=="NOM" else "Set B")],0.03,0.88,0.5,0.97)
     epavetext(["Linear correlation coefficients in %"],0.52,0.85,0.99,0.89,0.025,0)
     c.cd(2)
     gPad.SetGrid(1,1)
     gPad.SetTopMargin(0.14)
     gPad.SetRightMargin(0.13)
-    for i in range(1,hCORB[4].GetNbinsX()+1): 
-        hCORB[4].GetXaxis().SetBinLabel(i,variables[i-1])
-        hCORB[4].GetYaxis().SetBinLabel(i,variables[i-1])
-    hCORB[4].GetXaxis().SetLabelSize(0.034)
-    hCORB[4].GetYaxis().SetLabelSize(0.034)
-    hCORB[4].GetXaxis().SetLabelOffset(0.005)
-    hCORB[4].LabelsOption("v","X")
-    hCORB[4].Draw("colz,text")
+    for i in range(1,hCORB[n].GetNbinsX()+1): 
+        hCORB[n].GetXaxis().SetBinLabel(i,variables[i-1])
+        hCORB[n].GetYaxis().SetBinLabel(i,variables[i-1])
+    hCORB[n].GetXaxis().SetLabelSize(0.034)
+    hCORB[n].GetYaxis().SetLabelSize(0.034)
+    hCORB[n].GetXaxis().SetLabelOffset(0.005)
+    hCORB[n].LabelsOption("v","X")
+    hCORB[n].Draw("colz,text")
     epavetext(["Correlation matrix (background)","%s selection"%("Set A" if SEL=="NOM" else "Set B")],0.03,0.88,0.5,0.97)
     epavetext(["Linear correlation coefficients in %"],0.52,0.85,0.99,0.89,0.025,0)
     c.SaveAs("plots/Correlation_%s.pdf"%SEL)
@@ -182,55 +180,56 @@ for SEL in ["NOM","VBF"]:
     gStyle.SetStripDecimals(kFALSE)
     gPad.SetTopMargin(0.065)
     gPad.SetRightMargin(0.03)
-    hBDTST[4].GetXaxis().SetLimits(-1.0,1.0)
-    hBDTST[4].SetFillColor(kBlue-9)
-    hBDTST[4].SetLineColor(kBlue)
-    hBDTST[4].SetFillStyle(1001)
-    hBDTBT[4].SetFillColor(kRed)
-    hBDTBT[4].SetLineColor(kRed)
-    hBDTBT[4].SetFillStyle(3004)
-    hBDTS[4].SetLineColor(kBlue)
-    hBDTS[4].SetMarkerColor(kBlue)
-    hBDTS[4].SetMarkerStyle(20)
-    hBDTS[4].SetFillStyle(0)
-    hBDTB[4].SetLineColor(kRed)
-    hBDTB[4].SetMarkerColor(kRed)
-    hBDTB[4].SetMarkerStyle(20)
-    hBDTB[4].SetFillStyle(0)
+    gPad.SetGrid(1,1)
+#    hBDTST[n].GetXaxis().SetLimits(-1.0,1.0)
+    hBDTST[n].SetFillColor(kBlue-9)
+    hBDTST[n].SetLineColor(kBlue)
+    hBDTST[n].SetFillStyle(1001)
+    hBDTBT[n].SetFillColor(kRed)
+    hBDTBT[n].SetLineColor(kRed)
+    hBDTBT[n].SetFillStyle(3004)
+    hBDTS[n].SetLineColor(kBlue)
+    hBDTS[n].SetMarkerColor(kBlue)
+    hBDTS[n].SetMarkerStyle(20)
+    hBDTS[n].SetFillStyle(0)
+    hBDTB[n].SetLineColor(kRed)
+    hBDTB[n].SetMarkerColor(kRed)
+    hBDTB[n].SetMarkerStyle(20)
+    hBDTB[n].SetFillStyle(0)
 
-    hBDTST[4].GetXaxis().SetTitle("BDT output")
-    hBDTST[4].GetYaxis().SetTitle("A.U.")
-    hBDTST[4].GetXaxis().SetLabelSize(0.04)
-    hBDTST[4].GetYaxis().SetLabelSize(0.04)
-    hBDTST[4].GetXaxis().SetTitleSize(0.05)
-    hBDTST[4].GetYaxis().SetTitleSize(0.05)
-    hBDTST[4].GetXaxis().SetLabelOffset(0.005)
-    hBDTST[4].GetXaxis().SetTitleOffset(1.04)
-    hBDTST[4].GetYaxis().SetTitleOffset(1.05)
-    hBDTST[4].Draw("hist")
-    hBDTBT[4].Draw("hist,same")
-    hBDTS[4].Draw("p,same")
-    hBDTB[4].Draw("p,same")
+    hBDTST[n].GetXaxis().SetTitle("BDT output")
+    hBDTST[n].GetYaxis().SetTitle("A.U.")
+    hBDTST[n].GetXaxis().SetLabelSize(0.04)
+    hBDTST[n].GetYaxis().SetLabelSize(0.04)
+    hBDTST[n].GetXaxis().SetTitleSize(0.05)
+    hBDTST[n].GetYaxis().SetTitleSize(0.05)
+    hBDTST[n].GetXaxis().SetLabelOffset(0.005)
+    hBDTST[n].GetXaxis().SetTitleOffset(1.04)
+    hBDTST[n].GetYaxis().SetTitleOffset(1.05)
+    hBDTST[n].Draw("hist")
+    hBDTBT[n].Draw("hist,same")
+    hBDTS[n].Draw("p,same")
+    hBDTB[n].Draw("p,same")
     
     gPad.Update()
 
-    l = TLegend(0.38,0.7,0.72,1.-0.02-gPad.GetTopMargin())
+    l = TLegend(0.15,0.7,0.49,1.-0.02-gPad.GetTopMargin())
     l.SetBorderSize(0)
     l.SetFillStyle(0)
     l.SetTextSize(0.04)
     l.SetTextFont(42)
-    l.AddEntry(hBDTST[4],"Signal (train)","F")
-    l.AddEntry(hBDTS[4],"Signal (test)","PL")
-    l.AddEntry(hBDTBT[4],"Background (train)","F")
-    l.AddEntry(hBDTB[4],"Background (test)","PL")
+    l.AddEntry(hBDTST[n],"Signal (train)","F")
+    l.AddEntry(hBDTS[n],"Signal (test)","PL")
+    l.AddEntry(hBDTBT[n],"Background (train)","F")
+    l.AddEntry(hBDTB[n],"Background (test)","PL")
     l.SetY1(l.GetY2() - l.GetNRows()*l.GetTextSize()*1.2)
     l.Draw()
 
-    epave("Set %s selection"%("A" if SEL=="NOM" else "B"),gPad.GetLeftMargin()+0.01,1.-0.5*gPad.GetTopMargin(),"left",1,0.045)
+    epave("%s selection"%("Set A" if SEL=="NOM" else ("Set B" if SEL=="VBF" else "Z")),gPad.GetLeftMargin()+0.01,1.-0.5*gPad.GetTopMargin(),"left",1,0.045)
     c.SaveAs("plots/Training_%s.pdf"%SEL)
     c.Write("Training_%s.pdf"%SEL)
 
-    for i in range(5):
+    for i in range(len(hSB)):
         f[i].Close()
     
 fout.Close()

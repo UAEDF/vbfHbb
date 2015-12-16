@@ -32,7 +32,7 @@ def ROOTsetup():
     gROOT.ProcessLineSync(".x ../common/styleCMSTDR.C")
     gStyle.SetPadLeftMargin(0.13)
     gStyle.SetPadRightMargin(0.04)
-    gStyle.SetPadTopMargin(0.06)
+    gStyle.SetPadTopMargin(0.067)
     gStyle.SetPadBottomMargin(0.105)
     gStyle.SetTitleOffset(1.01,"X")
     gStyle.SetTitleOffset(1.20,"Y")
@@ -47,7 +47,7 @@ def ROOTsetup():
     ##gStyle.SetHistFillColor(-1); 
     gStyle.SetFillStyle(0); 
     #gStyle.SetFillColor(-1); 
-    gStyle.SetLineScalePS(2.0)
+    gStyle.SetLineScalePS(2.1)
     
 ####################################################################################################
 def hTag(a,b,c):
@@ -84,12 +84,12 @@ def FormatCMSPaves(opts,s):
     FormatPave(pcms1)
     pcms1.AddText("%.1f fb^{-1} (8 TeV)"%(float(opts.weight[0][0])/1000.))
     pcms1.SetTextAlign(32)
-    pcms1.SetTextSize(gStyle.GetPadTopMargin()*2.5/4.)
+    pcms1.SetTextSize(gStyle.GetPadTopMargin()*2.6/4.)
     pcms2 = TPaveText(gStyle.GetPadLeftMargin(),1.0-gStyle.GetPadTopMargin(),0.5,1.0,"NDC")
     FormatPave(pcms2)
-    pcms2.AddText("%s selection"%s[0].replace('NOM','Set A').replace('VBF','Set B'))
+    pcms2.AddText("%s selection"%s[0].replace('NOM','Set A').replace('VBF','Set B').replace('TPN','Top A').replace('TPV','Top B'))
     pcms2.SetTextAlign(12)
-    pcms2.SetTextSize(gStyle.GetPadTopMargin()*2.5/4.)
+    pcms2.SetTextSize(gStyle.GetPadTopMargin()*2.6/4.)
     return pcms1,pcms2
 
 ####################################################################################################
@@ -270,10 +270,11 @@ def datamc():
                 L = TLegend(gStyle.GetPadLeftMargin()+0.03,0.5,gStyle.GetPadLeftMargin()+0.03+0.23*3,1.-gStyle.GetPadTopMargin()-0.025)
                 FormatLegend(L)
                 # group loop
-                for ig,g in enumerate(sorted(list(set([x['g'] for (k,x) in Lsamples.iteritems()])),key=lambda y:(histos[hTag(y,vn,s[0])].Integral()))):
+                for ig,g in enumerate(sorted(list(set([x['g'] for (k,x) in Lsamples.iteritems()])),key=lambda y:(not '125' in y,not 'WJets' in y,histos[hTag(y,vn,s[0])].Integral()))):
                     l3("%s"%(g))
                     hg = hTag(g,vn,s[0])
                     Hg = histos[hg]
+                    print Hg.Integral()
                     # underflow
                     Hg.SetBinContent(1,0.5*(Hg.GetBinContent(0)+Hg.GetBinContent(1)))
                     Hg.SetBinError(1,sqrt(pow(Hg.GetBinError(0),2.)+pow(Hg.GetBinError(1),2.)))
