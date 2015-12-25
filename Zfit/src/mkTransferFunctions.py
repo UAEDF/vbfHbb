@@ -51,7 +51,7 @@ def style():
 	gROOT.ProcessLineSync(".x %s/styleCMSTDR.C"%basepath)
 	gROOT.ForceStyle()
 	gStyle.SetPadTopMargin(0.065)
-	gStyle.SetPadRightMargin(0.035)
+	gStyle.SetPadRightMargin(0.02)
         gStyle.SetPadLeftMargin(0.14)
         gStyle.SetPadBottomMargin(0.12)
         gStyle.SetTitleSize(0.055,"XY")
@@ -59,7 +59,7 @@ def style():
         gStyle.SetTitleOffset(1.0,"X")
         gStyle.SetTitleOffset(1.2,"Y")
         gStyle.SetStripDecimals(0)
-        gStyle.SetLineScalePS(2.0)
+        gStyle.SetLineScalePS(2.3)
 	gROOT.ProcessLineSync("gErrorIgnoreLevel = kWarning;")
 
 def hStyle(h,i,sumw2=True):
@@ -123,7 +123,7 @@ def main():
 	makeDirs('%s'%opts.workdir)
 	makeDirs('%s/plot'%opts.workdir)
 	makeDirs('%s/root'%opts.workdir)
-	longtag = "_B%d-%d_TF%s-%s"%(opts.X[0],opts.X[1],opts.TF[0],opts.TF[1])
+	longtag = "_B%d-%d_TF%s"%(opts.X[0],opts.X[1],opts.TF[0])
 	
 # New files
 	fout = TFile.Open("%s/root/TransferFunctions%s.root"%(opts.workdir,"" if not opts.long else longtag),"recreate")
@@ -163,6 +163,7 @@ def main():
 
 # Selection loop
 	for iS,S in enumerate(SC.selections):
+                l1("SEL%s (%d CATS)"%(S.label,S.ncat))
 ## Baseline
 		line = TF1("line","1.",opts.X[0],opts.X[1])
 		line.SetLineColor(kBlack)
@@ -175,7 +176,7 @@ def main():
 		line.GetYaxis().SetTitleOffset(1.35)
                 line.GetYaxis().SetNdivisions(ndivy)
 ## Load trees
-		fin = TFile.Open("flat/Fit_data_sel%s.root"%S.tag,"read")
+		fin = TFile.Open("flat/Fit_data_selNOM.root","read")
 		T = fin.Get("Hbb/events")
 ## Make canvas
 		CN = TCanvas("c_sel%s"%S.tag,"c_sel%s"%S.tag,900*(S.ncat-1),750)
@@ -190,8 +191,9 @@ def main():
 
 ## Category loop
 		for C in range(S.ncat):
+                        l2("CAT%d"%C)
 			Cp = C + sum([x for x in SC.ncats[0:iS]])
-			N  = "sel%s_CAT%d"%(S.label,Cp)
+			N  = "sel%s_CAT%d"%(S.label.replace('NOM','Set A').replace('PRK','Set B'),Cp)
 ### Get histogram
 			hDat["hDat_"+N] = TH1F("hDat_"+N,"hDAT_"+N,int(opts.X[1]-opts.X[0])/opts.BINS[iS],opts.X[0],opts.X[1])
 			h = hDat["hDat_"+N]
@@ -202,7 +204,7 @@ def main():
 			T.Draw("mbbReg[%d]>>hDat_%s"%(iS+1,N),cut)
 ### Blind
 			for iBin in range(1,h.GetNbinsX()+1):
-				if h.GetBinLowEdge(iBin) >= 100 and h.GetBinLowEdge(iBin) < 150:
+				if h.GetBinLowEdge(iBin) >= 70 and h.GetBinLowEdge(iBin) < 110:
 					h.SetBinContent(iBin,0)
 					h.SetBinError(iBin,0)
 ### Normalize
@@ -211,7 +213,7 @@ def main():
 			hRat["hRat_"+N] = h.Clone("hRat_"+N)
 			r = hRat["hRat_"+N]
 			hStyle(r,C,False)
-			r.Divide(hDat["hDat_sel%s_CAT%s"%(S.label,sum([x for x in SC.ncats[0:iS]]))])
+			r.Divide(hDat["hDat_sel%s_CAT%s"%(S.label.replace('NOM','Set A').replace('PRK','Set B'),sum([x for x in SC.ncats[0:iS]]))])
 			r.SetMarkerSize(1.8)
 			r.SetDirectory(0)
 ### Get fit function			
@@ -244,7 +246,7 @@ def main():
 				h.GetXaxis().SetTitle("m_{b#bar{b}} (GeV)")
 				h.GetYaxis().SetTitle("PDF")
 				h.GetYaxis().SetNdivisions(ndivy)
-				h.SetMaximum(0.3 if iS==0 else 0.2)
+				h.SetMaximum(0.13 if iS==0 else 0.12)
 				h.Draw("hist")
 				L0.AddEntry(h,"CAT%d"%Cp,"F")
   ## Mbb plot
@@ -282,7 +284,7 @@ def main():
 				L1.Draw()
 				archive += [L1]
                                 pCMS1.Clear()
-                                pCMS1.AddText("%s selection"%("Set A" if iS==0 else "Set B"))
+                                pCMS1.AddText("Z selection")
                                 pCMS2.Clear()
 	                        pCMS2.AddText("%.1f fb^{-1} (8 TeV)"%(19.8 if iS==0 else 18.3))
 				pCMS1.Draw()

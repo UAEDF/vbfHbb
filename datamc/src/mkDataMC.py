@@ -257,6 +257,7 @@ def datamc():
             l1("Group iteration")
             can.Clear()
             for vn,vi in sorted(Lvariables.iteritems()):
+                fout.cd()
                 # set pads
                 p1,p2 = FormatPads(can)
 ##################################################
@@ -347,6 +348,7 @@ def datamc():
                 # Edit canvas
                 gPad.SetLogy(1)
                 gPad.RedrawAxis()
+                p1.Write(p1.GetName()+("NOM" if "NOM" in opts.selection[0] else "VBF")+vn)
 ##################################################
                 # bottom pad
                 p2.cd()
@@ -383,6 +385,7 @@ def datamc():
                 if not os.path.exists(plotdir): makeDirs(plotdir)
                 can.SaveAs("%s/%s_s%s.pdf"%(plotdir,vn,s[0]))
                 can.SaveAs("%s/%s_s%s.png"%(plotdir,vn,s[0]))
+                fout.cd()
                 can.Clear()
     
 ##################################################

@@ -17,6 +17,9 @@ from toolkit import *
 from main import main
 from math import *
 
+global paves
+paves = []
+
 # OPTION PARSER ##################################################################################
 ##
 def parser(mp=None):
@@ -71,6 +74,15 @@ def INTERNALstyle():
 	gROOT.ProcessLine(".x %s/styleCMSTDR.C++"%basepath)
 	gROOT.ProcessLine('gROOT->ForceStyle();')
 	gStyle.SetStripDecimals(0)
+        gStyle.SetLineScalePS(1.8)
+        gStyle.SetPadRightMargin(0.04)
+        gStyle.SetPadLeftMargin(0.14)
+        gStyle.SetPadTopMargin(0.07)
+        gStyle.SetPadBottomMargin(0.12)
+        gStyle.SetTitleSize(0.05,"XY")
+        gStyle.SetLabelSize(0.04,"XY")
+        gStyle.SetGridColor(17)
+
 	
 	markers = [20, 21, 20 , 23]
 	colours = [kBlack,kBlue,kRed,kGreen+2] 
@@ -80,32 +92,25 @@ def INTERNALstyle():
 
 def INTERNALstyleHist(h,i,markers,colours,TYPE):
 	h.Sumw2()
-	h.SetMarkerStyle(markers[i])
-	h.SetMarkerColor(colours[i])
-	h.SetMarkerSize(1.0 if not "QCD" in h.GetName() else 0.0)
+	h.SetMarkerStyle(25)#markers[i])
+	h.SetMarkerColor(kBlue)#colours[i])
+	h.SetLineColor(kBlue)#colours[i])
+	h.SetMarkerSize(0.8 if not "QCD" in h.GetName() else 0.0)
 	h.SetLineColor(colours[i])
-	h.GetXaxis().SetTitle("M_{bb} (GeV)")
-	h.GetYaxis().SetTitle("PDF (%s)"%TYPE)
-	h.GetYaxis().SetNdivisions(505)
-	h.SetMaximum(0.25)
+	h.GetXaxis().SetTitle("Z discriminant output")
+	h.GetYaxis().SetTitle("< m_{b#bar{b}} > (GeV)")
+	h.GetXaxis().SetNdivisions(506)
+	h.GetYaxis().SetNdivisions(506)
+	h.GetYaxis().SetRangeUser(70.01,170.02)
 	return h
 
 ####################################################################################################
 
 def INTERNALhistograms(opts):
 	hDat = {}
-	hRat = {}
-	fFit = {}
-	gUnc = {}
 	for iTag,Tag in enumerate(opts.catTags):
-		for iCat,Cat in enumerate(opts.mvaBins[opts.mvaBins.keys()[iTag]]):
-			hDat[(Tag,iCat)] = None
-			hRat[(Tag,iCat)] = None
-			fFit[(Tag,iCat)] = None
-			gUnc[(Tag,iCat)] = None
-	fitter = None
-	covariant = None
-	return hDat, hRat, fFit, gUnc, fitter, covariant
+		hDat[Tag] = None
+	return hDat
 
 ####################################################################################################
 
@@ -148,7 +153,7 @@ def INTERNALline(fun, min, max):
 	ln.SetLineStyle(2)
 	ln.SetMinimum(0.0)
 	ln.SetMaximum(2.0)
-	ln.GetXaxis().SetTitle("M_{bb} (GeV)")
+	ln.GetXaxis().SetTitle("m_{b#bar{b}} (GeV)")
 	ln.GetYaxis().SetTitle("Signal / Control (QCD)")
 	return ln
 
@@ -173,6 +178,7 @@ def INTERNALpicksamples(opts,jsons):
 ####################################################################################################
 
 def mkTemplateFunctions():
+        global paves
 	mp = parser()
 	opts,fout,samples = main(mp,False,False,True)
 
@@ -182,141 +188,83 @@ def mkTemplateFunctions():
 	TYPE = opts.typetag
 	samples = INTERNALpicksamples(opts,jsons)
 
-	hDat, hRat, fFit, gUnc, fitter, covariant = INTERNALhistograms(opts)
-	c1, c2, c = INTERNALcanvases(opts)
-	can = TCanvas("main","main")
+	hDat  = INTERNALhistograms(opts)
+	hQcd  = INTERNALhistograms(opts)
+	can = TCanvas('profiles','profiles',900,750)
+	#can.Divide(2,1)
 
 	ln = INTERNALline("1",float(opts.fBound[0]),float(opts.fBound[1]))
 
 	for iTag,Tag in enumerate(opts.catTags):
-		nCat = int(opts.mvaBins['mva%s'%Tag][0])-1
-		rCat = 0 if Tag=='NOM' else 4
 		selsamples = [s for s in samples if s['incarnation']==Tag] 
 		fins = [x['tfile'] for x in selsamples]
-		l1('Running for %s - QCD'%Tag)
+		l1('Running for %s'%Tag)
 		
-		c2[Tag] = TCanvas('transfer_sel%s_%s'%(Tag,TYPE),'transfer_sel%s_%s'%(Tag,TYPE),600*(nCat-1),600)
-		c2[Tag].Divide(nCat-1,1)
-
-		leg = INTERNALlegend(Tag)
-		leg.SetX1(0.7)
-		lleg = dict(((Tag,iCat+1),INTERNALlegend(Tag)) for iCat in range(nCat-1))
+                can.cd(1 if 'NOM' in Tag else 2)
+                leg = TLegend(0.75,0.5,1.-gPad.GetRightMargin()-0.05,1.-gPad.GetTopMargin()-0.015)
+                leg.SetFillStyle(0)
+                leg.SetBorderSize(0)
+                leg.SetTextSize(0.045)
+                leg.SetTextFont(42)
+                leg.SetY1(leg.GetY2()-2*leg.GetTextSize()*1.25)
 		
-		for iCat in range(nCat):
-			jCat = iCat + rCat
-			if opts.merge:
-				if iCat==nCat-1: continue
-				if iCat==nCat-2: jCat = jCat*10+jCat+1
-			l2('Running for CAT%d'%jCat)
-#			v = jsons['vars']['variables'][opts.variables[opts.variables.keys()[iTag]][0]]
+                l2("Running for <mbbReg>")
+                fout.cd()
+                hQcd[Tag] = TProfile("hProf_sel%s_%s"%(Tag,TYPE),"hProf_sel%s_%s"%(Tag,TYPE),25,-0.15,0.15)
+                hDat[Tag] = TProfile("hProf_sel%s_%s"%(Tag,"Data"),"hProf_sel%s_%s"%(Tag,"Data"),50,-0.15,0.15)
+                h = hDat[Tag]
+		h = INTERNALstyleHist(h,0,markers,colours,TYPE)
+                h = hQcd[Tag]
+		h = INTERNALstyleHist(h,0,markers,colours,TYPE)
+		can.cd()
+		for ifin,fin in enumerate(fins):
+                    if "QCD" in fin.GetName(): 
+                        h = hQcd[Tag]
+                    else: 
+                        h = hDat[Tag]
+                    if "VBF" in fin.GetName(): continue
+                    fout.cd()
+                    can.cd(1 if 'NOM' in Tag else 2)
+		    l4('Sample: %s'%fin.GetName())
+                    CUT1 = "mbbReg[%d] > %.1f && mbbReg[%d] < %.1f"%(1 if 'NOM' in Tag else 2,60,1 if 'NOM' in Tag else 2,170)
+		    CUT2,cutlabel = write_cuts(["None"],["None"],reftrig=["None"],sample=jsons['samp']['files'][os.path.split(fin.GetName())[1]]['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.complexWghts[(Tag,'old')],trigequal=trigTruth(opts.usebool))
+		    l4('Cutting with: (%s)*%s'%(CUT1,CUT2))
+		    tin = fin.Get("Hbb/events")
+    	            l3('Drawing mbbReg[%d] --> %s'%(1 if 'NOM' in Tag else 2,h.GetName()))
+                    tin.Draw("mbbReg[%d]:%s>>+%s"%(1 if 'NOM' in Tag else 2,"mvaZ" if 'NOM' in Tag else "mvaVBF",h.GetName()),TCut(CUT1)*TCut(CUT2),"prof")
 
-# regular hists
-#			if v['xs']: hDat[(Tag,iCat)] = TH1F('hDat_sel%s_CAT%d'%(Tag,iCat),'hDat_sel%s_CAT%d'%(Tag,iCat),int(v['nbins_x']),v['xs'])
-#			else: hDat[(Tag,iCat)] = TH1F('hDat_sel%s_CAT%d'%(Tag,iCat),'hDat_sel%s_CAT%d'%(Tag,iCat),int(v['nbins_x']),int(v['xmin']),int(v['xmax']))
-			hDat[(Tag,iCat)] = TH1F('hDat_sel%s_CAT%d_%s'%(Tag,jCat,TYPE),'hDat_sel%s_CAT%d_%s'%(Tag,jCat,TYPE),int(float(opts.fBound[1]) - float(opts.fBound[0]))/(10 if 'Dat' in TYPE else 20),float(opts.fBound[0]),float(opts.fBound[1]))
-                        print hDat[(Tag,iCat)].GetBinWidth(1)
-			h = hDat[(Tag,iCat)]
-			h = INTERNALstyleHist(h,iCat,markers,colours,TYPE)
-			can.cd()
-# cut
-			CUT = TCut("mva%s>%.2f && mva%s<=%.2f"%(Tag,float(opts.mvaBins["mva%s"%Tag][1][iCat+1]),Tag,float(opts.mvaBins["mva%s"%Tag][1][iCat+2])))
-			if opts.merge:
-				CUT = TCut("mva%s>%.2f && mva%s<=%.2f"%(Tag,float(opts.mvaBins["mva%s"%Tag][1][iCat+1]),Tag,float(opts.mvaBins["mva%s"%Tag][1][iCat+3])))
+	            h.Write(h.GetTitle(),TH1.kOverwrite)
 
-			###CUT = TCut("mvaNOM>%.2f && mvaNOM<=%.2f"%(float(opts.mvaBins["mva%s"%Tag][1][iCat+1]),float(opts.mvaBins["mva%s"%Tag][1][iCat+2])))
-			l3('Cutting with: %s'%CUT)
-			for fin in fins:
-				l4('Sample: %s'%fin.GetName())
-				CUT2,cutlabel = write_cuts(["None"],["None"],reftrig=["None"],sample=jsons['samp']['files'][os.path.split(fin.GetName())[1]]['tag'],jsonsamp=opts.jsonsamp,jsoncuts=opts.jsoncuts,weight=opts.complexWghts[(Tag,'old')],trigequal=trigTruth(opts.usebool))
-				l4('Cutting with: %s'%CUT2)
+                gPad.SetGrid(0,1)
+                gPad.RedrawAxis()
+                hQcd[Tag].SetMarkerSize(1.0)
+                hQcd[Tag].SetMarkerStyle(20)
+                hQcd[Tag].SetMarkerColor(kBlack)
+                hDat[Tag].GetXaxis().SetTitleOffset(1.1)
+                hDat[Tag].DrawCopy()
+                hQcd[Tag].DrawCopy("same")
+                epave("Z selection",gPad.GetLeftMargin()+0.01,1.-0.5*gPad.GetTopMargin(),"left",1,0.048)
+                epave("%.1f fb^{-1} (8 TeV)"%(19.8 if 'NOM' in Tag else 18.3),1.-gPad.GetRightMargin()-0.01,1.-0.5*gPad.GetTopMargin(),"right",0,0.048)
+                line = -0.6 if 'NOM' in Tag else -0.1
+                tl = TLine(line,70,line,170)
+                tl.SetLineStyle(kDashed)
+                tl.SetLineColor(kGray+2)
+                tl.Draw()
+                paves += [tl]
+                leg.Clear()
+                a = leg.AddEntry(hDat[Tag],"Data","PL")
+                a.SetTextColor(kBlue+2)
+                a = leg.AddEntry(hQcd[Tag],"QCD","PL")
+                a.SetTextColor(kBlack)
+                leg.Draw()
+                paves += [leg]
+                gPad.RedrawAxis()
+                can.SaveAs("mbbRegProfileZ.pdf")
 
-# drawing
-				tin = fin.Get("Hbb/events")
-				l3('Drawing mbbReg[%d] --> %s'%(1 if 'NOM' in Tag else 2,h.GetName()))
-				tin.Draw("mbbReg[%d]>>+%s"%(1 if 'NOM' in Tag else 2,h.GetName()),TCut(CUT)*TCut(CUT2))
-			fout.cd()
-			###tin.Draw("mbbReg[1]>>%s"%(h.GetName()),CUT)
-			if not opts.unblind: h = INTERNALblind(h,100.,150.)
-			h.Scale(1./h.Integral())
-			h.SetDirectory(0)
-
-# ratio hist
-			hRat[(Tag,iCat)] = h.Clone(h.GetName().replace('hDat','hRat'))
-			r = hRat[(Tag,iCat)]
-			r.SetTitle(r.GetName())
-			r = INTERNALstyleHist(r,iCat,markers,colours,TYPE)
-
-# dividing by control CAT
-			##print "Divide: ", hDat[(Tag,0)].GetName()
-			r.Divide(hDat[(Tag,0)])
-			r.SetDirectory(0)
-			
-# fit
-			fFit[(Tag,iCat)] = TF1(h.GetName().replace('hDat','fitRatio'),'pol1',float(opts.fBound[0]),float(opts.fBound[1]))
-			f = fFit[(Tag,iCat)]
-			f.SetLineColor(colours[iCat])
-
-			h.Write(h.GetTitle(),TH1.kOverwrite)
-
-			if not iCat==0:
-				r.Fit(f,"RQ")
-				fitter = TVirtualFitter.GetFitter()
-				covariant = TMatrixDSym()
-				covariant.Use(fitter.GetNumberTotalParameters(),fitter.GetCovarianceMatrix())
-				nBins = 200
-				dx = (r.GetBinLowEdge(r.GetNbinsX()+1)-r.GetBinLowEdge(1))/float(nBins)
-				vx = array('f',[r.GetBinLowEdge(1)+(i+1)*dx for i in range(nBins)])
-				vy = array('f',[f.Eval(vx[i]) for i in range(nBins)])
-				vex = array('f',[0.0]*nBins)
-				vey = array('f',[sqrt(pow(vx[i],2)*covariant(1,1)+2.0*vx[i]*covariant(0,1)+covariant(0,0)) for i in range(nBins)])
-
-				gUnc[(Tag,iCat)] = TGraphErrors(nBins,vx,vy,vex,vey)
-				g = gUnc[(Tag,iCat)]
-				g.SetFillColor(colours[iCat])
-				g.SetFillStyle(3004)
-				
-				c1[Tag].cd()
-				h.Draw('same E')
-				hDat[(Tag,0)].GetYaxis().SetRangeUser(0.0,max(h.GetMaximum(),hDat[(Tag,0)].GetMaximum())*1.02)
-				gPad.Update()
-				leg.AddEntry(h,'CAT%d'%jCat,'P')
-				c2[Tag].cd(iCat)
-				ln.Draw()
-				g.Draw('same E3')
-				r.Draw('same')
-				ll = lleg[(Tag,iCat)] 
-				ll.AddEntry(h,'CAT%d / CAT%d'%(jCat,rCat),'P')
-				ll.SetY1(ll.GetY2()-ll.GetNRows()*0.06)
-				ll.SetTextSize(0.04)
-				ll.Draw()
-				r.GetYaxis().SetRangeUser(0.0,2.0)
-				r.Write(r.GetTitle(),TH1.kOverwrite)
-				g.Write(r.GetTitle().replace('hRat','gRat'),TH1.kOverwrite)
-			else:
-				c1[Tag] = TCanvas('MbbShape_sel%s_%s'%(Tag,TYPE),'MbbShape_sel%s_%s'%(Tag,TYPE),900,600)
-				c1[Tag].cd()
-				gPad.SetLeftMargin(0.12)
-				gPad.SetRightMargin(0.03)
-				h.GetYaxis().SetTitleOffset(0.8)
-				h.SetFillColor(kGray)
-				h.Draw('hist')
-				leg.AddEntry(h,'CAT%d'%jCat,'F')
-
-			fout.cd()
-			f.Write(f.GetName(),TH1.kOverwrite)
-
-		c1[Tag].cd()
-		leg.SetY1(leg.GetY2()-leg.GetNRows()*0.06)
-		leg.Draw()
-		c1[Tag].SaveAs('plots/transfer/%s%s.png'%(c1[Tag].GetName(),"_merged" if opts.merge else ""))
-		c1[Tag].SaveAs('plots/transfer/%s%s.pdf'%(c1[Tag].GetName(),"_merged" if opts.merge else ""))
-		c2[Tag].SaveAs('plots/transfer/%s%s.png'%(c2[Tag].GetName(),"_merged" if opts.merge else ""))
-		c2[Tag].SaveAs('plots/transfer/%s%s.pdf'%(c2[Tag].GetName(),"_merged" if opts.merge else ""))
-
-	#c.SaveAs('plots/transfer/%s.png'%c.GetName())
 
 # clean
-	for f in samples: f['tfile'].Close()
+	for f in samples: 
+            if f['tfile']: f['tfile'].Close()
 	fout.Close()
 
 ####################################################################################################

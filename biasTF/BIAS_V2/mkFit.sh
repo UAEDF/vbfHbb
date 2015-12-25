@@ -12,12 +12,18 @@ elif [[ "`uname -a`" == *schrodinger* ]]; then
 fi
 variablesslim="$basepath/../../common/vbfHbb_variables_2013_bareslim.json"
 globalpathskimslim="$basepath/flat"
+globalpath="/usb/data2/UAData/2015/"
 samples="VBF,GluGlu,Data,T,WJets,ZJets,QCD"
 samples_SoB_NOM="VBF125,GluGlu-Powheg125,DataA,DataB,DataC,DataD,T,WJets,ZJets"
 samples_SoB_VBF="VBF125,GluGlu-Powheg125,DataV,T,WJets,ZJets"
 
 usebool="--usebool" 
 
+#samples="T,WJets,ZJets,QCD"
+#samples="Data"
+samples="VBF125,GluGlu-Powheg125"
+preselZ="sNOM;nLeptons;Btag0_M;ZMASSWINDOW"
+cutspath="$basepath/../../common/vbfHbb_cuts_2015.json"
 preselNOM="sNOM;nLeptons"
 preselVBF="sVBF;nLeptons;sNOMveto"
 
@@ -54,9 +60,14 @@ if [ "$1" == "" ] || [ "$1" == "1" ];then
 	# VBF FitFlatTrees
 	$basepath/mkFitFlatTrees.py -d -D "$defaultopts" -G "$globalpath" --destination "./flat/" -t "VBF" --datatrigger "VBF" -p "$preselVBF" -s "$samples" -w "$NOweight" $usebool $notext
 	fi
+	if [ "$2" == "" ] || [ "$2" == "3" ]; then
+	# Z FitFlatTrees
+	$basepath/mkFitFlatTrees.py -d -D "$defaultopts" -C "$cutspath" -G "$globalpath" --destination "./flatZ/" -t "NOM" --datatrigger "NOM" -p "$preselZ" -s "$samples" -w "$NOweight" $usebool $notext
+#	$basepath/../../common/main.py -d -D "$defaultopts" -C "$cutspath" -G "$globalpath" -t "NOM" --datatrigger "NOM" -p "$preselZ,$preselZ;ZCAT0,$preselZ;ZCAT1,$preselZ;ZCAT2" -s "$samples" -w "19784.,LUMI;XSEC;PU#0;TNOM" $usebool $notext -y
+	fi
 fi
 
-if ([ "$1" == "" ] || [ "$1" == "1" ]) && ([ "$2" == "3" ] || [ "2" == "" ]); then
+if ([ "$1" == "" ] || [ "$1" == "1" ]) && ([ "$2" == "4" ] || [ "2" == "" ]); then
 	if [ ! -d ./flat/dataSeparate ]; then mkdir ./flat/dataSeparate; fi
 	if [ ! -f ./flat/Fit_MultiJetA_selNOM.root ]; then mv ./flat/dataSeparate/Fit_{MultiJet,BJetPlusX,VBF1Parked}*.root ./flat/; fi
 

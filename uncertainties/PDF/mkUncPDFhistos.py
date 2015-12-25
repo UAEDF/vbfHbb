@@ -12,6 +12,50 @@ from ROOT import *
 sys.argv = tempargv
 
 from toolkit import *
+global paves
+paves = []
+
+####################################################################################################
+def axisupdate(h):
+    ax = h.GetXaxis()
+    ax.SetTitleFont(42)
+    ax.SetTitleSize(0.045)
+    ax.SetTitleOffset(1.00)
+    ax.SetLabelFont(42)
+    ax.SetLabelSize(0.036)
+    ax.SetLabelOffset(0.005)
+#
+    ax = h.GetYaxis()
+    ax.SetTitleFont(42)
+    ax.SetTitleSize(0.036)
+    ax.SetTitleOffset(1.3)
+    ax.SetLabelFont(42)
+    ax.SetLabelSize(0.036)
+    ax.SetLabelOffset(0.005)
+#
+    return h
+
+####################################################################################################
+def putLine(x1,y1,x2,y2,style=kDashed,color=kGray+2,width=1):
+    global paves
+    l = TLine(x1,y1,x2,y2)
+    l.SetLineStyle(style)
+    l.SetLineColor(color)
+    l.SetLineWidth(width)
+    l.Draw()
+    paves += [l]
+
+####################################################################################################
+def putPave(text,x1,y1,align=12,font=42,size=0.045,color=kBlack,ndc=1):
+    global paves
+    l = TLatex(x1,y1,text)
+    l.SetNDC(1)
+    l.SetTextFont(font)
+    l.SetTextSize(size)
+    l.SetTextColor(color)
+    l.SetTextAlign(align)
+    l.Draw()
+    paves += [l]
 
 ##################################################
 def parser():
@@ -25,11 +69,11 @@ def parser():
 ##################################################
 class mycanvas():
 	def __init__(self,opts,base,var,pdf,suff):
-		self.cb = TCanvas("%s_%s_%s_UncPDF_relative"%(var,pdf,base),"%s_%s_%s_UncPDF_relative"%(var,pdf,base),1600,1200)
-		self.ct = TCanvas("%s_%s_%s_UncPDF_absolute"%(var,pdf,base),"%s_%s_%s_UncPDF_absolute"%(var,pdf,base),1600,1200)
+		self.cb = TCanvas("%s_%s_%s_UncPDF_relative"%(var,pdf,base),"%s_%s_%s_UncPDF_relative"%(var,pdf,base),900,750)
+		self.ct = TCanvas("%s_%s_%s_UncPDF_absolute"%(var,pdf,base),"%s_%s_%s_UncPDF_absolute"%(var,pdf,base),900,750)
 		onepad(opts,self.cb)
 		onepad(opts,self.ct)
-		self.c = TCanvas("%s_%s_%s_UncPDF"%(var,pdf,base),"%s_%s_%s_UncPDF"%(var,pdf,base),1600,1200)
+		self.c = TCanvas("%s_%s_%s_UncPDF"%(var,pdf,base),"%s_%s_%s_UncPDF"%(var,pdf,base),900,750)
 		self.p1,self.p2 = twopad(opts,self.c)
 		self.l = legend(0.75,0.5,0.99,0.95,"pdfset-%s (%s)"%(pdf,suff))
 		if not opts.noleg:
@@ -47,11 +91,11 @@ class mycanvas():
 ##################################################
 def onepad(opts,c):
 	c.cd()
-	c.SetTopMargin(0.05)
-	c.SetLeftMargin(0.12)
+	c.SetTopMargin(0.07)
+	c.SetLeftMargin(0.14)
 	if not opts.noleg: c.SetRightMargin(0.26)
-	else: c.SetRightMargin(0.05)
-	c.SetBottomMargin(0.10)
+	else: c.SetRightMargin(0.04)
+	c.SetBottomMargin(0.12)
 	c.SetFillStyle(0)
 	c.SetTicks(1,1)
 	c.Update()
@@ -61,14 +105,14 @@ def twopad(opts,c):
 	c.cd()
 	p1 = TPad("p1","p1",0.0,0.37,1.0,1.0)
 	p2 = TPad("p2","p2",0.0,0.0,1.0,0.4)
-	p1.SetTopMargin(0.05)
+	p1.SetTopMargin(0.07)
 	p1.SetBottomMargin(0.04)
-	p1.SetLeftMargin(0.12)
+	p1.SetLeftMargin(0.14)
 	#if not opts.noleg: p1.SetRightMargin(0.26)
 	#else: p1.SetRightMargin(0.12)
 	p1.SetRightMargin(0.26)
 	p2.SetTopMargin(0)
-	p2.SetLeftMargin(0.12)
+	p2.SetLeftMargin(0.14)
 	#if not opts.noleg: p2.SetRightMargin(0.26)
 	#else: p2.SetRightMargin(0.12)
 	p2.SetRightMargin(0.26)
@@ -93,7 +137,7 @@ def twopad(opts,c):
 ##	return hrat
 
 ##################################################
-def legend(left,bottom,right,top,title="",size=0.025):
+def legend(left,bottom,right,top,title="",size=0.035):
 	l = TLegend(left,bottom,right,top)
 	if not title=="":
 		l.SetTextSize(size*6/5)
@@ -102,8 +146,10 @@ def legend(left,bottom,right,top,title="",size=0.025):
 	l.SetTextFont(42)
 	l.SetTextSize(size)
 	l.SetTextColor(kBlack)
-	l.SetFillColor(TColor.GetColorBright(kGray))
-	l.SetFillStyle(1001)
+	#l.SetFillColor(TColor.GetColorBright(kGray))
+	#l.SetFillStyle(1001)
+	l.SetBorderSize(0)
+	l.SetFillStyle(0)
 	return l
 
 ##################################################
@@ -119,8 +165,8 @@ def GFromH(a,h,hp,hm,p):
 	g.GetXaxis().SetTitle(a.GetXaxis().GetTitle())
 	g.GetYaxis().SetTitle(a.GetYaxis().GetTitle())
 
-	g.GetXaxis().SetTitleOffset(1./(gPad.GetHNDC()))
-	g.GetYaxis().SetTitleOffset(1./(gPad.GetWNDC()))
+	g.GetXaxis().SetTitleOffset(1.1/(gPad.GetHNDC()))
+	g.GetYaxis().SetTitleOffset(1.3/(gPad.GetWNDC()))
 	g.GetXaxis().SetLabelOffset(0.005/(gPad.GetHNDC()))
 	g.GetYaxis().SetLabelOffset(0.005/(gPad.GetWNDC()))
 
@@ -162,6 +208,7 @@ def GFromH(a,h,hp,hm,p):
 ##################################################
 ##################################################
 def mkUncPDFhistos():
+        global paves
 	mp = parser()
 	opts,args = mp.parse_args()
 
@@ -170,16 +217,22 @@ def mkUncPDFhistos():
 	fname = opts.fout.split('/')[-1].replace('.root','')
 	makeDirs("plots/%s"%fname)
 
+        gStyle.SetPadLeftMargin(0.14)
+        gStyle.SetPadRightMargin(0.04)
+        gStyle.SetPadBottomMargin(0.12)
+        gStyle.SetPadTopMargin(0.07)
+
 	gStyle.SetOptStat(0)
-	gStyle.SetTitleFont(43)
-	gStyle.SetLabelFont(43)
+	gStyle.SetTitleFont(42)
+	gStyle.SetLabelFont(42)
 	gStyle.SetTitleSize(0.035,"XYZT")
+	gStyle.SetTitleSize(0.030,"Y")
 	gStyle.SetLabelSize(0.030,"XYZT")
 	gROOT.ProcessLine("gErrorIgnoreLevel = kWarning;")
 	gROOT.SetBatch(1)
 
 	keys = [k.GetName() for k in f.GetListOfKeys() if not '_' in k.GetName()]
-	axistitles = {'mvaNOM': 'mva set A', 'mvaVBF': 'mva set B', 'mbbReg1': 'regressed m_{b#bar{b}}', 'mbbReg2': 'regressed m_{b#bar{b}}'}
+	axistitles = {'mvaNOM': 'BDT output', 'mvaVBF': 'BDT output', 'mbbReg1': 'regressed m_{b#bar{b}} (GeV)', 'mbbReg2': 'regressed m_{b#bar{b}} (GeV)'}
 
 
 	for k in keys: 
@@ -257,20 +310,21 @@ def mkUncPDFhistos():
 					l2("Running for %s -- %s"%(v,p))
 					c.l.SetY1(0.95-0.032*(len(archive[v][p]) if not p=='all' else sum([len(archive[v][p2]) for p2 in archive[v].keys()]))-0.032*6/5)
 					if 'all' in p:
-						c.lt.SetY1(0.95-0.032*(len([x for x in list(itertools.chain(*[archive[v][p2].keys() for p2 in archive[v].keys()])) if 'cl' in x]))-0.032*6/5)
-						c.lb.SetY1(0.95-0.032*(len([x for x in list(itertools.chain(*[archive[v][p2].keys() for p2 in archive[v].keys()])) if 'cl' in x])+1)-0.032*6/5)
+						c.lt.SetY1(0.95-0.032*(len([x for x in list(itertools.chain(*[archive[v][p2].keys() for p2 in archive[v].keys()])) if 'cl' in x]))-0.038*6/5)
+						c.lb.SetY1(0.95-0.032*(len([x for x in list(itertools.chain(*[archive[v][p2].keys() for p2 in archive[v].keys()])) if 'cl' in x])+1)-0.038*6/5)
 						if opts.noleg:
-							c.lt.SetX1(0.15)
+							c.lt.SetX1(0.18)
 							c.lt.SetX2(0.40)
 							c.lt.SetY1(0.15)
-							c.lt.SetY2(0.15+0.032*(len([x for x in list(itertools.chain(*[archive[v][p2].keys() for p2 in archive[v].keys()])) if 'cl' in x])))#+0.032*6/5)
-							c.lb.SetX1(0.15)
+							c.lt.SetY2(0.15+0.038*(len([x for x in list(itertools.chain(*[archive[v][p2].keys() for p2 in archive[v].keys()])) if 'cl' in x])))#+0.032*6/5)
+							c.lb.SetX1(0.18)
 							c.lb.SetX2(0.40)
 							c.lb.SetY1(0.15)
-							c.lb.SetY2(0.15+0.032*(len([x for x in list(itertools.chain(*[archive[v][p2].keys() for p2 in archive[v].keys()])) if 'cl' in x])+1))#+0.032*6/5)
+							c.lb.SetY2(0.15+0.038*(len([x for x in list(itertools.chain(*[archive[v][p2].keys() for p2 in archive[v].keys()])) if 'cl' in x])+1))#+0.032*6/5)
 				
 					c.p1.cd()
 					haxisp1 = archive[v][p if not p=='all' else 'CT10']['cl' if not p=='band' else 'M'].Clone("axisp1")
+                                        haxisp1 = axisupdate(haxisp1)
 					haxisp1.GetXaxis().SetTitleSize(0)
 					haxisp1.GetXaxis().SetLabelSize(0)
 					haxisp1.GetYaxis().SetTitleOffset(haxisp1.GetYaxis().GetTitleOffset()/(1.-gPad.GetRightMargin()-gPad.GetLeftMargin()))
@@ -293,10 +347,11 @@ def mkUncPDFhistos():
 					else:        
 						haxisp2.GetYaxis().SetRangeUser(-opts.plotmax+eps,opts.plotmax-eps)
 						haxisp2.GetYaxis().SetNdivisions(506)
+                                        haxisp2 = axisupdate(haxisp2)
 					haxisp2.GetXaxis().SetLabelOffset(haxisp2.GetXaxis().GetLabelOffset()/(gPad.GetHNDC()))
-					haxisp2.GetXaxis().SetTitleOffset(haxisp2.GetXaxis().GetTitleOffset()/(gPad.GetHNDC()))
+					haxisp2.GetXaxis().SetTitleOffset(1.2*haxisp2.GetXaxis().GetTitleOffset()/(gPad.GetHNDC()))
 					haxisp2.GetYaxis().SetLabelOffset(haxisp2.GetYaxis().GetLabelOffset()/(1.-gPad.GetRightMargin()-gPad.GetLeftMargin()))
-					haxisp2.GetYaxis().SetTitleOffset(haxisp2.GetYaxis().GetTitleOffset()/(1.-gPad.GetRightMargin()-gPad.GetLeftMargin()))
+					haxisp2.GetYaxis().SetTitleOffset(1.2*haxisp2.GetYaxis().GetTitleOffset()/(1.-gPad.GetRightMargin()-gPad.GetLeftMargin()))
 					if v=='plain': 
 						haxisp2.SetNdivisions(101)
 						haxisp2.GetXaxis().SetBinLabel(1,'ALL')
@@ -317,10 +372,11 @@ def mkUncPDFhistos():
 					else:        
 						haxispb.GetYaxis().SetRangeUser(-opts.plotmax+eps,opts.plotmax-eps)
 						haxispb.GetYaxis().SetNdivisions(506)
+                                        haxispb = axisupdate(haxispb)
 					haxispb.GetXaxis().SetLabelOffset(haxispb.GetXaxis().GetLabelOffset()/(gPad.GetHNDC()))
-					haxispb.GetXaxis().SetTitleOffset(haxispb.GetXaxis().GetTitleOffset()/(gPad.GetHNDC()))
+					haxispb.GetXaxis().SetTitleOffset(1.2*haxispb.GetXaxis().GetTitleOffset()/(gPad.GetHNDC()))
 					haxispb.GetYaxis().SetLabelOffset(haxispb.GetYaxis().GetLabelOffset()/(gPad.GetWNDC())*1.1)
-					haxispb.GetYaxis().SetTitleOffset(haxispb.GetYaxis().GetTitleOffset()/(gPad.GetWNDC())*1.1)
+					haxispb.GetYaxis().SetTitleOffset(1.2*haxispb.GetYaxis().GetTitleOffset()/(gPad.GetWNDC())*1.1)
 					if v=='plain': 
 						haxispb.SetNdivisions(101)
 						haxispb.GetXaxis().SetBinLabel(1,'ALL')
@@ -329,7 +385,8 @@ def mkUncPDFhistos():
 					c.ct.cd()
 					gPad.Update()
 					haxispt = archive[v][p if not p=='all' else 'CT10']['cl' if not p=='band' else 'M'].Clone("axispt")
-					haxispt.GetYaxis().SetTitleOffset(haxispt.GetYaxis().GetTitleOffset()/(1.-gPad.GetRightMargin()-gPad.GetLeftMargin()))
+                                        haxispt = axisupdate(haxispt)
+					haxispt.GetYaxis().SetTitleOffset(1.2*haxispt.GetYaxis().GetTitleOffset()/(1.-gPad.GetRightMargin()-gPad.GetLeftMargin()))
 					haxispt.GetYaxis().SetLabelOffset(haxispt.GetYaxis().GetLabelOffset()/(1.-gPad.GetRightMargin()-gPad.GetLeftMargin()))
 					haxispt.GetYaxis().SetTitle("N")
 					#print suff
@@ -348,9 +405,9 @@ def mkUncPDFhistos():
 						haxispt.GetYaxis().SetRangeUser(-opts.plotmax+eps,opts.plotmax-eps)
 						haxispt.GetYaxis().SetNdivisions(506)
 					haxispt.GetXaxis().SetLabelOffset(haxispt.GetXaxis().GetLabelOffset()/(gPad.GetHNDC()))
-					haxispt.GetXaxis().SetTitleOffset(haxispt.GetXaxis().GetTitleOffset()/(gPad.GetHNDC()))
+					haxispt.GetXaxis().SetTitleOffset(1.2*haxispt.GetXaxis().GetTitleOffset()/(gPad.GetHNDC()))
 					haxispt.GetYaxis().SetLabelOffset(haxispt.GetYaxis().GetLabelOffset()/(gPad.GetWNDC())*1.1)
-					haxispt.GetYaxis().SetTitleOffset(haxispt.GetYaxis().GetTitleOffset()/(gPad.GetWNDC())*1.1)
+					haxispt.GetYaxis().SetTitleOffset(1.2*haxispt.GetYaxis().GetTitleOffset()/(gPad.GetWNDC())*1.1)
 					if v=='plain': 
 						haxispt.SetNdivisions(101)
 						haxispt.GetXaxis().SetBinLabel(1,'ALL')
@@ -490,6 +547,8 @@ def mkUncPDFhistos():
 					c.lb.Draw()
 		# saving
 					c.c.Update()
+                                        putPave("Set %s selection"%("A" if "NOM" in c.c.GetName() else "B"),gStyle.GetPadLeftMargin()+0.01,1.-gStyle.GetPadTopMargin()*0.5,align=12,font=62)
+                                        putPave("%.1f fb^{-1} (8 TeV)"%(19.8 if "NOM" in c.c.GetName() else 18.3),1.-gStyle.GetPadRightMargin()-0.01,1.-gStyle.GetPadTopMargin()*0.5,align=32,font=42)
 					c.c.SaveAs("plots/%s/%s/%s.png"%(fname,'yield' if suff=='' else 'acceptance',c.c.GetName()))
 					c.c.SaveAs("plots/%s/%s/%s.pdf"%(fname,'yield' if suff=='' else 'acceptance',c.c.GetName()))
 					if 'all' in p:

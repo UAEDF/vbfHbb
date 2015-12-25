@@ -11,12 +11,58 @@ from ROOT import *
 sys.argv = tempargv
 
 import main
+from math import *
 from optparse import OptionParser,OptionGroup
 from copy import deepcopy as dc
 from toolkit import *
 from dependencyFactory import *
 from write_cuts import *
 from array import array
+
+global paves
+paves = []
+
+####################################################################################################
+def axisupdate(h):
+    ax = h.GetXaxis()
+    ax.SetTitleFont(42)
+    ax.SetTitleSize(0.05)
+    ax.SetTitleOffset(1.00)
+    ax.SetLabelFont(42)
+    ax.SetLabelSize(0.05)
+    ax.SetLabelOffset(0.005)
+#
+    ax = h.GetYaxis()
+    ax.SetTitleFont(42)
+    ax.SetTitleSize(0.05)
+    ax.SetTitleOffset(1.2)
+    ax.SetLabelFont(42)
+    ax.SetLabelSize(0.04)
+    ax.SetLabelOffset(0.005)
+#
+    return h
+
+####################################################################################################
+def putLine(x1,y1,x2,y2,style=kDashed,color=kGray+2,width=1):
+    global paves
+    l = TLine(x1,y1,x2,y2)
+    l.SetLineStyle(style)
+    l.SetLineColor(color)
+    l.SetLineWidth(width)
+    l.Draw()
+    paves += [l]
+
+####################################################################################################
+def putPave(text,x1,y1,align=12,font=42,size=0.045,color=kBlack,ndc=1):
+    global paves
+    l = TLatex(x1,y1,text)
+    l.SetNDC(1)
+    l.SetTextFont(font)
+    l.SetTextSize(size)
+    l.SetTextColor(color)
+    l.SetTextAlign(align)
+    l.Draw()
+    paves += [l]
 
 # OPTION PARSER ####################################################################################
 def parser(mp=None):
@@ -207,7 +253,7 @@ def getCanvases(opts,fout,info):
 	gStyle.SetOptStat(0)
 	gStyle.SetPaintTextFormat(".3f")
         gROOT.ProcessLineSync('.x ../common/styleCMSTDR.C')
-        gStyle.SetPadTopMargin(0.08)
+        gStyle.SetPadTopMargin(0.07)
         gStyle.SetPadRightMargin(0.04)
         gStyle.SetPadBottomMargin(0.09)
         gStyle.SetPadLeftMargin(0.14)
@@ -220,7 +266,7 @@ def getCanvases(opts,fout,info):
 		h = fout.Get("ScaleFactors/%s"%(i.GetName()))
 		h.SetTitle("")
 		#h.GetXaxis().SetLabelSize(0.032)
-		h.GetXaxis().SetLabelSize(0.05)
+		#h.GetXaxis().SetLabelSize(0.05)
 		th2f = (h.IsA().GetName() == "TH2F")
 		if th2f and 'ScaleFactor' in h.GetName():
 			h.GetYaxis().SetNdivisions(0)
@@ -238,32 +284,40 @@ def getCanvases(opts,fout,info):
 			gPad.SetRightMargin(0.20 if not opts.notext else 0.04)
 			text.SetX1(text.GetX1()-0.04)
 			selleg.SetX1(selleg.GetX1()-0.04)
-			h.GetXaxis().SetTitleSize(0.06)
-			h.GetYaxis().SetTitleSize(0.06)
-			h.GetXaxis().SetLabelSize(0.06)
-			h.GetYaxis().SetLabelSize(0.05)
-			h.GetXaxis().SetLabelOffset(h.GetXaxis().GetLabelOffset()*1.1)
-			h.GetYaxis().SetLabelOffset(h.GetYaxis().GetLabelOffset()*1.3)
-			h.GetYaxis().SetTitleOffset(h.GetYaxis().GetTitleOffset()/1.1)
+			#h.GetXaxis().SetTitleSize(0.06)
+			#h.GetYaxis().SetTitleSize(0.06)
+			#h.GetXaxis().SetLabelSize(0.06)
+			#h.GetYaxis().SetLabelSize(0.05)
+			#h.GetXaxis().SetLabelOffset(h.GetXaxis().GetLabelOffset()*1.1)
+			#h.GetYaxis().SetLabelOffset(h.GetYaxis().GetLabelOffset()*1.3)
+			#h.GetYaxis().SetTitleOffset(h.GetYaxis().GetTitleOffset()/1.1)
+                        h = axisupdate(h)
 			h.GetXaxis().SetDecimals(kTRUE)
 			h.GetYaxis().SetDecimals(kTRUE)
 			h.GetYaxis().SetRangeUser(0,1.2)#round(h.GetMaximum()*1.5,1))
 			h.SetLineWidth(3)
-			h.DrawCopy("hist")
+                        h.DrawCopy("axis")
+                        tb = TBox(h.GetBinLowEdge(1),0,h.GetBinLowEdge(2),1.2)
+                        tb.SetLineColor(kGray)
+                        tb.SetFillColor(kGray)
+                        tb.SetFillStyle(1001)
+                        tb.Draw("same")
+			h.DrawCopy("hist,same")
 			h.SetMarkerSize(1.5)
 			h.SetFillColor(kBlue)
 			h.SetFillStyle(3018)#3018)
 			h.Draw("e2same,text70")
 			gPad.Update()
+                        gPad.RedrawAxis()
 			error=[None]*h.GetNbinsX()
 			for i in range(1,h.GetNbinsX()+1): 
 				if not 'ALL' in h.GetXaxis().GetBinLabel(i) and float(re.search('([A-Z]*)([0-9+-]*)',h.GetXaxis().GetBinLabel(i)).group(2))<0:
 						ctr = h.GetXaxis().GetBinCenter(i)
 						wid = h.GetXaxis().GetBinWidth(i)
 						pave = TPave(ctr-wid/2.,gPad.GetUymin(),ctr+wid/2.,gPad.GetUymax())
-						pave.SetFillColor(kGray+1)
-						pave.SetFillStyle(3003)
-						pave.Draw("same")
+						pave.SetFillColor(kGray)
+						pave.SetFillStyle(1001)
+						#pave.Draw("same")
 				if h.GetBinContent(i)==0: continue
 				error[i-1] = extraText(i-h.GetBinWidth(i)/2.,h.GetBinContent(i),"#pm %.3f"%h.GetBinError(i))
 				error[i-1].Draw("same")
@@ -276,8 +330,16 @@ def getCanvases(opts,fout,info):
 		line = TLine(h.GetNbinsX()-1,0.0,h.GetNbinsX()-1,gPad.GetUymax())
 		line.SetLineWidth(4)
 		line.Draw("same")
-		text.Draw("same")
-		if not opts.notext: selleg.Draw("same")
+		#text.Draw("same")
+		#if not opts.notext: selleg.Draw("same")
+                samplenames = {"GF":"GF","Tall": "Top", "ZJets":"Z+jets","QCD":"QCD","VBF125":"VBF"}
+                for lline in text.GetListOfLines():
+                    if "sample" in lline.GetTitle():
+                        sample = re.search("sample: (.*)",lline.GetTitle()).group(1)
+                        if not sample in samplenames: continue
+                        putPave(samplenames[sample]+" sample",0.5,gStyle.GetPadBottomMargin()+0.08,align=22,font=62,size=0.036)
+                        print sample
+                        print
 
                 pcms1 = TPaveText(gPad.GetLeftMargin(),1.-gPad.GetTopMargin(),0.3,1.,"NDC")
                 pcms1.SetTextAlign(12)
@@ -286,7 +348,7 @@ def getCanvases(opts,fout,info):
                 pcms1.SetFillStyle(-1)
                 pcms1.SetBorderSize(0)
                 pcms1.AddText("CMS")
-                pcms1.Draw()
+                #pcms1.Draw()
                 
                 pcms2 = TPaveText(0.6,1.-gPad.GetTopMargin(),1.-gPad.GetRightMargin()+0.015,1.,"NDC")
                 pcms2.SetTextAlign(32)
@@ -295,12 +357,16 @@ def getCanvases(opts,fout,info):
                 pcms2.SetFillStyle(-1)
                 pcms2.SetBorderSize(0)
                 pcms2.AddText("%.1f fb^{-1} (8 TeV)"%(19.8 if 'NOM' in fout.GetName() else 18.3))
-                pcms2.Draw()
+                #pcms2.Draw()
 
+                gStyle.SetPaintTextFormat(".3g")
+                putPave("Set %s selection"%("A" if 'NOM_' in fout.GetName() else "B"),gStyle.GetPadLeftMargin()+0.01,1.-0.5*gStyle.GetPadTopMargin(),align=12,font=62)
+                putPave("%.1f fb^{-1} (8 TeV)"%(19.8 if 'NOM_' in fout.GetName() else 18.3),1.-gStyle.GetPadRightMargin()-0.01,1.-0.5*gStyle.GetPadTopMargin(),align=32,font=42)
 		gPad.Update()
 		gDirectory.cd("%s:/Canvases"%(fout.GetName()))
 		c.Update()
 		c.Write(c.GetName(),TH1.kOverwrite)
+                gPad.RedrawAxis()
 		c.SaveAs("plots/%s/TriggerUncertainty/%s%s.pdf"%(os.path.split(fout.GetName())[1][:-5],c.GetName(),'' if not opts.notext else '_noleg'))
 		c.SaveAs("plots/%s/TriggerUncertainty/%s%s.png"%(os.path.split(fout.GetName())[1][:-5],c.GetName(),'' if not opts.notext else '_noleg'))
 		c.Update()
@@ -358,7 +424,7 @@ def printText(opts,top,left,sample,selection,mapvars,fontSize=0.020,fontColor=kB
 	if not opts.notext:
 		text.AddText("CMS preliminary")
 		text.AddText("VBF H#rightarrow b#bar{b}")
-		text.AddText("L = %.1f fb^{-1}"%(19800./1000. if selection=="Set A" else 18300./1000. if selection=="Set B" else "???")) # NOM VBF
+		text.AddText("%.1f fb^{-1}"%(19800./1000. if selection=="Set A" else 18300./1000. if selection=="Set B" else "???")) # NOM VBF
 	text.AddText("%s selection"%selection.replace('VBF','Set B').replace('NOM','Set A'))
 	text.AddText("sample: %s"%sample)
 	text.AddText("2D map: %s"%(' & '.join([(varnames[x] if x in varnames else x) for x in mapvars])))
@@ -377,6 +443,7 @@ def printSelleg(top,left,selection,trigger,fontSize=0.020,fontColor=kBlack):
 
 ####################################################################################################
 def mkTriggerUncertainties():
+        global paves
 	## init main (including option parsing)
 	#opts,samples,variables,loadedSamples,fout,KFWghts = main.main(parser())
 	mp = parser()

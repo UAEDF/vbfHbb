@@ -6,12 +6,12 @@ from array import array
 from time import time
 from copy import deepcopy as dc
 
-sys.path.append("../common")
-sys.path.append("../fitbias")
+sys.path.append("../../common")
+sys.path.append("../../fitbias")
 
 from toolkit import *
 from write_cuts import *
-from fitTF1 import fitTF1
+#from fitTF1 import fitTF1
 import main
 
 import ROOT
@@ -37,7 +37,7 @@ def parser(mp=None):
 	mu1 = OptionGroup(mp,"Extra options:")
 	mu1.add_option("--tag",help="Tags for selection/trigger set.",default=[],type="str",action="callback",callback=optsplit,dest="tag")
 	#mu1.add_option('-c','--categories',help=blue+'Pick for categories.'+plain,dest='categories',type="str",default=[],action='callback',callback=optsplit)
-	mu1.add_option('-B','--categoryboundaries',help=blue+'Boundaries for categories.'+plain,dest='categoryboundaries',type="str",default=[[-1.001,-0.6,0.0,0.70,0.84,1.001],[-1.001,0.0,0.4,0.8,1.001]],action='callback',callback=optsplitlist)
+	mu1.add_option('-B','--categoryboundaries',help=blue+'Boundaries for categories.'+plain,dest='categoryboundaries',type="str",default=[[-1.001,-0.6,0.0,0.70,0.84,1.001],[-1.001,-0.1,0.4,0.8,1.001]],action='callback',callback=optsplitlist)
 	mu1.add_option('--noleg',help='No legend border on the right. Essentials on the plot.',default=False,action='store_true')
 	mp.add_option_group(mu1)
 	return mp 

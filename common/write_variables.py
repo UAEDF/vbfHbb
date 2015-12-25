@@ -2,6 +2,7 @@
 
 from optparse import OptionParser
 import datetime,sys,os,re,json
+from datetime import datetime,date
 basepath=os.path.split(os.path.abspath(__file__))[0]
 sys.path.append(basepath)
 
@@ -13,7 +14,7 @@ sys.argv = tempargv
 
 from toolkit import * 
 
-today = datetime.date.today().strftime('%Y%m%d')
+today = datetime.today().strftime('%Y%m%d')
 
 class info:
 	def __init__(self,oname):

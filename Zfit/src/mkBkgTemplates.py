@@ -7,8 +7,8 @@ from optparse import OptionParser,OptionGroup
 import warnings
 warnings.filterwarnings( action='ignore', category=RuntimeWarning, message='.*class stack<RooAbsArg\*,deque<RooAbsArg\*> >' )
 
-basepath=os.path.split(os.path.abspath(__file__))[0]+"/../../"
-sys.path.append(basepath+"common/")
+basepath=os.path.split(os.path.abspath(__file__))[0]+"/../"
+sys.path.append("../common/")
 
 tempargv = sys.argv[:]
 sys.argv = []
@@ -48,18 +48,19 @@ def parser(mp=None):
 
 ####################################################################################################
 def style():
-	gROOT.SetBatch(1)
-	gROOT.ProcessLineSync(".x %s/styleCMSTDR.C"%basepath)
-	gROOT.ForceStyle()
-	gStyle.SetPadTopMargin(0.065)
-	gStyle.SetPadRightMargin(0.04)
+        gROOT.SetBatch(1)
+        gROOT.ProcessLineSync(".x %s/styleCMSTDR.C"%basepath)
+        gROOT.ForceStyle()
+        gStyle.SetPadTopMargin(0.065)
+        gStyle.SetPadRightMargin(0.04)
         gStyle.SetPadLeftMargin(0.14)
         gStyle.SetTitleSize(0.055,"XY")
         gStyle.SetTitleOffset(1.15,"Y")
         gStyle.SetTitleOffset(1.05,"X")
-	gROOT.ProcessLineSync("gErrorIgnoreLevel = kWarning;")
-	RooMsgService.instance().setSilentMode(kTRUE)
-	for i in range(2): RooMsgService.instance().setStreamStatus(i,kFALSE)
+        gROOT.ProcessLineSync("gErrorIgnoreLevel = kWarning;")
+        gStyle.SetLineScalePS(1.7)
+        RooMsgService.instance().setSilentMode(kTRUE)
+        for i in range(2): RooMsgService.instance().setStreamStatus(i,kFALSE)
 
 def hStyle(h,i,sumw2=True):
 	if sumw2: h.Sumw2()
@@ -77,31 +78,33 @@ def gaStyle(g,i):
 	g.SetFillStyle(1001)
 
 ####################################################################################################
-def RooDraw(can,x,h,model,S,C,Cp,text,archive,ylabel=None):
-	can.cd(C+1)
-	frame = x.frame()
-	h.plotOn(frame)
-	model.plotOn(frame,RooFit.LineWidth(2),RooFit.LineColor(kMagenta+2 if "Z" in can.GetName() else kGreen+2))
-	frame.GetXaxis().SetTitle("m_{b#bar{b}} (GeV)")
+def RooDraw(can,x,h,model,S,C,Cp,text,archive,ylabel=None,ymax=None):
+        can.cd(C+1)
+        frame = x.frame()
+        h.plotOn(frame)
+        model.plotOn(frame,RooFit.LineWidth(2),RooFit.LineColor(kMagenta+2 if "Z_" in can.GetName() else kGreen+2))
+        if "Z_" in can.GetName(): model.plotOn(frame,RooFit.Components("Z_bkg_CAT%d"%Cp),RooFit.LineWidth(2),RooFit.LineColor(kMagenta+2 if "Z_" in can.GetName() else kGreen+2),RooFit.LineStyle(kDashed))
+        frame.GetXaxis().SetTitle("m_{b#bar{b}} (GeV)")
         if not ylabel==None: frame.GetYaxis().SetTitle(ylabel)
-	frame.GetYaxis().SetNdivisions(507)
-	frame.Draw()
-	right,top = gStyle.GetPadRightMargin(),gStyle.GetPadTopMargin()
-	pave = TPaveText(0.68,0.75,1.-right-top*0.3333,1.-top*1.666,"NDC")
-	pave.SetTextAlign(11)
-	pave.SetFillStyle(-1)
-	pave.SetBorderSize(0)
-	pave.SetTextFont(62)
-	pave.SetTextSize(top*0.70)
-	#pave.AddText("%s selection"%(S.label.replace('NOM','Set A') if 'NOM' in S.label else S.label.replace('PRK','Set B')))
-	pave.AddText("CAT%d"%Cp)
-	a = pave.AddText(text)
-        a.SetTextColor(kMagenta+2 if "Z" in can.GetName() else kGreen+2)
-	pave.Draw()
-	gPad.Update()
-	pave.SetY1NDC(pave.GetY2NDC()-pave.GetTextSize()*1.25*pave.GetListOfLines().GetSize())
-	pave.Draw()
-	archive += [pave]
+        if not ymax==None: frame.GetYaxis().SetRangeUser(0,ymax)
+        frame.GetYaxis().SetNdivisions(507)
+        frame.Draw()
+        right,top = gStyle.GetPadRightMargin(),gStyle.GetPadTopMargin()
+        pave = TPaveText(0.68,0.75,1.-right-top*0.3333,1.-top*1.666,"NDC")
+        pave.SetTextAlign(11)
+        pave.SetFillStyle(-1)
+        pave.SetBorderSize(0)
+        pave.SetTextFont(62)
+        pave.SetTextSize(top*0.70)
+        #pave.AddText("%s selection"%(S.label.replace('NOM','Set A') if 'NOM' in S.label else S.label.replace('PRK','Set B')))
+        pave.AddText("CAT%d"%Cp)
+        a = pave.AddText(text)
+        a.SetTextColor(kMagenta+2 if "Z_" in can.GetName() else kGreen+2)
+        pave.Draw()
+        gPad.Update()
+        pave.SetY1NDC(pave.GetY2NDC()-pave.GetTextSize()*1.25*pave.GetListOfLines().GetSize())
+        pave.Draw()
+        archive += [pave]
 
 ####################################################################################################
 def main():
@@ -125,7 +128,7 @@ def main():
 
 # New histograms, graphs, containers
 	w = RooWorkspace("w","workspace")
-	CN0 = TCanvas("c1","c1",1800,1500)
+	CN0 = TCanvas("c1","c1",2700,750)
 	kJES = [None]*(SC.nsel)
 	kJER = [None]*(SC.nsel)
 	archive = []
@@ -149,37 +152,38 @@ def main():
 # Selection loop
 	for iS,S in enumerate(SC.selections):
  ## Container ## Containers
- 		hMbb = {}
- 		hMbbYield = {}
- 		rh_Z = {}
- 		rh_T = {}
+		hMbb = {}
+		hMbbYield = {}
+		rh_Z = {}
+		rh_T = {}
  ## File reading
 		inf = [None]*(len(fnames['files'])/2)
 		fi = 0
 		for f in fnames['files'].itervalues():
-			if 'sel%s'%S.tag in f['fname']: 
+			if 'selNOM' in f['fname']: 
 				inf[fi] = TFile.Open("flat/"+f['fname'],'read')
 				fi += 1
  ## Canvas definition
-		canZ = TCanvas("canZ_sel%s"%S.tag,"canZ_sel%s"%S.label,1800,1500)
-		canT = TCanvas("canT_sel%s"%S.tag,"canT_sel%s"%S.label,1800,1500)
-		canZ.Divide(2,2)
-		canT.Divide(2,2)
+		canZ = TCanvas("canZ_sel%s"%S.tag,"canZ_sel%s"%S.label,2700,750)
+		canT = TCanvas("canT_sel%s"%S.tag,"canT_sel%s"%S.label,2700,750)
+		canZ.Divide(3,1)
+		canT.Divide(3,1)
 		can = TCanvas("c","c",900,600)
  ## Nuissance parameters
- 		nVar = "CMS_vbfbb_scale_mbb_sel%s"%S.tag
+		nVar = "CMS_vbfbb_scale_mbb_sel%s"%S.tag
 		kJES[iS] = RooRealVar(nVar,nVar,1.0)
- 		nVar = "CMS_vbfbb_res_mbb_sel%s"%S.tag
+		nVar = "CMS_vbfbb_res_mbb_sel%s"%S.tag
 		kJER[iS] = RooRealVar(nVar,nVar,1.0)
 		kJES[iS].setConstant(kTRUE)
 		kJER[iS].setConstant(kTRUE)
-		
+    
 ## Category loop
 		for C in range(S.ncat):
 			Cp = C + sum([x for x in SC.ncats[0:iS]])
 			if C>2: NBINS=12
 			else: NBINS=opts.NBINS[iS]
 ### File loop
+                        tt, st = 0,0
 			for fi,F in enumerate(inf):
 				ni = F.GetName()
 				niShort = os.path.split(F.GetName())[1]
@@ -191,9 +195,10 @@ def main():
   #### Load tree
 				T = F.Get("Hbb/events")
   #### Define cut
-				cut = TCut("puWt[0]*trigWt%s%s*(mva%s>%.2f && mva%s<=%.2f)"%(S.tag,("" if S.tag=="VBF" else "[1]"),S.tag,S.boundaries[C],S.tag,S.boundaries[C+1]))
+				cut = TCut("puWt[0]*trigWtNOM%s*(mva%s>%.2f && mva%s<=%.2f)"%("" if S.tag=="VBF" else "[1]",S.tag,S.boundaries[C],S.tag,S.boundaries[C+1]))
+                                cut.Print()
   #### Draw mass
-  				hMbb[N] = TH1F(N,N,NBINS,opts.X[0],opts.X[1])
+				hMbb[N] = TH1F(N,N,NBINS,opts.X[0],opts.X[1])
 				h = hMbb[N]
 				h.Sumw2()
 				can.cd()
@@ -202,6 +207,7 @@ def main():
 				hY = hMbbYield[NYield]
 				xsec,npass = float(fnames['files'][niShort]['xsec']),float(fnames['files'][niShort]['npassed'])
 				hY.Scale(opts.LUMI[iS]*xsec/npass)
+                                print ni, hY.Integral()
 
 #
 #--- end of FILE loop
@@ -232,52 +238,52 @@ def main():
 					else: hSTY.Add(hY)
 			hTY = hTTY.Clone("TopYield")
 			hTY.Add(hSTY)
-			hZY.Add(hWY)
-			for o in hW,hZ,hST,hTT,hT,hWY,hZY,hSTY,hTTY,hTY: archive += [o]
-                        hZ.GetYaxis().SetTitle("Events / (%.f GeV)"%hZ.GetBinWidth(1))
-                        hTY.GetYaxis().SetTitle("Events / (%.f GeV)"%hTY.GetBinWidth(1))
-                        hSTY.GetYaxis().SetTitle("Events / (%.f GeV)"%hSTY.GetBinWidth(1))
+			#hZY.Add(hWY)
+			for o in hST,hTT,hT,hWY,hZY,hSTY,hTTY,hTY: archive += [o]
+			hZ.GetYaxis().SetTitle("Events / (%.1f GeV)"%hZ.GetBinWidth(1))
+			hTY.GetYaxis().SetTitle("Events / (%.1f GeV)"%hTY.GetBinWidth(1))
+			hSTY.GetYaxis().SetTitle("Events / (%.1f GeV)"%hSTY.GetBinWidth(1))
 
 ####################################################################################################
 #### Start of RooFit part 
   ## Yields
 			x   = RooRealVar("mbbReg_CAT%d"%Cp,"mbbReg_CAT%d"%Cp,opts.X[0],opts.X[1])
-			YZ  = RooRealVar("yield_ZJets_CAT%d"%Cp,"yield_ZJets_CAT%d"%Cp,hZY.Integral())
-			YW  = RooRealVar("yield_WJets_CAT%d"%Cp,"yield_WJets_CAT%d"%Cp,hWY.Integral())
+#			YZ  = RooRealVar("yield_ZJets_CAT%d"%Cp,"yield_ZJets_CAT%d"%Cp,hZY.Integral())
+#			YW  = RooRealVar("yield_WJets_CAT%d"%Cp,"yield_WJets_CAT%d"%Cp,hWY.Integral())
 			YTT = RooRealVar("yield_TTJets_CAT%d"%Cp,"yield_TTJets_CAT%d"%Cp,hTTY.Integral())
 			YST = RooRealVar("yield_singleT_CAT%d"%Cp,"yield_singleT_CAT%d"%Cp,hSTY.Integral())
 			YT  = RooRealVar("yield_Top_CAT%d"%Cp,"yield_Top_CAT%d"%Cp,hTY.Integral())
   ## Z Fit
-			rh_Z["CAT%d"%Cp] = RooDataHist("roohist_Z_CAT%d"%Cp,"roothist_Z_CAT%d"%(Cp),RooArgList(x),hZ)
-			mZ              = RooRealVar("Z_mean_CAT%d"%Cp,"Z_mean_CAT%d"%Cp,95,80,110)
-			sZ              = RooRealVar("Z_sigma_CAT%d"%Cp,"Z_sigma_CAT%d"%Cp,12,9,20)
-			mZShift         = RooFormulaVar("Z_mean_shifted_CAT%d"%Cp,"@0*@1",RooArgList(mZ,kJES[iS]))
-			sZShift         = RooFormulaVar("Z_sigma_shifted_CAT%d"%Cp,"@0*@1",RooArgList(sZ,kJER[iS]))
-			aZ              = RooRealVar("Z_a_CAT%d"%Cp,"Z_a_CAT%d"%Cp,-1,-10,10)
-			nZ              = RooRealVar("Z_n_CAT%d"%Cp,"Z_n_CAT%d"%Cp,1,0,10)
-			Zb0,Zb1,Zb2     = [RooRealVar("Z_b%d_CAT%d"%(i,Cp),"Z_b%d_CAT%d"%(i,Cp),0.5,0,1) for i in range(3)]
-  ### Bkg part: Bernstein
-  			Zbkg            = RooBernstein("Z_bkg_CAT%d"%Cp,"Z_bkg_CAT%d"%Cp,x,RooArgList(Zb0,Zb1,Zb2))
-  ### Sig part: Crystal Ball
-  			Zcore           = RooCBShape("Zcore_CAT%d"%Cp,"Zcore_CAT%d"%Cp,x,mZShift,sZShift,aZ,nZ)
-			fZsig           = RooRealVar("fZsig_CAT%d"%Cp,"fZsig_CAT%d"%Cp,0.7,0,1)
-  ### Combined model
-  			modelZ          = RooAddPdf("Z_model_CAT%d"%Cp,"Z_model_CAT%d"%Cp,RooArgList(Zcore,Zbkg),RooArgList(fZsig))
-  ### Fit Z
-  			resZ            = modelZ.fitTo(rh_Z["CAT%d"%Cp],RooFit.Save())
-			resZ.Print()
-  ### Draw Z
-  			RooDraw(canZ,x,rh_Z["CAT%d"%Cp],modelZ,S,C,Cp,"Z template",archive,hZ.GetYaxis().GetTitle())
-			canZ.cd(C+1)
-                        pCMS1.Clear()
-	                pCMS1.AddText("%s selection"%("Set A" if iS==0 else "Set B"))
-                        pCMS2.Clear()
-	                pCMS2.AddText("%.1f fb^{-1} (8 TeV)"%(19.8 if iS==0 else 18.3))
-			pCMS1.Draw()
-			pCMS2.Draw()
+##			rh_Z["CAT%d"%Cp] = RooDataHist("roohist_Z_CAT%d"%Cp,"roothist_Z_CAT%d"%(Cp),RooArgList(x),hZ)
+#			mZ              = RooRealVar("Z_mean_CAT%d"%Cp,"Z_mean_CAT%d"%Cp,95,80,110)
+#			sZ              = RooRealVar("Z_sigma_CAT%d"%Cp,"Z_sigma_CAT%d"%Cp,12,9,20)
+#			mZShift         = RooFormulaVar("Z_mean_shifted_CAT%d"%Cp,"@0*@1",RooArgList(mZ,kJES[iS]))
+#			sZShift         = RooFormulaVar("Z_sigma_shifted_CAT%d"%Cp,"@0*@1",RooArgList(sZ,kJER[iS]))
+#			aZ              = RooRealVar("Z_a_CAT%d"%Cp,"Z_a_CAT%d"%Cp,-1,-10,10)
+#			nZ              = RooRealVar("Z_n_CAT%d"%Cp,"Z_n_CAT%d"%Cp,1,0,10)
+#			Zb0,Zb1,Zb2     = [RooRealVar("Z_b%d_CAT%d"%(i,Cp),"Z_b%d_CAT%d"%(i,Cp),0.5,0,1) for i in range(3)]
+#  ### Bkg part: Bernstein
+#			Zbkg            = RooBernstein("Z_bkg_CAT%d"%Cp,"Z_bkg_CAT%d"%Cp,x,RooArgList(Zb0,Zb1,Zb2))
+#  ### Sig part: Crystal Ball
+#			Zcore           = RooCBShape("Zcore_CAT%d"%Cp,"Zcore_CAT%d"%Cp,x,mZShift,sZShift,aZ,nZ)
+#			fZsig           = RooRealVar("fZsig_CAT%d"%Cp,"fZsig_CAT%d"%Cp,0.7,0,1)
+#  ### Combined model
+#			modelZ          = RooAddPdf("Z_model_CAT%d"%Cp,"Z_model_CAT%d"%Cp,RooArgList(Zcore,Zbkg),RooArgList(fZsig))
+#  ### Fit Z
+#			resZ            = modelZ.fitTo(rh_Z["CAT%d"%Cp],RooFit.Save())
+#			resZ.Print()
+#  ### Draw Z
+#			RooDraw(canZ,x,rh_Z["CAT%d"%Cp],modelZ,S,C,Cp,"Z template",archive,hZ.GetYaxis().GetTitle())
+#			canZ.cd(C+1)
+#			pCMS1.Clear()
+#			pCMS1.AddText("%s selection"%("Set A" if iS==0 else "Set B"))
+#			pCMS2.Clear()
+#			pCMS2.AddText("%.1f fb^{-1} (8 TeV)"%(19.8 if iS==0 else 18.3))
+#			pCMS1.Draw()
+#			pCMS2.Draw()
 
   ## T Fit
-  			rh_T["CAT%d"%Cp] = RooDataHist("roohist_Top_CAT%d"%Cp,"roohist_Top_CAT%d"%(Cp),RooArgList(x),hTY if C<3 else hSTY)
+			rh_T["CAT%d"%Cp] = RooDataHist("roohist_Top_CAT%d"%Cp,"roohist_Top_CAT%d"%(Cp),RooArgList(x),hTY if C<3 else hSTY)
 			mT              = RooRealVar("Top_mean_CAT%d"%Cp,"Top_mean_CAT%d"%Cp,130,0,200)
 			sT              = RooRealVar("Top_sigma_CAT%d"%Cp,"Top_sigma_CAT%d"%Cp,50,0,200)
 			mTShift         = RooFormulaVar("Top_mean_shifted_CAT%d"%Cp,"@0*@1",RooArgList(mT,kJES[iS]))
@@ -286,20 +292,21 @@ def main():
 			modelT          = RooGaussian("Top_model_CAT%d"%Cp,"Top_model_CAT%d"%Cp,x,mTShift,sTShift)
   ### Fit T
 			resT            = modelT.fitTo(rh_T["CAT%d"%Cp],RooFit.Save(),RooFit.SumW2Error(kTRUE))#,"q")
+                        resT.Print()
   ### Draw T
-  			RooDraw(canT,x,rh_T["CAT%d"%Cp],modelT,S,C,Cp,"Top template",archive,hTY.GetYaxis().GetTitle() if C<3 else hSTY.GetYaxis().GetTitle())
+			RooDraw(canT,x,rh_T["CAT%d"%Cp],modelT,S,C,Cp,"Top template",archive,hTY.GetYaxis().GetTitle() if C<3 else hSTY.GetYaxis().GetTitle(),hTY.GetBinContent(hTY.GetMaximumBin())*1.35 if C<3 else hSTY.GetBinContent(hSTY.GetMaximumBin())*1.35)
 			canT.cd(C+1)
-                        pCMS1.Clear()
-	                pCMS1.AddText("%s selection"%("Set A" if iS==0 else "Set B"))
-                        pCMS2.Clear()
-	                pCMS2.AddText("%.1f fb^{-1} (8 TeV)"%(19.8 if iS==0 else 18.3))
+			pCMS1.Clear()
+			pCMS1.AddText("Z selection")
+			pCMS2.Clear()
+			pCMS2.AddText("%.1f fb^{-1} (8 TeV)"%(19.8 if iS==0 else 18.3))
 			pCMS1.Draw()
 			pCMS2.Draw()
 
 #### Set Constants
-			for o in [mZ,sZ,aZ,nZ,Zb0,Zb1,Zb2,fZsig,mT,sT]: o.setConstant(kTRUE)
+			for o in [mT,sT]: o.setConstant(kTRUE)
 #### Import objects
-			for o in [modelZ,modelT,YZ,YT,YTT,YST]:
+			for o in [modelT,YT,YTT,YST]:
 				getattr(w,'import')(o)
 				if opts.verbosity>0 and not opts.quiet: o.Print()
 
@@ -308,8 +315,8 @@ def main():
 #
 
 		makeDirs("%s/plot/bkgTemplates/"%opts.workdir)
-		canZ.SaveAs("%s/plot/bkgTemplates/%s.pdf"%(opts.workdir,canZ.GetName()))
-		canZ.SaveAs("%s/plot/bkgTemplates/%s.png"%(opts.workdir,canZ.GetName()))
+#		canZ.SaveAs("%s/plot/bkgTemplates/%s.pdf"%(opts.workdir,canZ.GetName()))
+#                canZ.SaveAs("%s/plot/bkgTemplates/%s.png"%(opts.workdir,canZ.GetName()))
 		canT.SaveAs("%s/plot/bkgTemplates/%s.pdf"%(opts.workdir,canT.GetName()))
 		canT.SaveAs("%s/plot/bkgTemplates/%s.png"%(opts.workdir,canT.GetName()))
 	

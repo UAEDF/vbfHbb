@@ -14,6 +14,8 @@ import ROOT
 from ROOT import *
 sys.argv = tempargv
 
+global paves
+paves = []
 
 # PRINTING #########################################################################################
 def l1(text):
@@ -375,11 +377,15 @@ def SELsetup(option,opt=None,value=None,parser=None):
 	else: return s
 
 ####################################################################################################
-def set_palette(ncontours=999):
-    stops = [0.00, 0.30, 1.00]
+def set_palette(ncontours=999,mainblue=True,split=0.30):
+    stops = [0.00, split, 1.00]
     red   = [0.85, 0.95, 0.00]
-    green = [0.85, 0.95, 0.30]
-    blue  = [0.50, 0.95, 0.90]
+    if mainblue:
+        green = [0.85, 0.95, 0.30]
+        blue  = [0.50, 0.95, 0.90]
+    else:
+        green = [0.85,0.95,0.60]
+        blue  = [0.5,0.95,0.00]
 
     s = array('d', stops)
     r = array('d', red)
@@ -433,3 +439,34 @@ def testimate(tref,i,N):
     m,s = divmod(trem,60)
     p = 100 - float(i)/float(N)*100
     return [m,s],p
+
+####################################################################################################
+def epavetext(text,x,y,x2,y2,size=0.04,hl=1):
+    global paves
+    p = TPaveText(x,y,x2,y2,"NDC")
+    p.SetTextSize(size)
+    p.SetTextFont(42)
+    p.SetTextAlign(11)
+    p.SetTextColor(kBlack)
+    p.SetFillStyle(0)
+    p.SetBorderSize(0)
+    for i,t in enumerate(text): 
+        ti = p.AddText(t)
+        if i==0: ti.SetTextFont(62)
+    p.SetY1NDC(p.GetY2NDC()-len(p.GetListOfLines())*size*1.25)
+    p.Draw("same")
+    paves += [p]
+    return p
+
+####################################################################################################
+def epave(text,x,y,pos="left",hl=1,size=0.028):
+    global paves
+    p = TLatex(x,y,text)
+    p.SetNDC()
+    p.SetTextSize(size)
+    p.SetTextFont(62 if hl==1 else 42)
+    p.SetTextAlign(12 if pos=="left" else (32 if pos=="right" else 22))
+    p.SetTextColor(kBlack)
+    p.Draw("same")
+    paves += [p]
+

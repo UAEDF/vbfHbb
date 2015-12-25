@@ -4,6 +4,7 @@ import os,sys,re,json,datetime
 from glob import glob
 from array import array
 from optparse import OptionParser,OptionGroup
+from copy import deepcopy as dc
 import warnings
 warnings.filterwarnings( action='ignore', category=RuntimeWarning, message='.*class stack<RooAbsArg\*,deque<RooAbsArg\*> >' )
 
@@ -44,7 +45,9 @@ def parser(mp=None):
 	mg2.add_option('--binwidth',help=colours[5]+'Binwidth: 0.1,0.1 (NOM,VBF)'+colours[0],default=[0.1,0.1],type='str',action='callback',callback=optsplitfloat,dest='dX')
 	mg2.add_option('--lumi',help=colours[5]+'Luminosity: 19784.,18281. (NOM,VBF)'+colours[0],default=[19784.,18281.],type='str',action='callback',callback=optsplitfloat,dest='LUMI')
 	mg2.add_option('--mass',help=colours[5]+'Mass: 115,120,125,...'+colours[0],default=[115,120,125,130,135],type='str',action='callback',callback=optsplitint,dest='MASS')
+        mg2.add_option('--massextra',help=colours[5]+'Mass: 100,105,...'+colours[0],default=[0],type='str',action='callback',callback=optsplitint,dest='MASSEXTRA')
 	mp.add_option_group(mg2)
+
 #
 	return mp
 
@@ -53,12 +56,8 @@ def style():
 	gROOT.SetBatch(1)
 	gROOT.ProcessLineSync(".x %s/styleCMSTDR.C"%basepath)
 	gROOT.ForceStyle()
-	gStyle.SetPadTopMargin(0.065)
+	gStyle.SetPadTopMargin(0.06)
 	gStyle.SetPadRightMargin(0.04)
-        gStyle.SetPadLeftMargin(0.14)
-        gStyle.SetTitleSize(0.055,"XY")
-        gStyle.SetTitleOffset(1.0,"Y")
-        gStyle.SetTitleOffset(1.05,"X")
 	gROOT.ProcessLineSync("gErrorIgnoreLevel = kWarning;")
 	RooMsgService.instance().setSilentMode(kTRUE)
 	for i in range(2): RooMsgService.instance().setStreamStatus(i,kFALSE)
@@ -79,23 +78,81 @@ def gaStyle(g,i):
 	g.SetFillStyle(1001)
 
 ####################################################################################################
+def RooDrawExtra(opts,can,x,hTOT,yVBF,yGF,model,bkg,fsig,width,mass,m,s,iS,S,C,Cp,archive):
+	can.cd(C+1)
+
+#	hTOT.Rebin(25)
+	hScale = RooDataHist("tmp","tmp",RooArgList(x),hTOT)
+
+        frame = x.frame()
+        hScale.plotOn(frame,RooFit.LineWidth(0))
+	model.plotOn(frame)#,RooFit.LineWidth(2))
+	frame.GetXaxis().SetNdivisions(505)
+	frame.GetXaxis().SetTitle("M_{bb} (GeV)")
+	frame.GetYaxis().SetTitle("Events / (%.1f)"%(hTOT.GetBinWidth(1)))
+	frame.GetYaxis().SetRangeUser(0.0,hTOT.GetBinContent(hTOT.GetMaximumBin())*1.1)
+	bkgplot = RooArgSet(bkg)
+	model.plotOn(frame,RooFit.Components(bkgplot),RooFit.LineColor(kBlue),RooFit.LineWidth(2),RooFit.LineStyle(kDashed))
+	frame.Draw()
+	archive += [bkgplot]
+
+	ftmp = model.asTF(RooArgList(x),RooArgList(fsig),RooArgSet(x))
+	y0,x0       = ftmp.GetMaximum(),ftmp.GetMaximumX()
+	x1,x2       = ftmp.GetX(y0/2.,opts.X[0],x0),ftmp.GetX(y0/2.,x0,opts.X[1])
+	fwhm        = x2-x1
+	width.setVal(fwhm)
+	y1          = opts.dX[iS]*25*0.5*y0*(yVBF.getVal()+yGF.getVal())/ftmp.Integral(opts.X[0],opts.X[1])
+	y2          = opts.dX[iS]*25*y0*(yVBF.getVal()+yGF.getVal())/ftmp.Integral(opts.X[0],opts.X[1])
+	line        = TLine(x1,y1,x2,y1)
+	line.SetLineColor(kMagenta+3)
+	line.SetLineStyle(7)
+	line.SetLineWidth(2)
+	line.Draw("same")
+	archive += [line]
+	
+	right,top   = gStyle.GetPadRightMargin(),gStyle.GetPadTopMargin()
+	left,bottom = gStyle.GetPadLeftMargin(),gStyle.GetPadBottomMargin()
+	
+	pave = TPaveText(0.65,0.55,1.-right-top*0.3333,1.-top*1.666,"NDC")
+	pave.SetTextAlign(11)
+	pave.SetFillStyle(-1)
+	pave.SetBorderSize(0)
+	pave.SetTextFont(42)
+	pave.SetTextSize(top*0.7)
+	pave.SetTextColor(kBlue+1)
+	pave.AddText("M_{H} = %d GeV"%mass)
+	pave.AddText("%s selection"%S.label)
+	pave.AddText("CAT%d"%Cp)
+	pave.AddText("m = %.1f #pm %.1f"%(m.getVal(),m.getError()))
+	pave.AddText("#sigma = %.1f #pm %.1f"%(s.getVal(),s.getError()))
+	pave.AddText("FWHM = %.2f"%fwhm)
+	pave.AddText("y_{max} = %.4f"%y2)
+        pave.AddText("I = %.2f"%ftmp.Integral(opts.X[0],opts.X[1]))
+        pave.AddText("h_{max} = %.2f"%hTOT.GetBinContent(hTOT.GetMaximumBin()))
+	pave.Draw()
+	gPad.Update()
+	pave.SetY1NDC(pave.GetY2NDC()-top*0.9*pave.GetListOfLines().GetSize())
+	pave.Draw()
+	archive += [pave]
+
+####################################################################################################
 def RooDraw(opts,can,x,h,hVBF,hGF,hTOT,yVBF,yGF,model,bkg,fsig,width,mass,m,s,iS,S,C,Cp,archive):
 	can.cd(C+1)
-	
+
 	hGF.Rebin(25)
 	hVBF.Rebin(25)
 	hTOT.Rebin(25)
 	hScale = RooDataHist("tmp","tmp",RooArgList(x),hTOT)
 
 	frame = x.frame()
-	hScale.plotOn(frame,RooFit.MarkerSize(0.6),RooFit.XErrorSize(0))
-	model.plotOn(frame,RooFit.LineWidth(1))#,RooFit.LineWidth(2))
-	frame.GetXaxis().SetNdivisions(510)
-	frame.GetXaxis().SetTitle("m_{b#bar{b}} (GeV)")
-	frame.GetYaxis().SetTitle("Events / (%.1f GeV)"%hTOT.GetBinWidth(1))
-	frame.GetYaxis().SetRangeUser(0.,hTOT.GetBinContent(hTOT.GetMaximumBin())*1.12);
+	hScale.plotOn(frame)
+	model.plotOn(frame)#,RooFit.LineWidth(2))
+	frame.GetXaxis().SetNdivisions(505)
+	frame.GetXaxis().SetTitle("M_{bb} (GeV)")
+	frame.GetYaxis().SetTitle("Events / (%.1f)"%hTOT.GetBinWidth(1))
+	frame.GetYaxis().SetRangeUser(0.,hTOT.GetBinContent(hTOT.GetMaximumBin())*1.1);
 	bkgplot = RooArgSet(bkg)
-	model.plotOn(frame,RooFit.Components(bkgplot),RooFit.LineColor(kBlue+2),RooFit.LineWidth(1),RooFit.LineStyle(kDashed))
+	model.plotOn(frame,RooFit.Components(bkgplot),RooFit.LineColor(kBlue),RooFit.LineWidth(2),RooFit.LineStyle(kDashed))
 	frame.Draw()
 	archive += [bkgplot]
 
@@ -106,7 +163,7 @@ def RooDraw(opts,can,x,h,hVBF,hGF,hTOT,yVBF,yGF,model,bkg,fsig,width,mass,m,s,iS
 	hS.Add(hVBF)
 	hS.Draw("same,hist")
 	frame.Draw("same")
-#	gPad.RedrawAxis()
+	gPad.RedrawAxis()
 	archive += [hS]
 
 	ftmp = model.asTF(RooArgList(x),RooArgList(fsig),RooArgSet(x))
@@ -115,53 +172,47 @@ def RooDraw(opts,can,x,h,hVBF,hGF,hTOT,yVBF,yGF,model,bkg,fsig,width,mass,m,s,iS
 	fwhm        = x2-x1
 	width.setVal(fwhm)
 	y1          = opts.dX[iS]*25*0.5*y0*(yVBF.getVal()+yGF.getVal())/ftmp.Integral(opts.X[0],opts.X[1])
+	y2          = opts.dX[iS]*25*y0*(yVBF.getVal()+yGF.getVal())/ftmp.Integral(opts.X[0],opts.X[1])
 	line        = TLine(x1,y1,x2,y1)
-	line.SetLineColor(kBlack)#kMagenta+3)
-	line.SetLineStyle(kDotted)
-	line.SetLineWidth(1)
+	line.SetLineColor(kMagenta+3)
+	line.SetLineStyle(7)
+	line.SetLineWidth(2)
 	line.Draw("same")
 	archive += [line]
 
+	right,top   = gStyle.GetPadRightMargin(),gStyle.GetPadTopMargin()
 	left,bottom = gStyle.GetPadLeftMargin(),gStyle.GetPadBottomMargin()
-	right,top = gStyle.GetPadRightMargin(),gStyle.GetPadTopMargin()
 	
-	leg = TLegend(0.67,0.35,1.-right-top*0.3333,1.-top-0.04)
+	leg = TLegend(0.65,0.30,1.-right-top*0.3333,0.40)
 	leg.AddEntry(hVBF,"VBF","F")
 	leg.AddEntry(hGF,"GF","F")
-	leg.SetFillStyle(0)
+	leg.SetFillStyle(-1)
 	leg.SetBorderSize(0)
 	leg.SetTextFont(42)
 	leg.SetTextSize(top*0.75)
-	leg.SetY1(leg.GetY2()-leg.GetNRows()*1.25*leg.GetTextSize())
+	leg.SetY1(leg.GetY2()-top*leg.GetNRows()*0.87)
 	leg.Draw()
 	archive += [leg]
 
-	pave = TPaveText(0.67,0.15,1.-right-top*0.3333,leg.GetY1()-0.05,"NDC")
+	pave = TPaveText(0.65,0.55,1.-right-top*0.3333,1.-top*1.666,"NDC")
 	pave.SetTextAlign(11)
-	pave.SetFillStyle(0)
+	pave.SetFillStyle(-1)
 	pave.SetBorderSize(0)
 	pave.SetTextFont(42)
-	pave.SetTextSize(top*0.67)
-	pave.SetTextColor(kBlue+2)
-	a = pave.AddText("m_{H} = %d GeV"%mass)
-        a.SetTextColor(kBlack)
-        a = pave.AddText("")
-        a.SetTextSize(top*0.45)
-#	pave.AddText("%s selection"%S.label.replace('NOM','Set A').replace('PRK','Set B'))
-	a = pave.AddText("CAT%d"%Cp)
-        a.SetTextColor(kBlack)
-        a.SetTextFont(62)
-	a = pave.AddText("Signal template")
-        a.SetTextColor(kBlue+2)
-        a.SetTextFont(62)
-        a = pave.AddText("")
-        a.SetTextSize(top*0.45)
+	pave.SetTextSize(top*0.7)
+	pave.SetTextColor(kBlue+1)
+	pave.AddText("M_{H} = %d GeV"%mass)
+	pave.AddText("%s selection"%S.label)
+	pave.AddText("CAT%d"%Cp)
 	pave.AddText("m = %.1f #pm %.1f"%(m.getVal(),m.getError()))
 	pave.AddText("#sigma = %.1f #pm %.1f"%(s.getVal(),s.getError()))
 	pave.AddText("FWHM = %.2f"%fwhm)
+	pave.AddText("y_{max} = %.4f"%y2)
+        pave.AddText("I = %.2f"%ftmp.Integral(opts.X[0],opts.X[1]))
+        pave.AddText("h_{max} = %.2f"%hTOT.GetBinContent(hTOT.GetMaximumBin()))
 	pave.Draw()
-#	gPad.Update()
-	pave.SetY1NDC(pave.GetY2NDC()-pave.GetTextSize()*1.20*pave.GetListOfLines().GetSize())
+	gPad.Update()
+	pave.SetY1NDC(pave.GetY2NDC()-top*0.9*pave.GetListOfLines().GetSize())
 	pave.Draw()
 	archive += [pave]
 
@@ -188,9 +239,10 @@ def main():
 # New histograms, graphs, containers
 	w = RooWorkspace("w","workspace")
 	MASS = opts.MASS
+	MASSEXTRA = opts.MASSEXTRA
 	LUMI = opts.LUMI
 	NBINS = [int((opts.X[1]-opts.X[0])/x) for x in opts.dX] 
-	CN0 = TCanvas("c1","c1",1800,1500)
+	CN0 = TCanvas("c1","c1",900,750)
 	kJES = [None]*(SC.nsel)
 	kJER = [None]*(SC.nsel)
 	archive = []
@@ -203,12 +255,14 @@ def main():
 	pCMS1.SetTextAlign(12)
 	pCMS1.SetFillStyle(-1)
 	pCMS1.SetBorderSize(0)
+	pCMS1.AddText("CMS")
 	pCMS2 = TPaveText(0.5,1.-top,1.-right*0.5,1.,"NDC")
 	pCMS2.SetTextFont(42)
 	pCMS2.SetTextSize(top*0.75)
 	pCMS2.SetTextAlign(32)
 	pCMS2.SetFillStyle(-1)
 	pCMS2.SetBorderSize(0)
+	pCMS2.AddText("L = 19.8 fb^{-1} (8 TeV)")
 
 # Selection loop
 	for iS,S in enumerate(SC.selections):
@@ -239,6 +293,7 @@ def main():
 #			for k2,v2 in v1.iteritems():
 #				print k,k1,k2,v2
 
+	hTOT = {}
 # Mass loop
 	for mass in MASS:
 ## Selection loop
@@ -254,7 +309,6 @@ def main():
  			rhs  = {}
  			hVBF = {}
 			hGF  = {}
-			hTOT = {}
 			yVBF = {}
 			yGF  = {}
  ### Canvas definition
@@ -312,10 +366,6 @@ def main():
   ### Draw 
 	  			RooDraw(opts,canM,x,rhs[N],hVBF[N],hGF[N],hTOT[N],yVBF[N],yGF[N],model,bkg,fsig,width,mass,m,s,iS,S,C,Cp,archive)
 				canM.cd(C+1)
-                                pCMS1.Clear()
-	                        pCMS1.AddText("%s selection"%("Set A" if iS==0 else "Set B"))
-                                pCMS2.Clear()
-	                        pCMS2.AddText("%.1f fb^{-1} (8 TeV)"%(19.8 if iS==0 else 18.3))
 				pCMS1.Draw()
 				pCMS2.Draw()
 				
@@ -338,6 +388,115 @@ def main():
 #--- end of SEL loop
 #
 
+######################################################################################################################################################
+# MassExtra loop
+	for mass in MASSEXTRA:
+## Cross section info
+		massref = 115 if mass<115 else (135 if mass>135 else sys.exit('Unhandled masspoint: %d'%mass))
+		sigmaVBF = float(finfo['crosssections']['VBF%d'%mass])
+		sigmaGF  = float(finfo['crosssections']['GluGlu%d'%mass])
+		sigmaVBFref = float(finfo['crosssections']['VBF%d'%massref])
+		sigmaGFref  = float(finfo['crosssections']['GluGlu-Powheg%d'%massref])
+		sigmarescaleVBF = sigmaVBF/sigmaVBFref
+		sigmarescaleGF  = sigmaGF/sigmaGFref
+		#print mass, "<--", massref
+		#print sigmarescaleVBF
+		#print sigmarescaleGF
+
+## Selection loop
+		for iS,S in enumerate(SC.selections):
+ ### Containers
+                        rhs    = {}
+			yVBF   = {}
+			yGF    = {}
+                        m      = {}
+                        s      = {}
+                        a      = {}
+                        e      = {}
+                        width  = {}
+                        mShift = {}
+                        sShift = {}
+                        fsig   = {}
+                        sig    = {}
+                        bkg    = {}
+                        model  = {}
+ ### Canvas definition
+			canM = TCanvas("sig_template_sel%s_mH%d"%(S.tag,mass),"cs%sm%d"%(S.tag,mass),900,750)
+			canM.Divide(2,2)
+		
+### Category loop
+			for C in range(S.ncat):
+				Cp = C + sum([x for x in SC.ncats[0:iS]])
+  #### Copy masstemplate
+#				model = w.obj("signal_model_m%d_CAT%d"%(massref,Cp)).Clone("signal_model_m%d_CAT%d"%(mass,Cp))
+#				model.Print()
+				x      = RooRealVar("mbbReg_CAT%d"%Cp,"mbbReg_CAT%d"%Cp,opts.X[0],opts.X[1])
+
+  				Nref = "mH%d_sel%s_CAT%d"%(massref,S.tag,Cp)
+				nref           = "m%d_CAT%d"%(massref,Cp)
+				n              = "m%d_CAT%d"%(mass,Cp)
+				yVBF[nref]     = w.obj("yield_signalVBF_mass%d_CAT%d"%(massref,Cp))
+				yGF[nref]      = w.obj("yield_signalGF_mass%d_CAT%d"%(massref,Cp))
+				yVBF[n]        = yVBF[nref].Clone("yield_signalVBF_mass%d_CAT%d"%(mass,Cp))
+				yGF[n]         = yGF[nref].Clone("yield_signalGF_mass%d_CAT%d"%(mass,Cp))
+                                yVBF[n].setVal(yVBF[nref].getVal()*sigmarescaleVBF)
+                                yGF[n].setVal(yGF[nref].getVal()*sigmarescaleGF)
+                                hTOT[n]        = hTOT[Nref].Clone("mass_Total_%s"%n)
+                                hTOT[n].Scale((yVBF[n].getVal()+yGF[n].getVal())/(yVBF[nref].getVal()+yGF[nref].getVal()))
+				rhs[n]         = RooDataHist("roohist_scaled_%s"%n,"roohist_scaled_%s"%n,RooArgList(x),hTOT[n])
+				###m[n]           = w.obj("mean_%s"%(nref))
+				m[n]           = w.obj("mean_%s"%(nref)).Clone("mean_%s"%(n)) 
+                                m[n].setConstant(kFALSE)
+                                m[n].setMin(mass-5)
+                                m[n].setMax(mass+5)
+				m[n].setVal(mass)
+				s[n]          = w.obj("sigma_%s"%(nref)).Clone("sigma_%s"%(n)) 
+				width[n]      = w.obj("fwhm_%s"%(nref)).Clone("fwhm_%s"%(n))
+				mShift[n]     = RooFormulaVar("mean_shifted_%s"%n,"mean_shifted_%s"%n,"@0*@1",RooArgList(m[n],kJES[iS]))
+				sShift[n]     = RooFormulaVar("sigma_shifted_%s"%n,"sigma_shifted_%s"%n,"@0*@1",RooArgList(s[n],kJER[iS]))
+                                
+				a[n]        = w.obj("alpha_%s"%(nref)).Clone("alpha_%s"%(n))
+				e[n]        = w.obj("exp_%s"%(nref)).Clone("exp_%s"%(n))
+				b0,b1,b2,b3 = [(w.obj("b%d_%s"%(i,nref)).Clone("b%d_%s"%(i,n)) if w.obj("b%d_%s"%(i,nref)) else None) for i in range(4)]
+  ### Bkg part: Bernstein     
+				bkg[n]        = RooBernstein("signal_bkg_%s"%n,"signal_bkg_%s"%n,x,RooArgList(b0,b1,b2))
+                                ###bkg[n]       = w.obj("signal_bkg_%s"%nref)
+  ### Sig part: Crystal Ball   
+				fsig[n]       = w.obj("fsig_%s"%nref).Clone("fsig_%s"%n)
+				###fsig[n]      = w.obj("fsig_%s"%nref)
+                                #fsig[n].setConstant(kFALSE)
+                                #fsig[n].setMin(0.2)
+                                #fsig[n].setMin(1.5)
+				#fsig[n].setVal(fsig[n].getVal()*(yVBF[n].getVal()+yGF[n].getVal())/(yVBF[nref].getVal()+yGF[nref].getVal()))
+				sig[n]        = RooCBShape("signal_gauss_%s"%n,"signal_gauss_%s"%n,x,mShift[n],sShift[n],a[n],e[n])
+                                ###sig[n]       = w.obj("signal_gauss_%s"%nref)
+				model[n]      = RooAddPdf("signal_model_%s"%n,"signal_model_%s"%n,RooArgList(sig[n],bkg[n]),RooArgList(fsig[n]))
+				###model[n]      = w.obj("signal_model_%s"%nref).Clone("signal_model_%s"%n)
+                                ##model[n].Print()
+
+   ### Draw 
+	  			RooDrawExtra(opts,canM,x,hTOT[n],yVBF[n],yGF[n],model[n],bkg[n],fsig[n],width[n],mass,m[n],s[n],iS,S,C,Cp,archive)
+				canM.cd(C+1)
+				pCMS1.Draw()
+				pCMS2.Draw()
+
+  #### Set Constants
+ 				for o in [b0,b1,b2,b3,m[n],s[n],a[n],e[n],fsig[n]]: 
+                                    if o: o.setConstant(kTRUE)
+  #### Import objects
+				for o in [model[n],width[n],yVBF[n],yGF[n]]:
+					getattr(w,'import')(o)
+					if opts.verbosity>0 and not opts.quiet: o.Print()
+##
+##--- end of CAT loop
+##
+
+			makeDirs("%s/plot/sigTemplates/"%opts.workdir)
+			canM.SaveAs("%s/plot/sigTemplates/%s.pdf"%(opts.workdir,canM.GetName()))
+			canM.SaveAs("%s/plot/sigTemplates/%s.png"%(opts.workdir,canM.GetName()))
+
+####################################################################################################
+# Write workspace
 	makeDirs("%s/root/"%opts.workdir)
 	w.writeToFile("%s/root/sig_shapes_workspace%s.root"%(opts.workdir,"" if not opts.long else longtag))
 
