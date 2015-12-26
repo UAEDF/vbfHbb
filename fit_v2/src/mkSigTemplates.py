@@ -160,7 +160,7 @@ def RooDraw(opts,can,x,h,hVBF,hGF,hTOT,yVBF,yGF,model,bkg,fsig,width,mass,m,s,iS
 	pave.AddText("#sigma = %.1f #pm %.1f"%(s.getVal(),s.getError()))
 	pave.AddText("FWHM = %.2f"%fwhm)
 	pave.Draw()
-#	gPad.Update()
+	gPad.Update()
 	pave.SetY1NDC(pave.GetY2NDC()-pave.GetTextSize()*1.20*pave.GetListOfLines().GetSize())
 	pave.Draw()
 	archive += [pave]
